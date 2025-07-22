@@ -1,243 +1,347 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submarinos Museos del Mundo</title>
+    <title>Submarinos Museos del Mundo - Un Archivo Interactivo</title>
     
-    <!-- CSS de Leaflet -->
+    <!-- Librerías CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- CSS para la agrupación de marcadores (MarkerCluster) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-
-    <!-- CSS para DataTables -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
-     
-    <!-- Estilos CSS para el layout y la tabla -->
+    
+    <!-- Tailwind CSS y Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #map { height: 60vh; background-color: #f0f0f0; }
-        #table-container { height: 40vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; background-color: #f8f9fa; }
-        #filters { padding-bottom: 10px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-        #filters label { font-weight: bold; }
-        #filters select { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        .dataTables_wrapper { flex-grow: 1; overflow-y: auto; }
-        table.dataTable tbody tr.selected { background-color: #b0d4f1 !important; }
-        .popup-content h3 { margin: 0 0 5px 0; font-size: 16px; }
-        .popup-content { text-align: left; font-size: 14px; line-height: 1.4; }
-        .popup-image { max-width: 180px; height: auto; border-radius: 5px; margin-top: 5px; }
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box; }
-        #loader-content { font-size: 1.5em; }
-        #loader-error { font-size: 1em; color: #c0392b; max-width: 600px; }
+        body { font-family: 'Source Sans Pro', sans-serif; }
+        h1, h2, h3 { font-family: 'Roboto Condensed', sans-serif; }
+        .dataTables_wrapper { font-size: 0.9em; }
+        table.dataTable tbody tr.selected { background-color: #3b82f6 !important; color: white; }
+        .stat-card { transition: transform 0.2s ease-in-out; }
+        .stat-card:hover { transform: translateY(-5px); }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800">
 
-<div id="loader">
-    <div id="loader-content">Cargando datos de submarinos...</div>
-</div>
+    <!-- 1. SECCIÓN HÉROE -->
+    <section id="hero" class="h-screen bg-cover bg-center bg-fixed flex items-center justify-center text-white" style="background-image: url('https://images.unsplash.com/photo-1594411754012-70835bab3f28?q=80&w=2070&auto=format&fit=crop');">
+        <div class="bg-black bg-opacity-50 p-10 rounded-lg text-center">
+            <h1 class="text-5xl md:text-7xl font-bold uppercase tracking-wider">Submarinos Museo</h1>
+            <p class="mt-4 text-xl md:text-2xl font-light">Un archivo interactivo de gigantes de acero y sus historias.</p>
+            <a href="#map-section" class="mt-8 inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors">
+                Iniciar Exploración
+            </a>
+        </div>
+    </section>
 
-<!-- Contenedor del mapa -->
-<div id="map"></div>
+    <!-- ANCLA PARA EL SCROLL -->
+    <div id="map-section"></div>
 
-<!-- Contenedor para la tabla y filtros -->
-<div id="table-container">
-    <div id="filters">
-        <label for="type-filter">Filtrar por Tipo:</label>
-        <select id="type-filter"><option value="">Todos</option></select>
-        <label for="country-filter">Filtrar por País:</label>
-        <select id="country-filter"><option value="">Todos</option></select>
+    <!-- 2. SECCIÓN DEL MAPA Y LA TABLA -->
+    <main class="w-full bg-white shadow-lg">
+        <div id="map" class="h-[65vh] w-full"></div>
+        <div class="p-4 bg-gray-50 border-t border-gray-200">
+             <button id="toggle-table-btn" class="mb-4 bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg text-sm">
+                Mostrar Lista de Submarinos
+            </button>
+            <div id="interactive-section" class="hidden">
+                <div id="filters" class="pb-4 flex flex-wrap gap-4 items-center">
+                    <label for="type-filter" class="font-bold">Tipo:</label>
+                    <select id="type-filter" class="p-2 border rounded-md"><option value="">Todos</option></select>
+                    <label for="country-filter" class="font-bold">País:</label>
+                    <select id="country-filter" class="p-2 border rounded-md"><option value="">Todos</option></select>
+                </div>
+                <div class="w-full overflow-x-auto">
+                    <table id="submarines-table" class="display" width="100%"></table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3. SECCIÓN DE ESTADÍSTICAS -->
+    <section id="stats" class="py-12 bg-gray-800 text-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold mb-8">El Archivo en Números</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="stat-card bg-gray-700 p-6 rounded-lg shadow-md">
+                    <h3 id="total-subs" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Submarinos Documentados</p>
+                </div>
+                <div class="stat-card bg-gray-700 p-6 rounded-lg shadow-md">
+                    <h3 id="total-countries" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Países con Museos</p>
+                </div>
+                <div class="stat-card bg-gray-700 p-6 rounded-lg shadow-md">
+                    <h3 id="total-types" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Tipos de Propulsión</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. SECCIÓN DE DESTACADOS -->
+    <section id="featured" class="py-12 bg-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Gigantes de la Historia</h2>
+            <div id="featured-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Las tarjetas de destacados se insertarán aquí dinámicamente -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. SECCIÓN "SOBRE EL PROYECTO" -->
+    <section id="about" class="py-12 bg-gray-100">
+        <div class="container mx-auto px-6 max-w-4xl text-center">
+            <h2 class="text-4xl font-bold mb-4">Sobre este Proyecto</h2>
+            <p class="text-lg leading-relaxed">
+                Este mapa interactivo es una iniciativa de <a href="https://www.elsnorkel.com" target="_blank" class="text-blue-600 hover:underline">elSnorkel.com</a> para crear un archivo completo y accesible de todos los submarinos que se preservan como museos alrededor del mundo. Es un tributo a la ingeniería, la historia y las tripulaciones que navegaron en estas increíbles máquinas.
+            </p>
+        </div>
+    </section>
+
+    <!-- 6. PIE DE PÁGINA -->
+    <footer class="bg-gray-900 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 elSnorkel.com. Todos los derechos reservados.</p>
+            <p class="mt-2">Un proyecto de exploración submarina e histórica.</p>
+            <!-- Aquí puedes agregar enlaces a redes sociales -->
+        </div>
+    </footer>
+
+
+    <div id="loader" class="fixed inset-0 bg-white bg-opacity-90 z-[10000] flex items-center justify-center">
+        <div id="loader-content" class="text-center">
+            <p class="text-2xl font-semibold">Cargando Archivo Global de Submarinos...</p>
+            <p class="text-lg mt-2">Por favor, espere.</p>
+        </div>
     </div>
-    <table id="submarines-table" class="display" width="100%"></table>
-</div>
 
-<!-- Librerías de JavaScript -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- LIBRERÍAS JAVASCRIPT -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-<script>
-    // URL de tu hoja de Google Sheet publicada como CSV
-    const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
+    <script>
+        // URL de tu hoja de Google Sheet publicada como CSV
+        const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
 
-    const loader = document.getElementById('loader');
-    const loaderContent = document.getElementById('loader-content');
-    const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri', maxZoom: 19
-    }).addTo(map);
+        // Variables globales
+        const loader = document.getElementById('loader');
+        const map = L.map('map').setView([20, 0], 2);
+        const markers = L.markerClusterGroup();
+        let table;
+        const allMarkers = {};
+        let puntosDeInteres = [];
 
-    const defaultSubmarineIcon = L.icon({
-        iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA5bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
-        iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
-    });
+        // Inicialización del mapa base
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri', maxZoom: 19
+        }).addTo(map);
 
-    let table;
-    const markers = L.markerClusterGroup();
-    const allMarkers = {};
-    let puntosDeInteres = [];
+        // Ícono por defecto
+        const defaultSubmarineIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA5bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
+            iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
+        });
 
-    // Función que envuelve una URL en un proxy CORS si es de un dominio externo
-    function getProxiedUrl(url) {
-        if (url && url.startsWith('http')) {
-            return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        // Función para usar proxy en URLs externas
+        function getProxiedUrl(url) {
+            if (url && url.startsWith('http')) {
+                return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            }
+            return url;
         }
-        return url; // Devuelve la URL original si no es válida o no necesita proxy
-    }
 
-    function initializeApp(data) {
-        puntosDeInteres = data;
-        map.addLayer(markers);
-        setupMarkers();
-        setupTable();
-        setupFilters();
-        setupTableClickHandler();
-        loader.style.display = 'none';
-    }
-
-    function setupMarkers() {
-        puntosDeInteres.forEach(punto => {
-            let finalIcon = defaultSubmarineIcon;
-
-            // **CORRECCIÓN: Aplicar proxy al ícono del marcador**
-            if (punto.markerIconUrl) {
-                finalIcon = L.icon({
-                    iconUrl: getProxiedUrl(punto.markerIconUrl),
-                    iconSize: [38, 38],
-                    iconAnchor: [19, 38],
-                    popupAnchor: [0, -40],
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                    shadowSize: [41, 41],
-                    shadowAnchor: [12, 41]
-                });
-            }
-            
-            // **CORRECCIÓN: Aplicar proxy a la imagen del popup**
-            const proxiedPopupImageUrl = getProxiedUrl(punto.imagen);
-
-            const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p><img src="${proxiedPopupImageUrl}" class="popup-image" onerror="this.style.display='none'"></div>`;
-            const marker = L.marker([punto.lat, punto.lng], { icon: finalIcon }).bindPopup(popupContent);
-            marker.pointId = punto.id;
-            allMarkers[punto.id] = marker;
-            markers.addLayer(marker);
-        });
-    }
-
-    function setupTable() {
-        table = $('#submarines-table').DataTable({
-            data: puntosDeInteres,
-            columns: [
-                { data: 'nombre', title: 'Nombre' },
-                { data: 'tipo', title: 'Tipo' },
-                { data: 'pais', title: 'País' },
-                { data: 'location', title: 'Ubicación' }
-            ],
-            scrollY: "calc(40vh - 100px)",
-            scrollCollapse: true,
-            paging: false,
-            info: false,
-            language: { search: "Buscar:" }
-        });
-    }
-    
-    function setupFilters() {
-        const typeFilter = $('#type-filter');
-        const countryFilter = $('#country-filter');
-        const types = [...new Set(puntosDeInteres.map(p => p.tipo).filter(Boolean))];
-        const countries = [...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))];
-        types.sort().forEach(type => typeFilter.append(`<option value="${type}">${type}</option>`));
-        countries.sort().forEach(country => countryFilter.append(`<option value="${country}">${country}</option>`));
-
-        typeFilter.on('change', applyFilters);
-        countryFilter.on('change', applyFilters);
-    }
-
-    function applyFilters() {
-        const selectedType = $('#type-filter').val();
-        const selectedCountry = $('#country-filter').val();
-
-        $.fn.dataTable.ext.search.pop();
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            const punto = puntosDeInteres[dataIndex];
-            const typeMatch = (selectedType === "" || punto.tipo === selectedType);
-            const countryMatch = (selectedCountry === "" || punto.pais === selectedCountry);
-            return typeMatch && countryMatch;
-        });
-        table.draw();
+        // Función principal que se ejecuta tras cargar los datos
+        function initializeApp(data) {
+            puntosDeInteres = data;
+            map.addLayer(markers);
+            setupMarkers();
+            setupTable();
+            setupFilters();
+            setupEventHandlers();
+            populateStats();
+            populateFeatured();
+            loader.style.display = 'none';
+        }
         
-        markers.clearLayers();
-        const filteredData = table.rows({ search: 'applied' }).data().toArray();
-        const filteredIds = new Set(filteredData.map(d => d.id));
-        
-        puntosDeInteres.forEach(punto => {
-            if (filteredIds.has(punto.id)) {
-                markers.addLayer(allMarkers[punto.id]);
-            }
-        });
-    }
-
-    function setupTableClickHandler() {
-        $('#submarines-table tbody').on('click', 'tr', function () {
-            if ($(this).hasClass('selected')) {
-                $(this).removeClass('selected');
-            } else {
-                table.$('tr.selected').removeClass('selected');
-                $(this).addClass('selected');
-            }
-            
-            const data = table.row(this).data();
-            if(data) {
-                const marker = allMarkers[data.id];
-                map.flyTo([data.lat, data.lng], 15);
-                if (markers.hasLayer(marker)) {
-                     markers.zoomToShowLayer(marker, () => marker.openPopup());
+        // Configuración de marcadores
+        function setupMarkers() {
+            puntosDeInteres.forEach(punto => {
+                let finalIcon = defaultSubmarineIcon;
+                // **LÓGICA ACTUALIZADA**
+                // Ahora busca el ícono en la columna 'iconUrl'
+                if (punto.iconUrl) {
+                    finalIcon = L.icon({
+                        iconUrl: getProxiedUrl(punto.iconUrl),
+                        iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -40],
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                        shadowSize: [41, 41], shadowAnchor: [12, 41]
+                    });
                 }
+                const proxiedPopupImageUrl = getProxiedUrl(punto.imagen);
+                const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p><img src="${proxiedPopupImageUrl}" class="popup-image" onerror="this.style.display='none'"></div>`;
+                const marker = L.marker([punto.lat, punto.lng], { icon: finalIcon }).bindPopup(popupContent);
+                marker.pointId = punto.id;
+                allMarkers[punto.id] = marker;
+                markers.addLayer(marker);
+            });
+        }
+
+        // Configuración de la tabla
+        function setupTable() {
+            table = $('#submarines-table').DataTable({
+                data: puntosDeInteres,
+                columns: [
+                    { data: null, title: "#", searchable: false, orderable: false, width: "5%" },
+                    { data: 'nombre', title: 'Nombre' },
+                    { data: 'tipo', title: 'Tipo' },
+                    { data: 'pais', title: 'País' },
+                    { data: 'location', title: 'Ubicación' }
+                ],
+                scrollY: "calc(40vh - 120px)",
+                scrollCollapse: true,
+                paging: false,
+                info: false,
+                language: { search: "Buscar:" }
+            });
+            table.on('order.dt search.dt', () => {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each((cell, i) => {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+        }
+        
+        // Configuración de filtros
+        function setupFilters() {
+            const typeFilter = $('#type-filter');
+            const countryFilter = $('#country-filter');
+            const types = [...new Set(puntosDeInteres.map(p => p.tipo).filter(Boolean))];
+            const countries = [...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))];
+            types.sort().forEach(type => typeFilter.append(`<option value="${type}">${type}</option>`));
+            countries.sort().forEach(country => countryFilter.append(`<option value="${country}">${country}</option>`));
+        }
+
+        // Lógica de filtrado
+        function applyFilters() {
+            const selectedType = $('#type-filter').val();
+            const selectedCountry = $('#country-filter').val();
+            $.fn.dataTable.ext.search.pop();
+            $.fn.dataTable.ext.search.push((settings, data, dataIndex) => {
+                const punto = puntosDeInteres[dataIndex];
+                const typeMatch = (selectedType === "" || punto.tipo === selectedType);
+                const countryMatch = (selectedCountry === "" || punto.pais === selectedCountry);
+                return typeMatch && countryMatch;
+            });
+            table.draw();
+            markers.clearLayers();
+            const filteredData = table.rows({ search: 'applied' }).data().toArray();
+            const filteredIds = new Set(filteredData.map(d => d.id));
+            puntosDeInteres.forEach(punto => {
+                if (filteredIds.has(punto.id)) {
+                    markers.addLayer(allMarkers[punto.id]);
+                }
+            });
+        }
+
+        // Configuración de todos los manejadores de eventos
+        function setupEventHandlers() {
+            // Filtros
+            $('#type-filter, #country-filter').on('change', applyFilters);
+            // Clic en la tabla
+            $('#submarines-table tbody').on('click', 'tr', function () {
+                $(this).toggleClass('selected').siblings().removeClass('selected');
+                const data = table.row(this).data();
+                if (data) {
+                    const marker = allMarkers[data.id];
+                    map.flyTo([data.lat, data.lng], 15);
+                    if (markers.hasLayer(marker)) {
+                        markers.zoomToShowLayer(marker, () => marker.openPopup());
+                    }
+                }
+            });
+            // Botón para mostrar/ocultar tabla
+            $('#toggle-table-btn').on('click', function() {
+                const section = $('#interactive-section');
+                section.slideToggle(300);
+                $(this).text(section.is(':visible') ? 'Ocultar Lista de Submarinos' : 'Mostrar Lista de Submarinos');
+            });
+        }
+
+        // Llenar sección de estadísticas
+        function populateStats() {
+            $('#total-subs').text(puntosDeInteres.length);
+            $('#total-countries').text([...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))].length);
+            $('#total-types').text([...new Set(puntosDeInteres.map(p => p.tipo).filter(Boolean))].length);
+        }
+
+        // Llenar sección de destacados
+        function populateFeatured() {
+            const featuredContainer = $('#featured-cards');
+            const featuredNames = ["USS Nautilus", "Brandtaucher", "U-505", "Riachuelo"];
+            const featuredSubs = puntosDeInteres.filter(p => featuredNames.includes(p.nombre));
+
+            featuredSubs.forEach(sub => {
+                const card = `
+                    <div class="stat-card bg-white p-6 rounded-lg shadow-lg cursor-pointer" data-id="${sub.id}">
+                        <img src="${getProxiedUrl(sub.imagen)}" alt="Imagen de ${sub.nombre}" class="h-40 w-full object-cover rounded-md mb-4" onerror="this.style.display='none'">
+                        <h3 class="text-xl font-bold">${sub.nombre}</h3>
+                        <p class="text-gray-600">${sub.pais}</p>
+                    </div>
+                `;
+                featuredContainer.append(card);
+            });
+
+            $('.stat-card[data-id]').on('click', function() {
+                const subId = $(this).data('id');
+                const subData = puntosDeInteres.find(p => p.id === subId);
+                if (subData) {
+                    const marker = allMarkers[subData.id];
+                    $('html, body').animate({ scrollTop: $('#map-section').offset().top }, 'smooth');
+                    map.flyTo([subData.lat, data.lng], 15);
+                    if (markers.hasLayer(marker)) {
+                        markers.zoomToShowLayer(marker, () => marker.openPopup());
+                    }
+                }
+            });
+        }
+
+        // Carga de datos inicial
+        Papa.parse(googleSheetUrl, {
+            download: true, header: true, skipEmptyLines: true, transformHeader: header => header.trim(),
+            complete: function(results) {
+                if (results.errors.length > 0) {
+                    loader.innerHTML = `<div id="loader-error"><h3>Error al procesar los datos</h3><p>Revisa la consola para más detalles.</p></div>`;
+                    return;
+                }
+                const processedData = results.data.map((row, index) => ({
+                    id: row.id || index, lat: parseFloat(row.Latitude), lng: parseFloat(row.Longitude),
+                    nombre: row.Name, tipo: row.Group, pais: row.Country, location: row.Location,
+                    descripcion: row.Description, imagen: row.Image, 
+                    // **LÓGICA ACTUALIZADA**
+                    // Lee la URL de la nueva columna 'Icon URL'
+                    iconUrl: row['Icon URL'],
+                    // Lee la categoría de la columna 'Marker Icon' (para uso futuro)
+                    markerCategory: row['Marker Icon']
+                })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
+                
+                if (processedData.length === 0) {
+                    loader.innerHTML = `<div id="loader-error"><h3>No se encontraron datos</h3><p>El archivo CSV se cargó pero no contiene filas válidas.</p></div>`;
+                    return;
+                }
+                initializeApp(processedData);
+            },
+            error: function(error) {
+                loader.innerHTML = `<div id="loader-error"><h3>Error Crítico al Cargar Datos</h3><p>No se pudo descargar la información desde la URL.</p></div>`;
             }
         });
-    }
-
-    Papa.parse(googleSheetUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: header => header.trim(),
-        complete: function(results) {
-            if (results.errors.length > 0) {
-                console.error("Errores de Parseo:", results.errors);
-                loaderContent.innerHTML = `<div id="loader-error"><h3>Error al procesar los datos</h3><p>Se encontraron errores en el archivo CSV. Revisa la consola del navegador (F12) para más detalles y verifica la fila indicada en tu hoja de cálculo.</p><p>Primer error: ${results.errors[0].message} en la fila ${results.errors[0].row + 2}</p></div>`;
-                return;
-            }
-
-            const processedData = results.data.map((row, index) => ({
-                id: row.id || index,
-                lat: parseFloat(row.Latitude),
-                lng: parseFloat(row.Longitude),
-                nombre: row.Name,
-                tipo: row.Group,
-                pais: row.Country,
-                location: row.Location,
-                descripcion: row.Description,
-                imagen: row.Image,
-                markerIconUrl: row['Marker Icon']
-            })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
-
-            if (processedData.length === 0) {
-                 loaderContent.innerHTML = `<div id="loader-error"><h3>No se encontraron datos</h3><p>El archivo CSV se cargó pero no contiene filas con datos válidos (Nombre, Latitud, Longitud). Revisa tu hoja de cálculo.</p></div>`;
-                 return;
-            }
-
-            initializeApp(processedData);
-        },
-        error: function(error) {
-            console.error("Error al cargar el archivo CSV:", error);
-            loaderContent.innerHTML = `<div id="loader-error"><h3>Error Crítico al Cargar Datos</h3><p>No se pudo descargar la información desde la URL proporcionada.</p><p><strong>Causa Posible:</strong> La URL es incorrecta, la hoja no está publicada como CSV para acceso público, o hay un problema de red.</p></div>`;
-        }
-    });
-</script>
-
+    </script>
 </body>
 </html>
