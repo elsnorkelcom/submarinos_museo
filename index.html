@@ -64,7 +64,7 @@
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/1j0F-Fhk1AYSGNjlDVwJ6SOScH_axuw8PY8eWrkS-WB8/edit?usp=sharing';
 
     // *** Verificación de la URL ***
-    if (googleSheetUrl.includes('PEGA_TU_ENLACE_CSV_AQUI') || !googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
+    if (googleSheetUrl.includes('https://docs.google.com/spreadsheets/d/1j0F-Fhk1AYSGNjlDVwJ6SOScH_axuw8PY8eWrkS-WB8/edit?usp=sharing') || !googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
         document.body.innerHTML = `<div id="error-message"><h1>Error de Configuración</h1><p>La URL de Google Sheets no es válida. Por favor, edita el archivo <code>index.html</code> y reemplaza el texto de ejemplo por el enlace CSV público de tu hoja de cálculo.</p><p>Asegúrate de seguir las instrucciones para <strong>Publicar en la web</strong>, seleccionar la hoja correcta (<strong>Points</strong>) y el formato <strong>CSV</strong>.</p></div>`;
         throw new Error("URL de Google Sheet no configurada o inválida.");
     }
