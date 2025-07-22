@@ -61,10 +61,10 @@
     // ==================================================================
     // PASO CRÍTICO: Pega aquí el enlace de tu Google Sheet publicado como CSV
     // ==================================================================
-    const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/1j0F-Fhk1AYSGNjlDVwJ6SOScH_axuw8PY8eWrkS-WB8/edit?usp=sharing';
+    const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
 
     // *** Verificación de la URL ***
-    if (googleSheetUrl.includes('https://docs.google.com/spreadsheets/d/1j0F-Fhk1AYSGNjlDVwJ6SOScH_axuw8PY8eWrkS-WB8/edit?usp=sharing') || !googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
+    if (googleSheetUrl.includes('https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv') || !googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
         document.body.innerHTML = `<div id="error-message"><h1>Error de Configuración</h1><p>La URL de Google Sheets no es válida. Por favor, edita el archivo <code>index.html</code> y reemplaza el texto de ejemplo por el enlace CSV público de tu hoja de cálculo.</p><p>Asegúrate de seguir las instrucciones para <strong>Publicar en la web</strong>, seleccionar la hoja correcta (<strong>Points</strong>) y el formato <strong>CSV</strong>.</p></div>`;
         throw new Error("URL de Google Sheet no configurada o inválida.");
     }
