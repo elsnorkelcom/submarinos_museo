@@ -66,7 +66,8 @@
         attribution: 'Tiles &copy; Esri', maxZoom: 19
     }).addTo(map);
 
-    const submarineIcon = L.icon({
+    // Ícono de submarino por defecto (SVG)
+    const defaultSubmarineIcon = L.icon({
         iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA5bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
         iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
     });
@@ -88,8 +89,24 @@
 
     function setupMarkers() {
         puntosDeInteres.forEach(punto => {
+            let finalIcon = defaultSubmarineIcon; // Usar el ícono SVG por defecto
+
+            // Si la hoja de cálculo proporciona una URL para un ícono, crear uno personalizado
+            if (punto.markerIconUrl && punto.markerIconUrl.startsWith('http')) {
+                finalIcon = L.icon({
+                    iconUrl: punto.markerIconUrl,
+                    iconSize: [38, 38],        // Tamaño del ícono
+                    iconAnchor: [19, 38],      // Punto del ícono que corresponderá a la ubicación del marcador
+                    popupAnchor: [0, -40],     // Punto desde donde se abrirá el popup
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    shadowSize: [41, 41],
+                    shadowAnchor: [12, 41]
+                });
+            }
+
             const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p><img src="${punto.imagen}" class="popup-image" onerror="this.style.display='none'"></div>`;
-            const marker = L.marker([punto.lat, punto.lng], { icon: submarineIcon }).bindPopup(popupContent);
+            // Usar el ícono determinado (personalizado o por defecto)
+            const marker = L.marker([punto.lat, punto.lng], { icon: finalIcon }).bindPopup(popupContent);
             marker.pointId = punto.id;
             allMarkers[punto.id] = marker;
             markers.addLayer(marker);
@@ -168,7 +185,7 @@
             }
         });
     }
-
+ 
     Papa.parse(googleSheetUrl, {
         download: true,
         header: true,
@@ -185,7 +202,8 @@
                 pais: row.Country,
                 location: row.Location,
                 descripcion: row.Description,
-                imagen: row.Image
+                imagen: row.Image,
+                markerIconUrl: row['Marker Icon'] // **NUEVO: Leer la URL del ícono**
             })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
 
             initializeApp(processedData);
