@@ -29,7 +29,6 @@
         .popup-content { text-align: left; font-size: 14px; line-height: 1.4; }
         .popup-image { max-width: 180px; height: auto; border-radius: 5px; margin-top: 5px; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
-        #error-message { padding: 20px; text-align: center; font-size: 1.2em; color: #c0392b; background-color: #fbeae5; border: 1px solid #c0392b; margin: 20px; }
     </style>
 </head>
 <body>
@@ -58,16 +57,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
 <script>
-    // ==================================================================
-    // PASO CRÍTICO: Pega aquí el enlace de tu Google Sheet publicado como CSV
-    // ==================================================================
+    // URL de tu hoja de Google Sheet publicada como CSV
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
-
-    // *** Verificación de la URL ***
-    if (googleSheetUrl.includes('https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv') || !googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
-        document.body.innerHTML = `<div id="error-message"><h1>Error de Configuración</h1><p>La URL de Google Sheets no es válida. Por favor, edita el archivo <code>index.html</code> y reemplaza el texto de ejemplo por el enlace CSV público de tu hoja de cálculo.</p><p>Asegúrate de seguir las instrucciones para <strong>Publicar en la web</strong>, seleccionar la hoja correcta (<strong>Points</strong>) y el formato <strong>CSV</strong>.</p></div>`;
-        throw new Error("URL de Google Sheet no configurada o inválida.");
-    }
 
     const loader = document.getElementById('loader');
     const map = L.map('map').setView([20, 0], 2);
