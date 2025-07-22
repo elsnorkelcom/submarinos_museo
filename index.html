@@ -1,87 +1,210 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="./favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submarinos Museos del Mundo</title>
+    
+    <!-- CSS de Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- CSS para la agrupación de marcadores (MarkerCluster) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-  <title>Loading the map...</title>
-
-  <!-- jQuery-->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
-
-  <!-- Load Leaflet CSS and JS-->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-  <!-- PapaParse -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/js/fontawesome.min.js"></script>
-
-  <!-- leaflet-providers-->
-  <script src="https://unpkg.com/leaflet-providers@2.0.0/leaflet-providers.js"></script>
-
-  <!-- Leaflet.awesome-markers v2.0.4, manually updated to svg to allow hex and material icons -->
-  <link rel="stylesheet" type="text/css" href="scripts/Leaflet.awesome-markers/dist/leaflet.awesome-markers.css">
-  <script type="text/javascript" src="scripts/Leaflet.awesome-markers/dist/leaflet.awesome-markers.js"></script>
-
-  <!-- Leaflet Markercluster -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-  <script type="text/javascript" src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-
-  <!-- Leaflet Markercluster layer support -->
-  <script src="https://unpkg.com/leaflet.markercluster.layersupport@2.0.1/dist/leaflet.markercluster.layersupport.js"></script>
-
-  <!-- Leaflet control geocoder -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.css" />
-  <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
-
-  <!-- Locate Control -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.72.0/L.Control.Locate.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.72.0/L.Control.Locate.min.js"></script>
-
-  <!-- jQuery-CSV -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.11/jquery.csv.min.js"></script>
-
-  <!-- Custom style sheet -->
-  <link rel="stylesheet" type="text/css" href="style.css">
-
-  <!-- DataTables -->
-  <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
-
-  <!-- Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
+    <!-- CSS para DataTables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+     
+    <!-- Estilos CSS para el layout y la tabla -->
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #map { height: 60vh; background-color: #f0f0f0; }
+        #table-container { height: 40vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; background-color: #f8f9fa; }
+        #filters { padding-bottom: 10px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        #filters label { font-weight: bold; }
+        #filters select { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        .dataTables_wrapper { flex-grow: 1; overflow-y: auto; }
+        table.dataTable tbody tr.selected { background-color: #b0d4f1 !important; } /* !important para sobreescribir estilos */
+        .popup-content h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .popup-content { text-align: left; font-size: 14px; line-height: 1.4; }
+        .popup-image { max-width: 180px; height: auto; border-radius: 5px; margin-top: 5px; }
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        #error-message { padding: 20px; text-align: center; font-size: 1.2em; color: #c0392b; background-color: #fbeae5; border: 1px solid #c0392b; margin: 20px; }
+    </style>
 </head>
-
 <body>
 
-  <div class="loader">Loading...</div>
-  <div id="map"></div>
-  <table id="maptable" class="display"></table>
+<div id="loader">Cargando datos de submarinos...</div>
 
-  <script type="text/javascript">
-    var map = L.map('map', {
-      attributionControl: false,
-      zoomControl: false,
-      scrollWheelZoom: false,
-      tap: false
-    }).setView([41.76,-72.69], 11); // default center is overridden by Google Sheet options and points
-  </script>
+<!-- Contenedor del mapa -->
+<div id="map"></div>
 
-  <script type="text/javascript" src="./google-doc-url.js"></script>
-  <script type="text/javascript" src="./scripts/constants.js"></script>
-  <script type="text/javascript" src="./scripts/palette.js"></script>
-  <script type="text/javascript" src="./scripts/polylabel.js"></script>
-  <script type="text/javascript" src="./scripts/map.js"></script>
+<!-- Contenedor para la tabla y filtros -->
+<div id="table-container">
+    <div id="filters">
+        <label for="type-filter">Filtrar por Tipo:</label>
+        <select id="type-filter"><option value="">Todos</option></select>
+        <label for="country-filter">Filtrar por País:</label>
+        <select id="country-filter"><option value="">Todos</option></select>
+    </div>
+    <table id="submarines-table" class="display" width="100%"></table>
+</div>
+
+<!-- Librerías de JavaScript -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<script>
+    // ==================================================================
+    // PASO CRÍTICO: Pega aquí el enlace de tu Google Sheet publicado como CSV
+    // ==================================================================
+    const googleSheetUrl = 'PEGA_TU_ENLACE_CSV_AQUI';
+
+    // *** Verificación de la URL ***
+    if (googleSheetUrl.includes('PEGA_TU_ENLACE_CSV_AQUI') || !googleSheetUrl.startsWith('https://docs.google.com/spreadsheets/d/e/')) {
+        document.body.innerHTML = `<div id="error-message"><h1>Error de Configuración</h1><p>La URL de Google Sheets no es válida. Por favor, edita el archivo <code>index.html</code> y reemplaza el texto de ejemplo por el enlace CSV público de tu hoja de cálculo.</p><p>Asegúrate de seguir las instrucciones para <strong>Publicar en la web</strong>, seleccionar la hoja correcta (<strong>Points</strong>) y el formato <strong>CSV</strong>.</p></div>`;
+        throw new Error("URL de Google Sheet no configurada o inválida.");
+    }
+
+    const loader = document.getElementById('loader');
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri', maxZoom: 19
+    }).addTo(map);
+
+    const submarineIcon = L.icon({
+        iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA5bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
+        iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
+    });
+
+    let table;
+    const markers = L.markerClusterGroup();
+    const allMarkers = {};
+    let puntosDeInteres = [];
+
+    function initializeApp(data) {
+        puntosDeInteres = data;
+        map.addLayer(markers);
+        setupMarkers();
+        setupTable();
+        setupFilters();
+        setupTableClickHandler();
+        loader.style.display = 'none'; // Ocultar el loader
+    }
+
+    function setupMarkers() {
+        puntosDeInteres.forEach(punto => {
+            const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p><img src="${punto.imagen}" class="popup-image" onerror="this.style.display='none'"></div>`;
+            const marker = L.marker([punto.lat, punto.lng], { icon: submarineIcon }).bindPopup(popupContent);
+            marker.pointId = punto.id;
+            allMarkers[punto.id] = marker;
+            markers.addLayer(marker);
+        });
+    }
+
+    function setupTable() {
+        table = $('#submarines-table').DataTable({
+            data: puntosDeInteres,
+            columns: [
+                { data: 'nombre', title: 'Nombre' },
+                { data: 'tipo', title: 'Tipo' },
+                { data: 'pais', title: 'País' },
+                { data: 'location', title: 'Ubicación' }
+            ],
+            scrollY: "calc(40vh - 100px)",
+            scrollCollapse: true,
+            paging: false,
+            info: false,
+            language: { search: "Buscar:" }
+        });
+    }
+    
+    function setupFilters() {
+        const typeFilter = $('#type-filter');
+        const countryFilter = $('#country-filter');
+        const types = [...new Set(puntosDeInteres.map(p => p.tipo).filter(Boolean))];
+        const countries = [...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))];
+        types.sort().forEach(type => typeFilter.append(`<option value="${type}">${type}</option>`));
+        countries.sort().forEach(country => countryFilter.append(`<option value="${country}">${country}</option>`));
+
+        typeFilter.on('change', applyFilters);
+        countryFilter.on('change', applyFilters);
+    }
+
+    function applyFilters() {
+        const selectedType = $('#type-filter').val();
+        const selectedCountry = $('#country-filter').val();
+
+        $.fn.dataTable.ext.search.pop();
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            const punto = puntosDeInteres[dataIndex];
+            const typeMatch = (selectedType === "" || punto.tipo === selectedType);
+            const countryMatch = (selectedCountry === "" || punto.pais === selectedCountry);
+            return typeMatch && countryMatch;
+        });
+        table.draw();
+        
+        markers.clearLayers();
+        const filteredData = table.rows({ search: 'applied' }).data().toArray();
+        const filteredIds = new Set(filteredData.map(d => d.id));
+        
+        puntosDeInteres.forEach(punto => {
+            if (filteredIds.has(punto.id)) {
+                markers.addLayer(allMarkers[punto.id]);
+            }
+        });
+    }
+
+    function setupTableClickHandler() {
+        $('#submarines-table tbody').on('click', 'tr', function () {
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+            } else {
+                table.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+            }
+            
+            const data = table.row(this).data();
+            if(data) {
+                const marker = allMarkers[data.id];
+                map.flyTo([data.lat, data.lng], 15);
+                if (markers.hasLayer(marker)) {
+                     markers.zoomToShowLayer(marker, () => marker.openPopup());
+                }
+            }
+        });
+    }
+
+    Papa.parse(googleSheetUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            const rawData = results.data;
+            const processedData = rawData.map((row, index) => ({
+                id: row.id || index, // Usar un ID de la hoja si existe, si no, el índice
+                lat: parseFloat(row.Latitude),
+                lng: parseFloat(row.Longitude),
+                nombre: row.Name,
+                tipo: row.Group,
+                pais: row.Country,
+                location: row.Location,
+                descripcion: row.Description,
+                imagen: row.Image
+            })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
+
+            initializeApp(processedData);
+        },
+        error: function(error) {
+            console.error("Error al cargar o procesar el archivo CSV:", error);
+            loader.innerHTML = "Error al cargar los datos. Revisa la URL y la consola.";
+        }
+    });
+</script>
 
 </body>
 </html>
