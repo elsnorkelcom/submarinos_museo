@@ -24,16 +24,20 @@
         #filters label { font-weight: bold; }
         #filters select { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
         .dataTables_wrapper { flex-grow: 1; overflow-y: auto; }
-        table.dataTable tbody tr.selected { background-color: #b0d4f1 !important; } /* !important para sobreescribir estilos */
+        table.dataTable tbody tr.selected { background-color: #b0d4f1 !important; }
         .popup-content h3 { margin: 0 0 5px 0; font-size: 16px; }
         .popup-content { text-align: left; font-size: 14px; line-height: 1.4; }
         .popup-image { max-width: 180px; height: auto; border-radius: 5px; margin-top: 5px; }
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box; }
+        #loader-content { font-size: 1.5em; }
+        #loader-error { font-size: 1em; color: #c0392b; max-width: 600px; }
     </style>
 </head>
 <body>
 
-<div id="loader">Cargando datos de submarinos...</div>
+<div id="loader">
+    <div id="loader-content">Cargando datos de submarinos...</div>
+</div>
 
 <!-- Contenedor del mapa -->
 <div id="map"></div>
@@ -61,12 +65,12 @@
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
 
     const loader = document.getElementById('loader');
+    const loaderContent = document.getElementById('loader-content');
     const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri', maxZoom: 19
     }).addTo(map);
 
-    // Ícono de submarino por defecto (SVG)
     const defaultSubmarineIcon = L.icon({
         iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA5bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
         iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
@@ -77,6 +81,14 @@
     const allMarkers = {};
     let puntosDeInteres = [];
 
+    // Función que envuelve una URL en un proxy CORS si es de un dominio externo
+    function getProxiedUrl(url) {
+        if (url && url.startsWith('http')) {
+            return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        }
+        return url; // Devuelve la URL original si no es válida o no necesita proxy
+    }
+
     function initializeApp(data) {
         puntosDeInteres = data;
         map.addLayer(markers);
@@ -84,28 +96,30 @@
         setupTable();
         setupFilters();
         setupTableClickHandler();
-        loader.style.display = 'none'; // Ocultar el loader
+        loader.style.display = 'none';
     }
 
     function setupMarkers() {
         puntosDeInteres.forEach(punto => {
-            let finalIcon = defaultSubmarineIcon; // Usar el ícono SVG por defecto
+            let finalIcon = defaultSubmarineIcon;
 
-            // Si la hoja de cálculo proporciona una URL para un ícono, crear uno personalizado
-            if (punto.markerIconUrl && punto.markerIconUrl.startsWith('http')) {
+            // **CORRECCIÓN: Aplicar proxy al ícono del marcador**
+            if (punto.markerIconUrl) {
                 finalIcon = L.icon({
-                    iconUrl: punto.markerIconUrl,
-                    iconSize: [38, 38],        // Tamaño del ícono
-                    iconAnchor: [19, 38],      // Punto del ícono que corresponderá a la ubicación del marcador
-                    popupAnchor: [0, -40],     // Punto desde donde se abrirá el popup
+                    iconUrl: getProxiedUrl(punto.markerIconUrl),
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 38],
+                    popupAnchor: [0, -40],
                     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
                     shadowSize: [41, 41],
                     shadowAnchor: [12, 41]
                 });
             }
+            
+            // **CORRECCIÓN: Aplicar proxy a la imagen del popup**
+            const proxiedPopupImageUrl = getProxiedUrl(punto.imagen);
 
-            const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p><img src="${punto.imagen}" class="popup-image" onerror="this.style.display='none'"></div>`;
-            // Usar el ícono determinado (personalizado o por defecto)
+            const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p><img src="${proxiedPopupImageUrl}" class="popup-image" onerror="this.style.display='none'"></div>`;
             const marker = L.marker([punto.lat, punto.lng], { icon: finalIcon }).bindPopup(popupContent);
             marker.pointId = punto.id;
             allMarkers[punto.id] = marker;
@@ -185,16 +199,21 @@
             }
         });
     }
- 
+
     Papa.parse(googleSheetUrl, {
         download: true,
         header: true,
-        dynamicTyping: true,
         skipEmptyLines: true,
+        transformHeader: header => header.trim(),
         complete: function(results) {
-            const rawData = results.data;
-            const processedData = rawData.map((row, index) => ({
-                id: row.id || index, // Usar un ID de la hoja si existe, si no, el índice
+            if (results.errors.length > 0) {
+                console.error("Errores de Parseo:", results.errors);
+                loaderContent.innerHTML = `<div id="loader-error"><h3>Error al procesar los datos</h3><p>Se encontraron errores en el archivo CSV. Revisa la consola del navegador (F12) para más detalles y verifica la fila indicada en tu hoja de cálculo.</p><p>Primer error: ${results.errors[0].message} en la fila ${results.errors[0].row + 2}</p></div>`;
+                return;
+            }
+
+            const processedData = results.data.map((row, index) => ({
+                id: row.id || index,
                 lat: parseFloat(row.Latitude),
                 lng: parseFloat(row.Longitude),
                 nombre: row.Name,
@@ -203,14 +222,19 @@
                 location: row.Location,
                 descripcion: row.Description,
                 imagen: row.Image,
-                markerIconUrl: row['Marker Icon'] // **NUEVO: Leer la URL del ícono**
+                markerIconUrl: row['Marker Icon']
             })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
+
+            if (processedData.length === 0) {
+                 loaderContent.innerHTML = `<div id="loader-error"><h3>No se encontraron datos</h3><p>El archivo CSV se cargó pero no contiene filas con datos válidos (Nombre, Latitud, Longitud). Revisa tu hoja de cálculo.</p></div>`;
+                 return;
+            }
 
             initializeApp(processedData);
         },
         error: function(error) {
-            console.error("Error al cargar o procesar el archivo CSV:", error);
-            loader.innerHTML = "Error al cargar los datos. Revisa la URL y la consola.";
+            console.error("Error al cargar el archivo CSV:", error);
+            loaderContent.innerHTML = `<div id="loader-error"><h3>Error Crítico al Cargar Datos</h3><p>No se pudo descargar la información desde la URL proporcionada.</p><p><strong>Causa Posible:</strong> La URL es incorrecta, la hoja no está publicada como CSV para acceso público, o hay un problema de red.</p></div>`;
         }
     });
 </script>
