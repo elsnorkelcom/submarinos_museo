@@ -1,1 +1,461 @@
 
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submarinos Museos del Mundo</title>
+    
+    <!-- Librerías CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    
+    <!-- Tailwind CSS y Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+    <style id="dynamic-styles">
+        body { font-family: 'Source Sans Pro', sans-serif; }
+        h1, h2, h3 { font-family: 'Roboto Condensed', sans-serif; }
+        .dataTables_wrapper { font-size: 0.9em; }
+        table.dataTable tbody tr.selected { background-color: #3b82f6 !important; color: white; }
+        .stat-card { transition: transform 0.2s ease-in-out; }
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        /* Estilos que serán controlados por la hoja de cálculo */
+        :root {
+            --primary-color: #2563eb; /* Azul por defecto */
+            --dark-color: #1f2937;    /* Gris oscuro por defecto */
+        }
+        .bg-primary { background-color: var(--primary-color); }
+        .hover\:bg-primary-dark:hover { filter: brightness(0.9); }
+        .text-primary { color: var(--primary-color); }
+        .hover\:underline:hover { text-decoration: underline; }
+        .bg-dark { background-color: var(--dark-color); }
+        .bg-dark-light { background-color: #374151; } /* Un tono más claro para las tarjetas */
+
+        .card-text-shadow {
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .social-icon a {
+            transition: transform 0.2s ease-in-out;
+        }
+        .social-icon a:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- 1. SECCIÓN HÉROE -->
+    <section id="hero" class="h-screen bg-cover bg-center bg-fixed flex items-center justify-center text-white">
+        <div class="bg-black bg-opacity-50 p-10 rounded-lg text-center">
+            <h1 id="hero-title" class="text-5xl md:text-7xl font-bold uppercase tracking-wider"></h1>
+            <p id="hero-subtitle" class="mt-4 text-xl md:text-2xl font-light"></p>
+            <a id="hero-button" href="#map-section" class="mt-8 inline-block bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors">
+            </a>
+        </div>
+    </section>
+
+    <!-- ANCLA PARA EL SCROLL -->
+    <div id="map-section"></div>
+
+    <!-- 2. SECCIÓN DEL MAPA Y LA TABLA -->
+    <main class="w-full bg-white shadow-lg">
+        <div id="map" class="h-[65vh] w-full"></div>
+        <div class="p-4 bg-gray-50 border-t border-gray-200">
+             <button id="toggle-table-btn" class="mb-4 bg-dark hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg text-sm">
+                Mostrar Lista de Submarinos
+            </button>
+            <div id="interactive-section" class="hidden">
+                <div id="filters" class="pb-4 flex flex-wrap gap-4 items-center">
+                    <label for="type-filter" class="font-bold">Tipo:</label>
+                    <select id="type-filter" class="p-2 border rounded-md"><option value="">Todos</option></select>
+                    <label for="country-filter" class="font-bold">País:</label>
+                    <select id="country-filter" class="p-2 border rounded-md"><option value="">Todos</option></select>
+                </div>
+                <div class="w-full overflow-x-auto">
+                    <table id="submarines-table" class="display" width="100%"></table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3. SECCIÓN DE ESTADÍSTICAS -->
+    <section id="stats" class="py-12 bg-dark text-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 id="stats-title" class="text-4xl font-bold mb-8"></h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-subs" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Submarinos Documentados</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-countries" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Países con Museos</p>
+                </div>
+                 <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-afloat" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Museos a Flote</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-nuclear" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Propulsión Nuclear</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-diesel" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Propulsión Diesel</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-ww2" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">De la Segunda Guerra</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. SECCIÓN DE DESTACADOS -->
+    <section id="featured" class="py-12 bg-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 id="featured-title" class="text-4xl font-bold mb-8 text-gray-800"></h2>
+            <div id="featured-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </div>
+    </section>
+
+    <!-- **NUEVO: Contenedor para el logo antes de la sección "Sobre este Proyecto"** -->
+    <div id="logo-container" class="py-8 bg-gray-100 text-center">
+        <img id="about-logo" src="" alt="Logo del Proyecto" class="mx-auto h-24">
+    </div>
+
+    <!-- 5. SECCIÓN "SOBRE EL PROYECTO" -->
+    <section id="about" class="pt-4 pb-12 bg-gray-100">
+        <div class="container mx-auto px-6 max-w-4xl text-center">
+            <h2 id="about-title" class="text-4xl font-bold mb-4"></h2>
+            <p id="about-text" class="text-lg leading-relaxed"></p>
+        </div>
+    </section>
+
+    <!-- 6. PIE DE PÁGINA -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p id="footer-text"></p>
+            <div id="social-icons" class="flex justify-center space-x-6 mt-4"></div>
+            <p class="mt-4 text-sm text-gray-400">Un proyecto de elSnorkel.com</p>
+        </div>
+    </footer>
+
+
+    <div id="loader" class="fixed inset-0 bg-white bg-opacity-90 z-[10000] flex items-center justify-center">
+        <div id="loader-content" class="text-center">
+            <p class="text-2xl font-semibold">Cargando Configuración...</p>
+        </div>
+    </div>
+
+    <!-- LIBRERÍAS JAVASCRIPT -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <script>
+        // ==================================================================
+        // CONFIGURACIÓN: URLs de tus hojas de cálculo
+        // ==================================================================
+        const pointsSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
+        const configSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=796922007&single=true&output=csv';
+
+        // ==================================================================
+        // DOCUMENTACIÓN Y VARIABLES GLOBALES
+        // ==================================================================
+        const loader = document.getElementById('loader');
+        const loaderContent = document.getElementById('loader-content');
+        const map = L.map('map').setView([20, 0], 2);
+        const markers = L.markerClusterGroup();
+        let table, allMarkers = {}, puntosDeInteres = [], config = {};
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri', maxZoom: 19
+        }).addTo(map);
+
+        const defaultSubmarineIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZHRoPSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA9bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
+            iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
+        });
+
+        function getProxiedUrl(url) {
+            if (url && url.startsWith('http')) {
+                return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            }
+            return url;
+        }
+        
+        function applyConfig(options) {
+            options.forEach(opt => {
+                if (opt.setting) config[opt.setting] = opt.value;
+            });
+            document.title = config.hero_title || 'Submarinos Museos del Mundo';
+            $('#hero-title').text(config.hero_title || '');
+            $('#hero-subtitle').text(config.hero_subtitle || '');
+            $('#hero-button').text(config.hero_button_text || 'Iniciar');
+            $('#stats-title').text(config.stats_title || '');
+            $('#featured-title').text(config.featured_title || '');
+            $('#about-title').text(config.about_title || '');
+            $('#about-text').html(config.about_text || '');
+            $('#footer-text').text(config.footer_text || '');
+            if (config.hero_background_image) {
+                $('#hero').css('background-image', `url(${config.hero_background_image})`);
+            }
+            if (config.primary_color) {
+                document.documentElement.style.setProperty('--primary-color', config.primary_color);
+            }
+            if (config.dark_color) {
+                document.documentElement.style.setProperty('--dark-color', config.dark_color);
+            }
+            // **NUEVO: Lógica para mostrar el logo**
+            if (config.about_logo_url) {
+                $('#about-logo').attr('src', getProxiedUrl(config.about_logo_url));
+            } else {
+                $('#logo-container').hide();
+            }
+            populateSocialIcons();
+        }
+
+        function loadData() {
+            Papa.parse(configSheetUrl, {
+                download: true, header: true, skipEmptyLines: true, 
+                transformHeader: header => header.trim().toLowerCase(),
+                complete: function(results) {
+                    applyConfig(results.data);
+                    loaderContent.innerHTML = '<p class="text-2xl font-semibold">Cargando Archivo Global de Submarinos...</p>';
+                    loadPoints();
+                },
+                error: function() {
+                     loader.innerHTML = `<div id="loader-error"><h3>Error Crítico</h3><p>No se pudo cargar la hoja de configuración "Config".</p></div>`;
+                }
+            });
+        }
+
+        function loadPoints() {
+            Papa.parse(pointsSheetUrl, {
+                download: true, header: true, skipEmptyLines: true, 
+                transformHeader: header => header.trim().toLowerCase(),
+                complete: function(results) {
+                    const processedData = results.data.map((row, index) => ({
+                        id: row.id || index, lat: parseFloat(row.latitude), lng: parseFloat(row.longitude),
+                        nombre: row.name, tipo: row.group, pais: row.country, location: row.location,
+                        descripcion: row.description, imagen: row.image, iconUrl: row['icon url'],
+                        markerCategory: row['marker icon'], launchYear: parseInt(row['launch year'], 10),
+                        featured: row.featured, link: row.link
+                    })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
+                    initializeApp(processedData);
+                },
+                error: function() {
+                    loader.innerHTML = `<div id="loader-error"><h3>Error Crítico</h3><p>No se pudo cargar la hoja de datos "Points".</p></div>`;
+                }
+            });
+        }
+        
+        function initializeApp(data) {
+            puntosDeInteres = data;
+            map.addLayer(markers);
+            setupMarkers();
+            setupTable();
+            setupFilters();
+            setupEventHandlers();
+            populateStats();
+            populateFeatured();
+            loader.style.display = 'none';
+        }
+        
+        function setupMarkers() {
+            puntosDeInteres.forEach(punto => {
+                let finalIcon = defaultSubmarineIcon;
+                if (punto.iconUrl) {
+                    finalIcon = L.icon({
+                        iconUrl: getProxiedUrl(punto.iconUrl),
+                        iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -40],
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                        shadowSize: [41, 41], shadowAnchor: [12, 41]
+                    });
+                }
+                const proxiedPopupImageUrl = getProxiedUrl(punto.imagen);
+                
+                let imageHtml = `<img src="${proxiedPopupImageUrl}" class="popup-image" onerror="this.style.display='none'">`;
+                if (punto.link && punto.link.startsWith('http')) {
+                    imageHtml = `<a href="${punto.link}" target="_blank" rel="noopener noreferrer">${imageHtml}</a>`;
+                }
+
+                const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p>${imageHtml}</div>`;
+                const marker = L.marker([punto.lat, punto.lng], { icon: finalIcon }).bindPopup(popupContent);
+                marker.pointId = punto.id;
+                allMarkers[punto.id] = marker;
+                markers.addLayer(marker);
+            });
+        }
+
+        function setupTable() {
+            table = $('#submarines-table').DataTable({
+                data: puntosDeInteres,
+                columns: [
+                    { data: null, title: "#", searchable: false, orderable: false, width: "5%" },
+                    { data: 'nombre', title: 'Nombre' },
+                    { data: 'tipo', title: 'Tipo' },
+                    { data: 'pais', title: 'País' },
+                    { data: 'location', title: 'Ubicación' }
+                ],
+                scrollY: "calc(40vh - 120px)",
+                scrollCollapse: true,
+                paging: false,
+                info: false,
+                language: { search: "Buscar:" }
+            });
+            table.on('order.dt search.dt', () => {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each((cell, i) => {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+        }
+        
+        function setupFilters() {
+            const typeFilter = $('#type-filter');
+            const countryFilter = $('#country-filter');
+            const types = [...new Set(puntosDeInteres.map(p => p.tipo).filter(Boolean))];
+            const countries = [...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))];
+            types.sort().forEach(type => typeFilter.append(`<option value="${type}">${type}</option>`));
+            countries.sort().forEach(country => countryFilter.append(`<option value="${country}">${country}</option>`));
+        }
+
+        function applyFilters() {
+            const selectedType = $('#type-filter').val();
+            const selectedCountry = $('#country-filter').val();
+            $.fn.dataTable.ext.search.pop();
+            $.fn.dataTable.ext.search.push((settings, data, dataIndex) => {
+                const punto = puntosDeInteres[dataIndex];
+                const typeMatch = (selectedType === "" || punto.tipo === selectedType);
+                const countryMatch = (selectedCountry === "" || punto.pais === selectedCountry);
+                return typeMatch && countryMatch;
+            });
+            table.draw();
+            markers.clearLayers();
+            const filteredData = table.rows({ search: 'applied' }).data().toArray();
+            const filteredIds = new Set(filteredData.map(d => d.id));
+            puntosDeInteres.forEach(punto => {
+                if (filteredIds.has(punto.id)) {
+                    markers.addLayer(allMarkers[punto.id]);
+                }
+            });
+        }
+
+        function setupEventHandlers() {
+            $('#type-filter, #country-filter').on('change', applyFilters);
+            $('#submarines-table tbody').on('click', 'tr', function () {
+                $(this).toggleClass('selected').siblings().removeClass('selected');
+                const data = table.row(this).data();
+                if (data) {
+                    const marker = allMarkers[data.id];
+                    map.flyTo([data.lat, data.lng], 15);
+                    if (markers.hasLayer(marker)) {
+                        markers.zoomToShowLayer(marker, () => marker.openPopup());
+                    }
+                }
+            });
+            $('#toggle-table-btn').on('click', function() {
+                const section = $('#interactive-section');
+                section.slideToggle(300);
+                $(this).text(section.is(':visible') ? 'Ocultar Lista de Submarinos' : 'Mostrar Lista de Submarinos');
+            });
+        }
+
+        function populateStats() {
+            $('#total-subs').text(puntosDeInteres.length);
+            $('#total-countries').text([...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))].length);
+            const countAfloat = puntosDeInteres.filter(p => p.markerCategory && p.markerCategory.toLowerCase().includes('a flote')).length;
+            const countNuclear = puntosDeInteres.filter(p => p.tipo && p.tipo.toLowerCase() === 'nuclear').length;
+            const countDiesel = puntosDeInteres.filter(p => p.tipo && p.tipo.toLowerCase() === 'diesel').length;
+            const countWW2 = puntosDeInteres.filter(p => p.launchYear >= 1939 && p.launchYear <= 1945).length;
+            $('#total-afloat').text(countAfloat);
+            $('#total-nuclear').text(countNuclear);
+            $('#total-diesel').text(countDiesel);
+            $('#total-ww2').text(countWW2);
+        }
+
+        function populateFeatured() {
+            const featuredContainer = $('#featured-cards');
+            const featuredSubs = puntosDeInteres.filter(p => {
+                return p.featured && String(p.featured).toLowerCase() === 'true';
+            });
+
+            featuredSubs.forEach(sub => {
+                const card = `
+                    <div class="stat-card rounded-lg shadow-lg cursor-pointer h-64 bg-cover bg-center flex flex-col justify-end p-4 text-white relative overflow-hidden" 
+                         style="background-image: url('${getProxiedUrl(sub.imagen)}')" 
+                         data-id="${sub.id}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent rounded-lg"></div>
+                        <div class="relative z-10 card-text-shadow">
+                            <h3 class="text-xl font-bold">${sub.nombre}</h3>
+                            <p class="text-gray-200">${sub.pais}</p>
+                        </div>
+                    </div>
+                `;
+                featuredContainer.append(card);
+            });
+
+            $('.stat-card[data-id]').on('click', function() {
+                const subId = $(this).data('id');
+                const subData = puntosDeInteres.find(p => p.id === subId);
+                if (subData) {
+                    const marker = allMarkers[subData.id];
+                    $('html, body').animate({ scrollTop: $('#map-section').offset().top }, 'smooth');
+                    map.flyTo([subData.lat, subData.lng], 15);
+                    if (markers.hasLayer(marker)) {
+                        markers.zoomToShowLayer(marker, () => marker.openPopup());
+                    }
+                }
+            });
+        }
+        
+        function populateSocialIcons() {
+            const container = $('#social-icons');
+            container.empty();
+
+            const socialSvgs = {
+                linkedin: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clip-rule="evenodd"/></svg>`,
+                facebook: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>`,
+                instagram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.012 3.584-.07 4.85c-.148 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.85s.012-3.584.07-4.85c.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44 1.441-.645 1.441-1.44-.645-1.44-1.441-1.44z"/></svg>`,
+                twitter: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+                website: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h6a.75.75 0 000-1.5h-5.25V6z" clip-rule="evenodd" /></svg>`
+            };
+
+            const links = [
+                { key: 'linkedin_url', svg: socialSvgs.linkedin },
+                { key: 'facebook_url', svg: socialSvgs.facebook },
+                { key: 'instagram_url', svg: socialSvgs.instagram },
+                { key: 'twitter_url', svg: socialSvgs.twitter },
+                { key: 'website_url', svg: socialSvgs.website }
+            ];
+
+            links.forEach(linkInfo => {
+                if (config[linkInfo.key] && config[linkInfo.key].startsWith('http')) {
+                    const iconHtml = `
+                        <div class="social-icon">
+                            <a href="${config[linkInfo.key]}" target="_blank" rel="noopener noreferrer" title="${linkInfo.key.split('_')[0]}">
+                                ${linkInfo.svg}
+                            </a>
+                        </div>
+                    `;
+                    container.append(iconHtml);
+                }
+            });
+        }
+        
+        // Iniciar la carga de datos
+        loadData();
+    </script>
+</body>
+</html>
