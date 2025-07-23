@@ -36,6 +36,10 @@
         .hover\:underline:hover { text-decoration: underline; }
         .bg-dark { background-color: var(--dark-color); }
         .bg-dark-light { background-color: #374151; } /* Un tono más claro para las tarjetas */
+
+        .card-text-shadow {
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -166,7 +170,7 @@
 
         // Ícono por defecto
         const defaultSubmarineIcon = L.icon({
-            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA9bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZHRoPSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA9bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
             iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
         });
 
@@ -181,7 +185,8 @@
         // Aplica la configuración cargada a la página
         function applyConfig(options) {
             options.forEach(opt => {
-                if (opt.Setting) config[opt.Setting] = opt.Value;
+                // **MEJORA: Convertir encabezado a minúsculas para evitar errores de mayúsculas**
+                if (opt.setting) config[opt.setting] = opt.value;
             });
             document.title = config.hero_title || 'Submarinos Museos del Mundo';
             $('#hero-title').text(config.hero_title || '');
@@ -206,7 +211,9 @@
         // Carga de datos encadenada
         function loadData() {
             Papa.parse(configSheetUrl, {
-                download: true, header: true, skipEmptyLines: true,
+                download: true, header: true, skipEmptyLines: true, 
+                // **MEJORA: Convertir encabezados a minúsculas**
+                transformHeader: header => header.trim().toLowerCase(),
                 complete: function(results) {
                     applyConfig(results.data);
                     loaderContent.innerHTML = '<p class="text-2xl font-semibold">Cargando Archivo Global de Submarinos...</p>';
@@ -220,14 +227,19 @@
 
         function loadPoints() {
             Papa.parse(pointsSheetUrl, {
-                download: true, header: true, skipEmptyLines: true, transformHeader: header => header.trim(),
+                download: true, header: true, skipEmptyLines: true, 
+                // **MEJORA: Convertir encabezados a minúsculas**
+                transformHeader: header => header.trim().toLowerCase(),
                 complete: function(results) {
                     const processedData = results.data.map((row, index) => ({
-                        id: row.id || index, lat: parseFloat(row.Latitude), lng: parseFloat(row.Longitude),
-                        nombre: row.Name, tipo: row.Group, pais: row.Country, location: row.Location,
-                        descripcion: row.Description, imagen: row.Image, iconUrl: row['Icon URL'],
-                        markerCategory: row['Marker Icon'], launchYear: parseInt(row['Launch year'], 10),
-                        featured: row['Featured'] // **NUEVO: Leer el flag 'Featured'**
+                        id: row.id || index, lat: parseFloat(row.latitude), lng: parseFloat(row.longitude),
+                        nombre: row.name, tipo: row.group, pais: row.country, location: row.location,
+                        descripcion: row.description, 
+                        imagen: row.image, // Usar 'image' en minúsculas
+                        iconUrl: row['icon url'],
+                        markerCategory: row['marker icon'], 
+                        launchYear: parseInt(row['launch year'], 10),
+                        featured: row.featured
                     })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
                     initializeApp(processedData);
                 },
@@ -357,18 +369,20 @@
 
         function populateFeatured() {
             const featuredContainer = $('#featured-cards');
-            // **LÓGICA ACTUALIZADA: Filtrar por el flag 'Featured'**
             const featuredSubs = puntosDeInteres.filter(p => {
-                // Acepta 'TRUE', 'true', 'YES', 'yes', etc.
                 return p.featured && String(p.featured).toLowerCase() === 'true';
             });
 
             featuredSubs.forEach(sub => {
                 const card = `
-                    <div class="stat-card bg-white p-6 rounded-lg shadow-lg cursor-pointer" data-id="${sub.id}">
-                        <img src="${getProxiedUrl(sub.imagen)}" alt="Imagen de ${sub.nombre}" class="h-40 w-full object-cover rounded-md mb-4" onerror="this.style.display='none'">
-                        <h3 class="text-xl font-bold">${sub.nombre}</h3>
-                        <p class="text-gray-600">${sub.pais}</p>
+                    <div class="stat-card rounded-lg shadow-lg cursor-pointer h-64 bg-cover bg-center flex flex-col justify-end p-4 text-white relative overflow-hidden" 
+                         style="background-image: url('${getProxiedUrl(sub.imagen)}')" 
+                         data-id="${sub.id}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent rounded-lg"></div>
+                        <div class="relative z-10 card-text-shadow">
+                            <h3 class="text-xl font-bold">${sub.nombre}</h3>
+                            <p class="text-gray-200">${sub.pais}</p>
+                        </div>
                     </div>
                 `;
                 featuredContainer.append(card);
