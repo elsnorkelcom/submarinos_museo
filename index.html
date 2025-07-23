@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submarinos Museos del Mundo - Un Archivo Interactivo</title>
+    <title>Submarinos Museos del Mundo</title>
     
     <!-- Librerías CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -17,24 +17,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
 
-    <style>
+    <style id="dynamic-styles">
         body { font-family: 'Source Sans Pro', sans-serif; }
         h1, h2, h3 { font-family: 'Roboto Condensed', sans-serif; }
         .dataTables_wrapper { font-size: 0.9em; }
         table.dataTable tbody tr.selected { background-color: #3b82f6 !important; color: white; }
         .stat-card { transition: transform 0.2s ease-in-out; }
         .stat-card:hover { transform: translateY(-5px); }
+        
+        /* Estilos que serán controlados por la hoja de cálculo */
+        :root {
+            --primary-color: #2563eb; /* Azul por defecto */
+            --dark-color: #1f2937;    /* Gris oscuro por defecto */
+        }
+        .bg-primary { background-color: var(--primary-color); }
+        .hover\:bg-primary-dark:hover { filter: brightness(0.9); }
+        .text-primary { color: var(--primary-color); }
+        .hover\:underline:hover { text-decoration: underline; }
+        .bg-dark { background-color: var(--dark-color); }
+        .bg-dark-light { background-color: #374151; } /* Un tono más claro para las tarjetas */
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
     <!-- 1. SECCIÓN HÉROE -->
-    <section id="hero" class="h-screen bg-cover bg-center bg-fixed flex items-center justify-center text-white" style="background-image: url('https://images.unsplash.com/photo-1594411754012-70835bab3f28?q=80&w=2070&auto=format&fit=crop');">
+    <section id="hero" class="h-screen bg-cover bg-center bg-fixed flex items-center justify-center text-white">
         <div class="bg-black bg-opacity-50 p-10 rounded-lg text-center">
-            <h1 class="text-5xl md:text-7xl font-bold uppercase tracking-wider">Submarinos Museo</h1>
-            <p class="mt-4 text-xl md:text-2xl font-light">Un archivo interactivo de gigantes de acero y sus historias.</p>
-            <a href="#map-section" class="mt-8 inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors">
-                Iniciar Exploración
+            <h1 id="hero-title" class="text-5xl md:text-7xl font-bold uppercase tracking-wider"></h1>
+            <p id="hero-subtitle" class="mt-4 text-xl md:text-2xl font-light"></p>
+            <a id="hero-button" href="#map-section" class="mt-8 inline-block bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors">
             </a>
         </div>
     </section>
@@ -46,7 +57,7 @@
     <main class="w-full bg-white shadow-lg">
         <div id="map" class="h-[65vh] w-full"></div>
         <div class="p-4 bg-gray-50 border-t border-gray-200">
-             <button id="toggle-table-btn" class="mb-4 bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg text-sm">
+             <button id="toggle-table-btn" class="mb-4 bg-dark hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg text-sm">
                 Mostrar Lista de Submarinos
             </button>
             <div id="interactive-section" class="hidden">
@@ -64,21 +75,33 @@
     </main>
 
     <!-- 3. SECCIÓN DE ESTADÍSTICAS -->
-    <section id="stats" class="py-12 bg-gray-800 text-white">
+    <section id="stats" class="py-12 bg-dark text-white">
         <div class="container mx-auto px-6 text-center">
-            <h2 class="text-4xl font-bold mb-8">El Archivo en Números</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="stat-card bg-gray-700 p-6 rounded-lg shadow-md">
+            <h2 id="stats-title" class="text-4xl font-bold mb-8"></h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
                     <h3 id="total-subs" class="text-5xl font-bold">0</h3>
                     <p class="mt-2 text-lg">Submarinos Documentados</p>
                 </div>
-                <div class="stat-card bg-gray-700 p-6 rounded-lg shadow-md">
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
                     <h3 id="total-countries" class="text-5xl font-bold">0</h3>
                     <p class="mt-2 text-lg">Países con Museos</p>
                 </div>
-                <div class="stat-card bg-gray-700 p-6 rounded-lg shadow-md">
-                    <h3 id="total-types" class="text-5xl font-bold">0</h3>
-                    <p class="mt-2 text-lg">Tipos de Propulsión</p>
+                 <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-afloat" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Museos a Flote</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-nuclear" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Propulsión Nuclear</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-diesel" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">Propulsión Diesel</p>
+                </div>
+                <div class="stat-card bg-dark-light p-6 rounded-lg shadow-md">
+                    <h3 id="total-ww2" class="text-5xl font-bold">0</h3>
+                    <p class="mt-2 text-lg">De la Segunda Guerra</p>
                 </div>
             </div>
         </div>
@@ -87,37 +110,31 @@
     <!-- 4. SECCIÓN DE DESTACADOS -->
     <section id="featured" class="py-12 bg-white">
         <div class="container mx-auto px-6 text-center">
-            <h2 class="text-4xl font-bold mb-8 text-gray-800">Gigantes de la Historia</h2>
-            <div id="featured-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Las tarjetas de destacados se insertarán aquí dinámicamente -->
-            </div>
+            <h2 id="featured-title" class="text-4xl font-bold mb-8 text-gray-800"></h2>
+            <div id="featured-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
         </div>
     </section>
 
     <!-- 5. SECCIÓN "SOBRE EL PROYECTO" -->
     <section id="about" class="py-12 bg-gray-100">
         <div class="container mx-auto px-6 max-w-4xl text-center">
-            <h2 class="text-4xl font-bold mb-4">Sobre este Proyecto</h2>
-            <p class="text-lg leading-relaxed">
-                Este mapa interactivo es una iniciativa de <a href="https://www.elsnorkel.com" target="_blank" class="text-blue-600 hover:underline">elSnorkel.com</a> para crear un archivo completo y accesible de todos los submarinos que se preservan como museos alrededor del mundo. Es un tributo a la ingeniería, la historia y las tripulaciones que navegaron en estas increíbles máquinas.
-            </p>
+            <h2 id="about-title" class="text-4xl font-bold mb-4"></h2>
+            <p id="about-text" class="text-lg leading-relaxed"></p>
         </div>
     </section>
 
     <!-- 6. PIE DE PÁGINA -->
-    <footer class="bg-gray-900 text-white py-8">
+    <footer class="bg-dark text-white py-8">
         <div class="container mx-auto px-6 text-center">
-            <p>&copy; 2024 elSnorkel.com. Todos los derechos reservados.</p>
-            <p class="mt-2">Un proyecto de exploración submarina e histórica.</p>
-            <!-- Aquí puedes agregar enlaces a redes sociales -->
+            <p id="footer-text"></p>
+            <p class="mt-2">Un proyecto de elSnorkel.com</p>
         </div>
     </footer>
 
 
     <div id="loader" class="fixed inset-0 bg-white bg-opacity-90 z-[10000] flex items-center justify-center">
         <div id="loader-content" class="text-center">
-            <p class="text-2xl font-semibold">Cargando Archivo Global de Submarinos...</p>
-            <p class="text-lg mt-2">Por favor, espere.</p>
+            <p class="text-2xl font-semibold">Cargando Configuración...</p>
         </div>
     </div>
 
@@ -129,16 +146,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
-        // URL de tu hoja de Google Sheet publicada como CSV
-        const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
+        // ==================================================================
+        // CONFIGURACIÓN: URLs de tus hojas de cálculo
+        // ==================================================================
+        const pointsSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv';
+        const configSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=796922007&single=true&output=csv';
 
         // Variables globales
         const loader = document.getElementById('loader');
+        const loaderContent = document.getElementById('loader-content');
         const map = L.map('map').setView([20, 0], 2);
         const markers = L.markerClusterGroup();
-        let table;
-        const allMarkers = {};
-        let puntosDeInteres = [];
+        let table, allMarkers = {}, puntosDeInteres = [], config = {};
 
         // Inicialización del mapa base
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -147,7 +166,7 @@
 
         // Ícono por defecto
         const defaultSubmarineIcon = L.icon({
-            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA5bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgMTJIN2E1IDUgMCAwMC01IDV2MWE1IDUgMCAwMDQgNC41VjIxaDJ2LTEuNWExLjUgMS41IDAgMDEzIDBWMjFoMmwxLjM4LTEuODYuMDEuMDEuMDEtLjAxYTUgNSAwIDAwMy42LTYuNUwyMiA9bC0zIDMiLz48cGF0aCBkPSJNMTggMTBIMTBWOGgydjEuNUwMTggMTBaIi8+PC9zdmc+',
             iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -20]
         });
 
@@ -158,8 +177,66 @@
             }
             return url;
         }
+        
+        // Aplica la configuración cargada a la página
+        function applyConfig(options) {
+            options.forEach(opt => {
+                if (opt.Setting) config[opt.Setting] = opt.Value;
+            });
+            document.title = config.hero_title || 'Submarinos Museos del Mundo';
+            $('#hero-title').text(config.hero_title || '');
+            $('#hero-subtitle').text(config.hero_subtitle || '');
+            $('#hero-button').text(config.hero_button_text || 'Iniciar');
+            $('#stats-title').text(config.stats_title || '');
+            $('#featured-title').text(config.featured_title || '');
+            $('#about-title').text(config.about_title || '');
+            $('#about-text').html(config.about_text || '');
+            $('#footer-text').text(config.footer_text || '');
+            if (config.hero_background_image) {
+                $('#hero').css('background-image', `url(${config.hero_background_image})`);
+            }
+            if (config.primary_color) {
+                document.documentElement.style.setProperty('--primary-color', config.primary_color);
+            }
+            if (config.dark_color) {
+                document.documentElement.style.setProperty('--dark-color', config.dark_color);
+            }
+        }
 
-        // Función principal que se ejecuta tras cargar los datos
+        // Carga de datos encadenada
+        function loadData() {
+            Papa.parse(configSheetUrl, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: function(results) {
+                    applyConfig(results.data);
+                    loaderContent.innerHTML = '<p class="text-2xl font-semibold">Cargando Archivo Global de Submarinos...</p>';
+                    loadPoints();
+                },
+                error: function() {
+                     loader.innerHTML = `<div id="loader-error"><h3>Error Crítico</h3><p>No se pudo cargar la hoja de configuración "Config".</p></div>`;
+                }
+            });
+        }
+
+        function loadPoints() {
+            Papa.parse(pointsSheetUrl, {
+                download: true, header: true, skipEmptyLines: true, transformHeader: header => header.trim(),
+                complete: function(results) {
+                    const processedData = results.data.map((row, index) => ({
+                        id: row.id || index, lat: parseFloat(row.Latitude), lng: parseFloat(row.Longitude),
+                        nombre: row.Name, tipo: row.Group, pais: row.Country, location: row.Location,
+                        descripcion: row.Description, imagen: row.Image, iconUrl: row['Icon URL'],
+                        markerCategory: row['Marker Icon'], launchYear: parseInt(row['Launch year'], 10),
+                        featured: row['Featured'] // **NUEVO: Leer el flag 'Featured'**
+                    })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
+                    initializeApp(processedData);
+                },
+                error: function() {
+                    loader.innerHTML = `<div id="loader-error"><h3>Error Crítico</h3><p>No se pudo cargar la hoja de datos "Points".</p></div>`;
+                }
+            });
+        }
+        
         function initializeApp(data) {
             puntosDeInteres = data;
             map.addLayer(markers);
@@ -172,12 +249,9 @@
             loader.style.display = 'none';
         }
         
-        // Configuración de marcadores
         function setupMarkers() {
             puntosDeInteres.forEach(punto => {
                 let finalIcon = defaultSubmarineIcon;
-                // **LÓGICA ACTUALIZADA**
-                // Ahora busca el ícono en la columna 'iconUrl'
                 if (punto.iconUrl) {
                     finalIcon = L.icon({
                         iconUrl: getProxiedUrl(punto.iconUrl),
@@ -195,7 +269,6 @@
             });
         }
 
-        // Configuración de la tabla
         function setupTable() {
             table = $('#submarines-table').DataTable({
                 data: puntosDeInteres,
@@ -219,7 +292,6 @@
             }).draw();
         }
         
-        // Configuración de filtros
         function setupFilters() {
             const typeFilter = $('#type-filter');
             const countryFilter = $('#country-filter');
@@ -229,7 +301,6 @@
             countries.sort().forEach(country => countryFilter.append(`<option value="${country}">${country}</option>`));
         }
 
-        // Lógica de filtrado
         function applyFilters() {
             const selectedType = $('#type-filter').val();
             const selectedCountry = $('#country-filter').val();
@@ -251,11 +322,8 @@
             });
         }
 
-        // Configuración de todos los manejadores de eventos
         function setupEventHandlers() {
-            // Filtros
             $('#type-filter, #country-filter').on('change', applyFilters);
-            // Clic en la tabla
             $('#submarines-table tbody').on('click', 'tr', function () {
                 $(this).toggleClass('selected').siblings().removeClass('selected');
                 const data = table.row(this).data();
@@ -267,7 +335,6 @@
                     }
                 }
             });
-            // Botón para mostrar/ocultar tabla
             $('#toggle-table-btn').on('click', function() {
                 const section = $('#interactive-section');
                 section.slideToggle(300);
@@ -275,18 +342,26 @@
             });
         }
 
-        // Llenar sección de estadísticas
         function populateStats() {
             $('#total-subs').text(puntosDeInteres.length);
             $('#total-countries').text([...new Set(puntosDeInteres.map(p => p.pais).filter(Boolean))].length);
-            $('#total-types').text([...new Set(puntosDeInteres.map(p => p.tipo).filter(Boolean))].length);
+            const countAfloat = puntosDeInteres.filter(p => p.markerCategory && p.markerCategory.toLowerCase().includes('a flote')).length;
+            const countNuclear = puntosDeInteres.filter(p => p.tipo && p.tipo.toLowerCase() === 'nuclear').length;
+            const countDiesel = puntosDeInteres.filter(p => p.tipo && p.tipo.toLowerCase() === 'diesel').length;
+            const countWW2 = puntosDeInteres.filter(p => p.launchYear >= 1939 && p.launchYear <= 1945).length;
+            $('#total-afloat').text(countAfloat);
+            $('#total-nuclear').text(countNuclear);
+            $('#total-diesel').text(countDiesel);
+            $('#total-ww2').text(countWW2);
         }
 
-        // Llenar sección de destacados
         function populateFeatured() {
             const featuredContainer = $('#featured-cards');
-            const featuredNames = ["USS Nautilus", "Brandtaucher", "U-505", "Riachuelo"];
-            const featuredSubs = puntosDeInteres.filter(p => featuredNames.includes(p.nombre));
+            // **LÓGICA ACTUALIZADA: Filtrar por el flag 'Featured'**
+            const featuredSubs = puntosDeInteres.filter(p => {
+                // Acepta 'TRUE', 'true', 'YES', 'yes', etc.
+                return p.featured && String(p.featured).toLowerCase() === 'true';
+            });
 
             featuredSubs.forEach(sub => {
                 const card = `
@@ -305,43 +380,16 @@
                 if (subData) {
                     const marker = allMarkers[subData.id];
                     $('html, body').animate({ scrollTop: $('#map-section').offset().top }, 'smooth');
-                    map.flyTo([subData.lat, data.lng], 15);
+                    map.flyTo([subData.lat, subData.lng], 15);
                     if (markers.hasLayer(marker)) {
                         markers.zoomToShowLayer(marker, () => marker.openPopup());
                     }
                 }
             });
         }
-
-        // Carga de datos inicial
-        Papa.parse(googleSheetUrl, {
-            download: true, header: true, skipEmptyLines: true, transformHeader: header => header.trim(),
-            complete: function(results) {
-                if (results.errors.length > 0) {
-                    loader.innerHTML = `<div id="loader-error"><h3>Error al procesar los datos</h3><p>Revisa la consola para más detalles.</p></div>`;
-                    return;
-                }
-                const processedData = results.data.map((row, index) => ({
-                    id: row.id || index, lat: parseFloat(row.Latitude), lng: parseFloat(row.Longitude),
-                    nombre: row.Name, tipo: row.Group, pais: row.Country, location: row.Location,
-                    descripcion: row.Description, imagen: row.Image, 
-                    // **LÓGICA ACTUALIZADA**
-                    // Lee la URL de la nueva columna 'Icon URL'
-                    iconUrl: row['Icon URL'],
-                    // Lee la categoría de la columna 'Marker Icon' (para uso futuro)
-                    markerCategory: row['Marker Icon']
-                })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
-                
-                if (processedData.length === 0) {
-                    loader.innerHTML = `<div id="loader-error"><h3>No se encontraron datos</h3><p>El archivo CSV se cargó pero no contiene filas válidas.</p></div>`;
-                    return;
-                }
-                initializeApp(processedData);
-            },
-            error: function(error) {
-                loader.innerHTML = `<div id="loader-error"><h3>Error Crítico al Cargar Datos</h3><p>No se pudo descargar la información desde la URL.</p></div>`;
-            }
-        });
+        
+        // Iniciar la carga de datos
+        loadData();
     </script>
 </body>
 </html>
