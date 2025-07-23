@@ -25,27 +25,52 @@
         .stat-card { transition: transform 0.2s ease-in-out; }
         .stat-card:hover { transform: translateY(-5px); }
         
-        /* Estilos que serán controlados por la hoja de cálculo */
         :root {
-            --primary-color: #2563eb; /* Azul por defecto */
-            --dark-color: #1f2937;    /* Gris oscuro por defecto */
+            --primary-color: #2563eb;
+            --dark-color: #1f2937;
         }
         .bg-primary { background-color: var(--primary-color); }
         .hover\:bg-primary-dark:hover { filter: brightness(0.9); }
         .text-primary { color: var(--primary-color); }
         .hover\:underline:hover { text-decoration: underline; }
         .bg-dark { background-color: var(--dark-color); }
-        .bg-dark-light { background-color: #374151; } /* Un tono más claro para las tarjetas */
+        .bg-dark-light { background-color: #374151; }
 
-        .card-text-shadow {
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-        }
+        .card-text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8); }
+        .social-icon a { transition: transform 0.2s ease-in-out; }
+        .social-icon a:hover { transform: scale(1.1); }
 
-        .social-icon a {
-            transition: transform 0.2s ease-in-out;
+        .share-btn {
+            margin-top: 10px;
+            padding: 4px 8px;
+            font-size: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
-        .social-icon a:hover {
-            transform: scale(1.1);
+        .share-btn:hover {
+            filter: brightness(0.9);
+        }
+        #copy-confirm {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 20000;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+            pointer-events: none;
+        }
+        #copy-confirm.show {
+            opacity: 1;
+            bottom: 40px;
         }
     </style>
 </head>
@@ -126,7 +151,6 @@
         </div>
     </section>
 
-    <!-- **NUEVO: Contenedor para el logo antes de la sección "Sobre este Proyecto"** -->
     <div id="logo-container" class="py-8 bg-gray-100 text-center">
         <img id="about-logo" src="" alt="Logo del Proyecto" class="mx-auto h-24">
     </div>
@@ -148,12 +172,13 @@
         </div>
     </footer>
 
-
     <div id="loader" class="fixed inset-0 bg-white bg-opacity-90 z-[10000] flex items-center justify-center">
         <div id="loader-content" class="text-center">
             <p class="text-2xl font-semibold">Cargando Configuración...</p>
         </div>
     </div>
+    
+    <div id="copy-confirm">¡Enlace copiado!</div>
 
     <!-- LIBRERÍAS JAVASCRIPT -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -216,7 +241,6 @@
             if (config.dark_color) {
                 document.documentElement.style.setProperty('--dark-color', config.dark_color);
             }
-            // **NUEVO: Lógica para mostrar el logo**
             if (config.about_logo_url) {
                 $('#about-logo').attr('src', getProxiedUrl(config.about_logo_url));
             } else {
@@ -226,6 +250,15 @@
         }
 
         function loadData() {
+            if (!pointsSheetUrl || !pointsSheetUrl.startsWith('http')) {
+                loader.innerHTML = `<div id="loader-error"><h3>Error de Configuración</h3><p>La URL para la hoja "Points" no es válida.</p></div>`;
+                return;
+            }
+            if (!configSheetUrl || !configSheetUrl.startsWith('http')) {
+                loader.innerHTML = `<div id="loader-error"><h3>Error de Configuración</h3><p>La URL para la hoja "Config" no es válida.</p></div>`;
+                return;
+            }
+
             Papa.parse(configSheetUrl, {
                 download: true, header: true, skipEmptyLines: true, 
                 transformHeader: header => header.trim().toLowerCase(),
@@ -245,13 +278,17 @@
                 download: true, header: true, skipEmptyLines: true, 
                 transformHeader: header => header.trim().toLowerCase(),
                 complete: function(results) {
-                    const processedData = results.data.map((row, index) => ({
-                        id: row.id || index, lat: parseFloat(row.latitude), lng: parseFloat(row.longitude),
-                        nombre: row.name, tipo: row.group, pais: row.country, location: row.location,
-                        descripcion: row.description, imagen: row.image, iconUrl: row['icon url'],
-                        markerCategory: row['marker icon'], launchYear: parseInt(row['launch year'], 10),
-                        featured: row.featured, link: row.link
-                    })).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
+                    const processedData = results.data.map((row, index) => {
+                        const slug = row.name ? row.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : `sub-${index}`;
+                        return {
+                            id: row.id || index, lat: parseFloat(row.latitude), lng: parseFloat(row.longitude),
+                            nombre: row.name, tipo: row.group, pais: row.country, location: row.location,
+                            descripcion: row.description, imagen: row.image, iconUrl: row['icon url'],
+                            markerCategory: row['marker icon'], launchYear: parseInt(row['launch year'], 10),
+                            featured: row.featured, link: row.link,
+                            slug: slug
+                        }
+                    }).filter(p => p.nombre && !isNaN(p.lat) && !isNaN(p.lng));
                     initializeApp(processedData);
                 },
                 error: function() {
@@ -270,6 +307,7 @@
             populateStats();
             populateFeatured();
             loader.style.display = 'none';
+            handleUrlHash();
         }
         
         function setupMarkers() {
@@ -289,8 +327,10 @@
                 if (punto.link && punto.link.startsWith('http')) {
                     imageHtml = `<a href="${punto.link}" target="_blank" rel="noopener noreferrer">${imageHtml}</a>`;
                 }
+                
+                const shareUrl = `${window.location.origin}${window.location.pathname}#${punto.slug}`;
+                const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p>${imageHtml}<button class="share-btn" data-url="${shareUrl}">Compartir Enlace</button></div>`;
 
-                const popupContent = `<div class="popup-content"><h3>${punto.nombre}</h3><p>${punto.descripcion || ''}</p>${imageHtml}</div>`;
                 const marker = L.marker([punto.lat, punto.lng], { icon: finalIcon }).bindPopup(popupContent);
                 marker.pointId = punto.id;
                 allMarkers[punto.id] = marker;
@@ -369,6 +409,15 @@
                 section.slideToggle(300);
                 $(this).text(section.is(':visible') ? 'Ocultar Lista de Submarinos' : 'Mostrar Lista de Submarinos');
             });
+            $(document).on('click', '.share-btn', function() {
+                const urlToCopy = $(this).data('url');
+                navigator.clipboard.writeText(urlToCopy).then(() => {
+                    showCopyConfirm();
+                }).catch(err => {
+                    console.error('Error al copiar enlace: ', err);
+                    alert('No se pudo copiar el enlace.');
+                });
+            });
         }
 
         function populateStats() {
@@ -427,7 +476,7 @@
                 linkedin: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clip-rule="evenodd"/></svg>`,
                 facebook: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>`,
                 instagram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.012 3.584-.07 4.85c-.148 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.85s.012-3.584.07-4.85c.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44 1.441-.645 1.441-1.44-.645-1.44-1.441-1.44z"/></svg>`,
-                twitter: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+                twitter: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 1.752h1.833L7.084 4.126H5.117z"/></svg>`,
                 website: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h6a.75.75 0 000-1.5h-5.25V6z" clip-rule="evenodd" /></svg>`
             };
 
@@ -453,6 +502,32 @@
             });
         }
         
+        function handleUrlHash() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const targetSub = puntosDeInteres.find(p => p.slug === hash);
+                if (targetSub) {
+                    setTimeout(() => {
+                        const marker = allMarkers[targetSub.id];
+                        map.flyTo([targetSub.lat, targetSub.lng], 15);
+                        if (markers.hasLayer(marker)) {
+                            markers.zoomToShowLayer(marker, () => marker.openPopup());
+                        } else {
+                            marker.openPopup();
+                        }
+                    }, 500);
+                }
+            }
+        }
+
+        function showCopyConfirm() {
+            const confirmElement = $('#copy-confirm');
+            confirmElement.addClass('show');
+            setTimeout(() => {
+                confirmElement.removeClass('show');
+            }, 2000);
+        }
+
         // Iniciar la carga de datos
         loadData();
     </script>
