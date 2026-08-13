@@ -1,2 +1,19 @@
-google-doc-url.js
+# Node
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment
+.env
+
+# OS
 .DS_Store
+
+# Build
+dist/
+
+# Editor
+.vscode/
+
+# Logs
+*.log
