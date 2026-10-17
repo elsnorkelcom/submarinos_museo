@@ -1,0 +1,20 @@
+{
+  "heroTitle": "Submarinos Museo del Mundo",
+  "heroSubtitle": "Un archivo interactivo de gigantes de acero y sus historias.",
+  "heroCta": "Iniciar Exploración",
+  "statsTitle": "El Archivo en Números",
+  "featuredTitle": "Gigantes de la Historia",
+  "aboutTitle": "Sobre este Proyecto",
+  "aboutText": "Este mapa interactivo es una iniciativa de <b>elSnorkel.com</b> para crear un archivo completo y accesible de todos los submarinos que se preservan como museos alrededor del mundo.",
+  "footerText": "© 2026 elSnorkel.com. Todos los derechos reservados.",
+  "logo": "assets/img/logo.jpg",
+  "heroImage": "assets/img/cobia.webp",
+  "social": {
+    "website_url": "https://www.elsnorkel.com"
+  },
+  "source": {
+    "points": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv",
+    "config": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=796922007&single=true&output=csv"
+  },
+  "generatedAt": "2026-10-17"
+}
