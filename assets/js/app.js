@@ -33,6 +33,8 @@ const state = {
     types: new Set(),
     country: "all",
     media: false,
+    video: false,
+    water: "all",
     coming: false
   },
   searchFrame: 0,
@@ -69,6 +71,11 @@ function cacheDom() {
   dom.heroTypes = byId("hero-types");
   dom.heroMedia = byId("hero-media");
 
+  dom.featuredTitle = byId("featured-title");
+  dom.featuredCount = byId("featured-count");
+  dom.featuredCountLabel = byId("featured-count-label");
+  dom.featuredGrid = byId("featured-grid");
+
   dom.mapSection = byId("map-section");
   dom.map = byId("map");
   dom.mapCount = byId("map-count");
@@ -81,6 +88,9 @@ function cacheDom() {
   dom.typeFilters = byId("type-filters");
   dom.countryFilter = byId("country-filter");
   dom.mediaFilter = byId("media-filter");
+  dom.videoFilter = byId("video-filter");
+  dom.afloatFilter = byId("afloat-filter");
+  dom.dryFilter = byId("dry-filter");
   dom.comingFilter = byId("coming-filter");
   dom.resetFilters = byId("reset-filters");
 
@@ -184,6 +194,10 @@ function getVideoUrl(unit) {
 
 function hasMedia(unit) {
   return Boolean(unit.image || getVideoUrl(unit));
+}
+
+function isFeatured(unit) {
+  return unit.featured || Boolean(getVideoUrl(unit));
 }
 
 function normalizeText(value) {
@@ -358,6 +372,7 @@ function hydrateConfig(config) {
   const cfg = config || {};
 
   if (cfg.heroSubtitle) setText(dom.heroSubtitle, cfg.heroSubtitle);
+  if (cfg.featuredTitle) setText(dom.featuredTitle, cfg.featuredTitle);
   if (cfg.aboutTitle) setText(dom.aboutTitle, cfg.aboutTitle);
   if (cfg.aboutText) dom.aboutText.innerHTML = sanitizeRich(cfg.aboutText);
   if (cfg.footerText) setText(dom.footerText, cfg.footerText);
@@ -527,8 +542,52 @@ function buildTypeBars() {
   }).join("");
 }
 
-/* ---------- Mapa ---------- */
+function featuredCardMarkup(unit) {
+  const meta = typeMeta(unit.typeKey);
+  const image = unit.image
+    ? `<img src="${esc(unit.image)}" alt="${esc(
+        `Submarino museo ${unit.name}`
+      )}" loading="lazy" referrerpolicy="no-referrer" data-card-fallback>`
+    : `<span class="featured-card__fallback">${blueprintMarkup()}</span>`;
+  const location =
+    [unit.museum, unit.city].filter(Boolean).join(" · ") ||
+    unit.country ||
+    "Ubicación no documentada";
 
+  return `<button class="featured-card" type="button" data-unit="${esc(unit.id)}">
+    <span class="featured-card__media">
+      ${image}
+      <span class="featured-card__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
+    meta.icon
+  }"></use></svg>${esc(unit.typeLabel)}</span>
+    </span>
+    <span class="featured-card__body">
+      <span class="featured-card__code">${esc(unit.dossier || unit.id)}</span>
+      <span class="featured-card__name">${esc(unit.name)}</span>
+      <span class="featured-card__loc">${esc(location)}</span>
+    </span>
+  </button>`;
+}
+
+function renderFeatured() {
+  if (!dom.featuredGrid) return;
+
+  const list = state.units.filter(isFeatured);
+  const label = list.length === 1 ? "UNIDAD CLAVE" : "UNIDADES CLAVE";
+
+  setText(dom.featuredCount, list.length);
+  setText(dom.featuredCountLabel, label);
+  dom.featuredGrid.innerHTML = list.map(featuredCardMarkup).join("");
+}
+
+function handleFeaturedMediaError(event) {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-card-fallback")) return;
+
+  image.outerHTML = `<span class="featured-card__fallback">${blueprintMarkup()}</span>`;
+}
+
+/* ---------- Mapa ---------- */
 function initMap() {
   if (!window.L) throw new Error("No se pudo cargar el motor de mapas (Leaflet).");
 
@@ -688,7 +747,13 @@ function updateMapHud() {
 function filtersActive() {
   const filters = state.filters;
   return Boolean(
-    filters.q.trim() || filters.types.size || filters.country !== "all" || filters.media || filters.coming
+    filters.q.trim() ||
+      filters.types.size ||
+      filters.country !== "all" ||
+      filters.media ||
+      filters.video ||
+      filters.water !== "all" ||
+      filters.coming
   );
 }
 
@@ -700,6 +765,9 @@ function applyFilters() {
     if (filters.types.size && !filters.types.has(unit.typeKey)) return false;
     if (filters.country !== "all" && unit.country !== filters.country) return false;
     if (filters.media && !hasMedia(unit)) return false;
+    if (filters.video && !getVideoUrl(unit)) return false;
+    if (filters.water === "afloat" && !unit.afloat) return false;
+    if (filters.water === "dry" && unit.afloat) return false;
     if (filters.coming && unit.status !== "coming-soon") return false;
     if (query && !unit._search.includes(query)) return false;
     return true;
@@ -712,6 +780,9 @@ function applyFilters() {
   }
 
   if (dom.mediaFilter) dom.mediaFilter.setAttribute("aria-pressed", String(filters.media));
+  if (dom.videoFilter) dom.videoFilter.setAttribute("aria-pressed", String(filters.video));
+  if (dom.afloatFilter) dom.afloatFilter.setAttribute("aria-pressed", String(filters.water === "afloat"));
+  if (dom.dryFilter) dom.dryFilter.setAttribute("aria-pressed", String(filters.water === "dry"));
   if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", String(filters.coming));
   if (dom.resetFilters) dom.resetFilters.hidden = !filtersActive();
 
@@ -833,6 +904,8 @@ function resetFilters() {
   state.filters.types.clear();
   state.filters.country = "all";
   state.filters.media = false;
+  state.filters.video = false;
+  state.filters.water = "all";
   state.filters.coming = false;
 
   if (dom.search) dom.search.value = "";
@@ -1264,10 +1337,40 @@ function bindEvents() {
     });
   }
 
+  if (dom.videoFilter) {
+    dom.videoFilter.addEventListener("click", () => {
+      state.filters.video = !state.filters.video;
+      applyFilters();
+    });
+  }
+
+  if (dom.afloatFilter) {
+    dom.afloatFilter.addEventListener("click", () => {
+      state.filters.water = state.filters.water === "afloat" ? "all" : "afloat";
+      applyFilters();
+    });
+  }
+
+  if (dom.dryFilter) {
+    dom.dryFilter.addEventListener("click", () => {
+      state.filters.water = state.filters.water === "dry" ? "all" : "dry";
+      applyFilters();
+    });
+  }
+
   if (dom.comingFilter) {
     dom.comingFilter.addEventListener("click", () => {
       state.filters.coming = !state.filters.coming;
       applyFilters();
+    });
+  }
+
+  if (dom.featuredGrid) {
+    dom.featuredGrid.addEventListener("error", handleFeaturedMediaError, true);
+    dom.featuredGrid.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element)) return;
+      const card = event.target.closest("[data-unit]");
+      if (card) selectUnit(card.dataset.unit, { scroll: true, focusMap: true });
     });
   }
 
@@ -1380,6 +1483,7 @@ async function init() {
 
     hydrateConfig(state.config);
     renderStats();
+    renderFeatured();
     buildTypeFilters();
     buildCountryFilter();
     buildLegend();

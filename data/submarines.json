@@ -17,7 +17,7 @@
     "image": "",
     "videoUrl": "",
     "link": "",
-    "featured": false,
+    "featured": true,
     "afloat": false,
     "status": "open",
     "description": "Clase Military submarine. Botado en 1850. Se conserva en Bundeswehr Military History Museum, Dresden, Alemania."
@@ -3260,7 +3260,7 @@
     "image": "",
     "videoUrl": "",
     "link": "",
-    "featured": false,
+    "featured": true,
     "afloat": false,
     "status": "open",
     "description": "Clase Nautilus class. Se conserva en Submarine Force Library and Museum, Groton, Estados Unidos."

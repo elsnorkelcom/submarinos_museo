@@ -103,9 +103,39 @@ def normalize_country(value: str) -> str:
     return COUNTRY_FIXES.get(value, value)
 
 
-def build_submarines(rows: list[dict[str, str]]) -> list[dict]:
+def read_settings(rows: list[dict[str, str]]) -> dict[str, str]:
+    return {
+        clean(row.get("Setting")): clean(row.get("Value"))
+        for row in rows
+        if clean(row.get("Setting"))
+    }
+
+
+def pick_video(row: dict[str, str]) -> str:
+    """Acepta la columna de video con varios nombres posibles."""
+    for key in ("Video", "Video URL", "YouTube", "Youtube", "video_url"):
+        value = clean(row.get(key))
+        if value:
+            return value
+
+    for key, value in row.items():
+        if not key:
+            continue
+        lowered = key.lower()
+        if "video" in lowered or "youtube" in lowered:
+            cleaned = clean(value)
+            if cleaned:
+                return cleaned
+
+    return ""
+
+
+def build_submarines(
+    rows: list[dict[str, str]], featured_names: set[str] | None = None
+) -> list[dict]:
     submarines: list[dict] = []
     used_ids: set[str] = set()
+    featured_lookup = {name.strip().lower() for name in (featured_names or set()) if name.strip()}
 
     for index, row in enumerate(rows, start=1):
         name = clean(row.get("Name"))
@@ -135,7 +165,11 @@ def build_submarines(rows: list[dict[str, str]]) -> list[dict]:
         launch_year = parse_year(row.get("Launch year"))
         image = clean(row.get("Image"))
         link = clean(row.get("URL"))
-        video = clean(row.get("Video") or row.get("Video URL") or row.get("YouTube"))
+        video = pick_video(row)
+        is_featured = (
+            clean(row.get("Featured")).upper() == "TRUE"
+            or name.strip().lower() in featured_lookup
+        )
 
         base_id = slugify(name)
         sub_id = base_id
@@ -173,7 +207,7 @@ def build_submarines(rows: list[dict[str, str]]) -> list[dict]:
                 "image": image,
                 "videoUrl": video,
                 "link": link,
-                "featured": clean(row.get("Featured")).upper() == "TRUE",
+                "featured": is_featured,
                 "afloat": "a flote" in clean(row.get("Marker Icon")).lower(),
                 "status": status,
                 "description": " ".join(description_parts),
@@ -184,11 +218,7 @@ def build_submarines(rows: list[dict[str, str]]) -> list[dict]:
 
 
 def build_config(rows: list[dict[str, str]]) -> dict:
-    settings = {
-        clean(row.get("Setting")): clean(row.get("Value"))
-        for row in rows
-        if clean(row.get("Setting"))
-    }
+    settings = read_settings(rows)
 
     social = {
         key: settings.get(key, "")
@@ -224,9 +254,13 @@ def build_config(rows: list[dict[str, str]]) -> dict:
             "about_text",
             "Este mapa interactivo es una iniciativa de <b>elSnorkel.com</b> para crear un archivo completo y accesible de todos los submarinos que se preservan como museos alrededor del mundo.",
         ),
-        "footerText": settings.get(
-            "footer_text",
-            f"© {date.today().year} elSnorkel.com. Todos los derechos reservados.",
+        "footerText": re.sub(
+            r"©\s*\d{4}",
+            f"© {date.today().year}",
+            settings.get(
+                "footer_text",
+                f"© {date.today().year} elSnorkel.com. Todos los derechos reservados.",
+            ),
         ),
         "logo": "assets/img/logo.jpg",
         "heroImage": "assets/img/cobia.webp",
@@ -248,7 +282,14 @@ def main() -> None:
     point_rows = read_rows(args.points_file or POINTS_URL)
     config_rows = read_rows(args.config_file or CONFIG_URL)
 
-    submarines = build_submarines(point_rows)
+    settings = read_settings(config_rows)
+    featured_names = {
+        part.strip()
+        for part in settings.get("featured_submarine_names", "").split(",")
+        if part.strip()
+    }
+
+    submarines = build_submarines(point_rows, featured_names)
     config = build_config(config_rows)
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)

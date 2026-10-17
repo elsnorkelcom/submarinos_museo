@@ -9,7 +9,7 @@ para cada unidad, pensado primero para móvil.
 
 ## Cómo funciona
 
-- `index.html` — estructura de la página (héroe, mapa, dossier, registro, intel y acerca de).
+- `index.html` — estructura de la página (héroe, destacados, mapa, dossier, registro, intel y acerca de).
 - `assets/css/app.css` — sistema visual completo (táctico/oscuro, mobile first).
 - `assets/js/app.js` — carga de datos, mapa, filtros, registro y dossier.
 - `data/submarines.json` — 160 unidades normalizadas con coordenadas, tipo, país, museo y media.
@@ -26,9 +26,23 @@ por lo que la oferta puede actualizarse por lotes sin tocar el frontend.
 - Marcadores con icono por tipo (diésel, nuclear, eléctrico, manivela) y agrupación por zona.
 - Halo de selección para localizar una unidad incluso dentro de un clúster.
 
+### Destacados
+
+La sección `// 01 — DESTACADOS` reúne las unidades clave. Se consideran destacadas las que
+tienen `Featured=TRUE` en la hoja **y** las que aportan media reproducible (video). Cada tarjeta
+abre el dossier correspondiente y centra el mapa en la unidad.
+
+### Filtros
+
+Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre y estado:
+
+- **CON MEDIA / CON VIDEO** — media disponible o video reproducible.
+- **A FLOTE / EN SECO** — mutuamente excluyentes; muestran unidades aún en el agua o ya en tierra.
+- **PRÓXIMAMENTE** — unidades anunciadas pero todavía no visitables.
+
 ### Dossier
 
-Al seleccionar una unidad (en el mapa o en el registro) se abre su expediente:
+Al seleccionar una unidad (en el mapa, en el registro o en destacados) se abre su expediente:
 tipo con icono, estado, ubicación, especificaciones y media. La media admite imagen o
 video público de YouTube; si no hay media se muestra un plano técnico provisional.
 
@@ -67,9 +81,16 @@ python scripts/import_sheets.py --points-file puntos.csv --config-file config.cs
 | `lat`, `lng` | Coordenadas. |
 | `launchYear` | Año de botadura. |
 | `image`, `videoUrl`, `link` | Media y enlace de la fuente. |
-| `featured`, `afloat` | Destacado y si sigue a flote. |
+| `featured`, `afloat` | Destacado (columna `Featured` o lista `featured_submarine_names`) y si sigue a flote. |
 | `status` | `open` o `coming-soon`. |
 | `description` | Texto breve autogenerado. |
+
+### Columnas de la hoja
+
+El importador busca la columna de video por nombre (`Video`, `Video URL`, `YouTube`, etc.),
+así que puedes añadirla cuando quieras sin tocar el código. Los destacados de la hoja de
+configuración (`featured_submarine_names`) se marcan automáticamente junto con `Featured=TRUE`.
+El año del `footer_text` se normaliza al año actual en cada importación.
 
 ## Estructura
 

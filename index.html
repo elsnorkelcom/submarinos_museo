@@ -100,6 +100,7 @@
         <span><b id="header-count">--</b> UNIDADES</span>
       </div>
       <nav class="hud-nav" aria-label="Secciones">
+        <a href="#featured">DESTACADOS</a>
         <a href="#map-section">MAPA</a>
         <a href="#registry">REGISTRO</a>
         <a href="#intel">INTEL</a>
@@ -149,10 +150,21 @@
         <span class="corner corner--br" aria-hidden="true"></span>
       </section>
 
+      <section class="section" id="featured">
+        <div class="section__head">
+          <div>
+            <p class="kicker">// 01 — DESTACADOS</p>
+            <h2 class="section__title" id="featured-title">GIGANTES DE LA HISTORIA</h2>
+          </div>
+          <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label">UNIDADES CLAVE</span></p>
+        </div>
+        <div class="featured-grid" id="featured-grid"></div>
+      </section>
+
       <section class="section" id="map-section">
         <div class="section__head">
           <div>
-            <p class="kicker">// 01 — TEATRO DE OPERACIONES</p>
+            <p class="kicker">// 02 — TEATRO DE OPERACIONES</p>
             <h2 class="section__title">MAPA TÁCTICO</h2>
           </div>
           <p class="section__note"><b id="map-count">--</b> <span id="map-count-label">UNIDADES LOCALIZADAS</span></p>
@@ -172,6 +184,9 @@
               </select>
             </label>
             <button class="chip chip--toggle" id="media-filter" type="button" aria-pressed="false">CON MEDIA</button>
+            <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false">CON VIDEO</button>
+            <button class="chip chip--toggle" id="afloat-filter" type="button" aria-pressed="false">A FLOTE</button>
+            <button class="chip chip--toggle" id="dry-filter" type="button" aria-pressed="false">EN SECO</button>
             <button class="chip chip--toggle" id="coming-filter" type="button" aria-pressed="false">PRÓXIMAMENTE</button>
             <button class="chip chip--reset" id="reset-filters" type="button" hidden>LIMPIAR</button>
           </div>
@@ -190,7 +205,7 @@
       <section class="section dossier-section" id="dossier">
         <div class="section__head">
           <div>
-            <p class="kicker">// 02 — EXPEDIENTE</p>
+            <p class="kicker">// 03 — EXPEDIENTE</p>
             <h2 class="section__title">DOSSIER DE UNIDAD</h2>
           </div>
           <button class="btn btn--ghost btn--sm" id="dossier-close" type="button" hidden>
@@ -212,7 +227,7 @@
       <section class="section" id="registry">
         <div class="section__head">
           <div>
-            <p class="kicker">// 03 — REGISTRO</p>
+            <p class="kicker">// 04 — REGISTRO</p>
             <h2 class="section__title">UNIDADES DOCUMENTADAS</h2>
           </div>
           <div class="registry-tools">
@@ -251,7 +266,7 @@
       <section class="section" id="intel">
         <div class="section__head">
           <div>
-            <p class="kicker">// 04 — INTEL</p>
+            <p class="kicker">// 05 — INTEL</p>
             <h2 class="section__title">EL ARCHIVO EN NÚMEROS</h2>
           </div>
           <p class="section__note">SNAPSHOT <span id="generated-at">--</span></p>
@@ -290,7 +305,7 @@
             <span class="about__stamp">ARCHIVO<br>ABIERTO</span>
           </div>
           <div class="about__body">
-            <p class="kicker">// 05 — ORIGEN</p>
+            <p class="kicker">// 06 — ORIGEN</p>
             <h2 class="section__title" id="about-title">SOBRE EL ARCHIVO</h2>
             <div id="about-text" class="about__text"></div>
             <dl class="about__meta">
@@ -311,6 +326,7 @@
           <span class="brand__text"><strong>ELSNORKEL</strong><small>ARCHIVO SUBMARINO</small></span>
         </a>
         <nav class="footer__nav" aria-label="Enlaces de pie">
+          <a href="#featured">DESTACADOS</a>
           <a href="#map-section">MAPA</a>
           <a href="#registry">REGISTRO</a>
           <a href="#intel">INTEL</a>
