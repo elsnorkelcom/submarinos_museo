@@ -387,28 +387,6 @@ a {
   box-shadow: 0 0 0 3px rgba(198, 255, 61, 0.04);
 }
 
-.brand__text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1;
-}
-
-.brand__text strong {
-  font-family: var(--display);
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-}
-
-.brand__text small {
-  margin-top: 3px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 7px;
-  letter-spacing: 0.18em;
-}
-
 .hud-status {
   display: flex;
   align-items: center;
@@ -3835,14 +3813,6 @@ a {
     height: 34px;
   }
 
-  .brand__text strong {
-    font-size: 1rem;
-  }
-
-  .brand__text small {
-    font-size: 6px;
-  }
-
   .hud-status {
     gap: 5px;
     font-size: 7px;
@@ -4055,7 +4025,6 @@ a {
 
 .about__meta dt,
 .about__stamp,
-.brand__text small,
 .chip__count,
 .coverage__fine,
 .dossier__media--empty,
@@ -4078,7 +4047,6 @@ a {
 @media (max-width: 900px) {
   .about__meta dt,
   .about__stamp,
-  .brand__text small,
   .chip__count,
   .coverage__fine,
   .dossier__media--empty,
