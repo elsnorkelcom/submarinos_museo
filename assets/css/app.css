@@ -2982,6 +2982,80 @@ a {
   }
 }
 
+/* ---------- Legibilidad: suelo de tamaños mínimos ---------- */
+
+/*
+ * El HUD se afina mucho (7-8px) para parecer instrumental, pero en pantallas
+ * pequeñas llegaba a 6px y dejaba de leerse. Estas reglas fijan un suelo por
+ * función en vez de por estética: 9px para micro-etiquetas estructurales,
+ * 11px para texto con función (tipo, museo, leyenda, filtros).
+ */
+
+.about__meta dt,
+.about__stamp,
+.brand__text small,
+.chip__count,
+.coverage__fine,
+.dossier__media--empty,
+.featured-card__type,
+.intel-card small,
+.map-hud,
+.map-legend,
+.media-tag,
+.registry__head,
+.select-wrap--sm select,
+.specs dt,
+.status-badge,
+.unit-row__country,
+.unit-row__museum,
+.unit-row__type,
+.unit-row__year {
+  font-size: 8px;
+}
+
+@media (max-width: 900px) {
+  .about__meta dt,
+  .about__stamp,
+  .brand__text small,
+  .chip__count,
+  .coverage__fine,
+  .dossier__media--empty,
+  .intel-card small,
+  .map-hud,
+  .select-wrap--sm select {
+    font-size: 9px;
+  }
+
+  .dossier__code,
+  .featured-card__code,
+  .featured-card__type,
+  .footer__bottom,
+  .footer__nav a,
+  .hud-status,
+  .lang-switch__btn,
+  .media-tag,
+  .registry__head,
+  .section__note,
+  .social__link,
+  .specs dt,
+  .type-badge,
+  .unit-row__code,
+  .unit-row__country,
+  .unit-row__year {
+    font-size: 10px;
+  }
+
+  .chip,
+  .hero__stats dt,
+  .map-legend,
+  .select-wrap select,
+  .status-badge,
+  .unit-row__museum,
+  .unit-row__type {
+    font-size: 11px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
