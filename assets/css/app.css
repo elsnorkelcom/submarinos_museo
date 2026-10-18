@@ -526,6 +526,25 @@ a {
   will-change: transform;
 }
 
+/*
+ * Capa de video del hero. Es opcional: si la configuracion no trae
+ * heroVideo el <video> queda oculto y el fondo es la imagen de siempre.
+ * Va dentro de .hero__bg para heredar filtro, opacidad y paralaje.
+ */
+
+.hero__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 58%;
+}
+
+.hero__bg.has-video {
+  background-image: none;
+}
+
 .hero::after {
   content: "";
   position: absolute;

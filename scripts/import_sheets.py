@@ -156,6 +156,21 @@ def parse_year(value: str | None) -> int | None:
     return int(match.group(1)) if match else None
 
 
+MEDIA_PATH_RE = re.compile(r"^(https?://[^\s]+|assets/[A-Za-z0-9._/-]+)$", re.IGNORECASE)
+
+
+def safe_media(value: str | None) -> str:
+    """Acepta solo http(s) o una ruta relativa dentro de assets/.
+
+    Evita que un valor raro de la hoja (por ejemplo javascript:) acabe en el
+    atributo src de un <video>.
+    """
+    candidate = clean(value)
+    if not candidate or ".." in candidate:
+        return ""
+    return candidate if MEDIA_PATH_RE.match(candidate) else ""
+
+
 def normalize_country(value: str) -> str:
     value = clean(value)
     return COUNTRY_FIXES.get(value, value)
@@ -326,6 +341,8 @@ def build_config(rows: list[dict[str, str]]) -> dict:
         ),
         "logo": "assets/img/logo.jpg",
         "heroImage": "assets/img/cobia.webp",
+        "heroVideo": safe_media(settings.get("hero_video")),
+        "heroVideoMobile": safe_media(settings.get("hero_video_mobile")),
         "social": social,
         "source": {
             "points": POINTS_URL,

@@ -220,6 +220,8 @@ function cacheDom() {
 
   dom.headerCount = byId("header-count");
   dom.hero = document.querySelector(".hero");
+  dom.heroBg = byId("hero-bg");
+  dom.heroVideo = byId("hero-video");
   dom.heroCanvas = byId("hero-canvas");
   dom.periBrg = byId("peri-brg");
   dom.periDep = byId("peri-dep");
@@ -591,11 +593,67 @@ function hydrateConfig(config) {
     );
   }
 
+  mountHeroVideo(cfg);
+
   renderSocial(cfg.social);
 
   const snapshot = formatDate(cfg.generatedAt);
   setText(dom.generatedAt, snapshot);
   setText(dom.footerDate, snapshot);
+}
+
+/*
+ * Video de fondo del hero (opcional).
+ *
+ * Sigue el patron de la Royal Navy: una codificacion de escritorio y otra
+ * mas liviana para movil, con la imagen del hero como poster. Si la hoja no
+ * trae video no se toca nada y queda la imagen de siempre.
+ */
+function mountHeroVideo(cfg) {
+  const video = dom.heroVideo;
+  if (!video) return;
+
+  const desktop = safeUrl(cfg.heroVideo);
+  const mobile = safeUrl(cfg.heroVideoMobile);
+  const useMobile = Boolean(mobile) && window.matchMedia("(max-width: 760px)").matches;
+  const src = useMobile ? mobile : desktop;
+
+  if (!src) {
+    video.removeAttribute("src");
+    video.hidden = true;
+    if (dom.heroBg) dom.heroBg.classList.remove("has-video");
+    return;
+  }
+
+  const poster = safeUrl(cfg.heroImage);
+  if (poster) video.poster = poster;
+
+  video.muted = true;
+  video.loop = true;
+  video.setAttribute("playsinline", "");
+  video.preload = "metadata";
+  video.hidden = false;
+  video.src = src;
+
+  if (dom.heroBg) dom.heroBg.classList.add("has-video");
+}
+
+/*
+ * El autoplay solo se pide cuando el hero esta en pantalla, la pestana esta
+ * visible y no hay preferencia de movimiento reducido. Si el navegador lo
+ * bloquea queda el poster, asi que no hay que forzar nada.
+ */
+function syncHeroVideo(onScreen) {
+  const video = dom.heroVideo;
+  if (!video || video.hidden || !video.src) return;
+
+  if (!onScreen || state.prefersReduced || document.hidden) {
+    video.pause();
+    return;
+  }
+
+  const attempt = video.play();
+  if (attempt && typeof attempt.catch === "function") attempt.catch(() => {});
 }
 
 function socialLabel(key, url) {
@@ -1755,6 +1813,28 @@ function initHeroScene() {
   );
 
   updateParallax();
+
+  const video = dom.heroVideo;
+  if (video && !video.hidden && video.src && !reduce) {
+    let videoOnScreen = false;
+
+    if ("IntersectionObserver" in window) {
+      const videoObserver = new IntersectionObserver(
+        (entries) => {
+          videoOnScreen = entries.some((entry) => entry.isIntersecting);
+          syncHeroVideo(videoOnScreen);
+        },
+        { threshold: 0.12 }
+      );
+
+      videoObserver.observe(hero);
+    } else {
+      videoOnScreen = true;
+    }
+
+    document.addEventListener("visibilitychange", () => syncHeroVideo(videoOnScreen));
+    syncHeroVideo(videoOnScreen);
+  }
 
   const canvas = dom.heroCanvas;
   if (!canvas) return;

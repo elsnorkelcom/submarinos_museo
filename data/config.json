@@ -9,6 +9,8 @@
   "footerText": "© 2026 elSnorkel.com. Todos los derechos reservados.",
   "logo": "assets/img/logo.jpg",
   "heroImage": "assets/img/cobia.webp",
+  "heroVideo": "",
+  "heroVideoMobile": "",
   "social": {
     "website_url": "https://www.elsnorkel.com"
   },

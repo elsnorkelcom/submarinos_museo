@@ -37,6 +37,24 @@ El héroe monta tres capas decorativas (todas `aria-hidden`, sin coste de accesi
 No usa imágenes de terceros: el perfil del submarino es un SVG propio y el resto se resuelve
 con CSS y canvas.
 
+#### Vídeo de fondo (opcional)
+
+El héroe admite un vídeo de fondo, siguiendo el patrón de la Royal Navy: **una codificación de
+escritorio y otra más liviana para móvil**, con la imagen del héroe como póster.
+
+| Ajuste en la hoja | Efecto |
+| --- | --- |
+| `hero_video` | Vídeo que se usa a partir de 760 px. Deja el valor vacío para no usar vídeo. |
+| `hero_video_mobile` | Vídeo alternativo por debajo de 760 px. Si está vacío se usa el de escritorio. |
+
+El valor puede ser una URL `http(s)` o una ruta relativa dentro de `assets/` (por ejemplo
+`assets/video/hero.mp4`). Si no hay vídeo configurado el `<video>` queda oculto y se ve la
+imagen de siempre.
+
+Comportamiento: el vídeo va dentro de `.hero__bg`, así que hereda el filtro, la opacidad y el
+paralaje de la imagen. Se reproduce solo cuando el héroe está en pantalla, la pestaña está
+visible y **no** hay `prefers-reduced-motion`; en cualquier otro caso se queda el póster.
+
 ### Mapa
 
 - Leaflet 1.9.4 + Leaflet.markercluster.
@@ -152,6 +170,10 @@ El importador busca la columna de video por nombre (`Video`, `Video URL`, `YouTu
 así que puedes añadirla cuando quieras sin tocar el código. Los destacados de la hoja de
 configuración (`featured_submarine_names`) se marcan automáticamente junto con `Featured=TRUE`.
 El año del `footer_text` se normaliza al año actual en cada importación.
+
+En la hoja de **configuración** (columna `Setting` / `Value`) también se leen `hero_video` y
+`hero_video_mobile` para el vídeo de fondo del héroe. Solo se aceptan URLs `http(s)` o rutas
+`assets/...`, así que un valor raro se ignora en vez de acabar en el atributo `src`.
 
 ## Estructura
 
