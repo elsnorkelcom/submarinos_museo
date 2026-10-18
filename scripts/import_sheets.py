@@ -328,22 +328,32 @@ def build_submarines(
     return submarines
 
 
+def es_enlace_real(value: str) -> bool:
+    """Un enlace con «tu-usuario» es una plantilla, no una red del proyecto."""
+    return (
+        bool(value)
+        and value.startswith("http")
+        and "tu-usuario" not in value
+        and "tu-pagina" not in value
+    )
+
+
 def build_config(rows: list[dict[str, str]]) -> dict:
     settings = read_settings(rows)
 
+    # La hoja manda... salvo si trae una plantilla sin sustituir. Si el valor de
+    # la hoja es una plantilla se usa el respaldo: antes la plantilla pisaba al
+    # enlace bueno y, al filtrarla, la red desaparecía del pie al regenerar.
     social = {
-        key: settings.get(key, "") or SOCIAL_DEFAULTS.get(key, "")
+        key: (
+            settings.get(key, "")
+            if es_enlace_real(settings.get(key, ""))
+            else SOCIAL_DEFAULTS.get(key, "")
+        )
         for key in SOCIAL_DEFAULTS
     }
     # Quita los enlaces de plantilla que todavía no son reales.
-    social = {
-        key: value
-        for key, value in social.items()
-        if value
-        and "tu-usuario" not in value
-        and "tu-pagina" not in value
-        and value.startswith("http")
-    }
+    social = {key: value for key, value in social.items() if es_enlace_real(value)}
 
     return {
         "heroTitle": settings.get("hero_title", "Submarinos Museo del Mundo"),
