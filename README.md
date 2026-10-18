@@ -15,6 +15,7 @@ para cada unidad, pensado primero para móvil.
 - `data/submarines.json` — 160 unidades normalizadas con coordenadas, tipo, país, museo y media.
 - `data/config.json` — textos, logo, imagen de héroe y redes sociales.
 - `scripts/import_sheets.py` — genera los JSON a partir de las hojas publicadas de Google Sheets.
+- `scripts/make_coins.py` — genera las monedas SVG de las 5 situaciones del museo.
 
 El sitio **no** consulta Google Sheets en tiempo de ejecución: lee siempre los JSON locales,
 por lo que la oferta puede actualizarse por lotes sin tocar el frontend.
@@ -32,12 +33,32 @@ La sección `// 01 — DESTACADOS` reúne las unidades clave. Se consideran dest
 tienen `Featured=TRUE` en la hoja **y** las que aportan media reproducible (video). Cada tarjeta
 abre el dossier correspondiente y centra el mapa en la unidad.
 
+### Situación del museo
+
+Cada unidad puede marcarse con una **situación**, identificada por uno de los 5 iconos del
+proyecto. En la hoja escribe la variable (o pega la URL del icono: el importador la reconoce):
+
+| Variable | Significado | Moneda |
+| --- | --- | --- |
+| `flote` | A flote, en el agua | `assets/img/coins/flote.svg` |
+| `agua` | En el agua (varado/sumergido) | `assets/img/coins/agua.svg` |
+| `tierra` | En tierra, en seco y visitable | `assets/img/coins/tierra.svg` |
+| `cerrado` | Bajo techo / cerrado, no visitable | `assets/img/coins/cerrado.svg` |
+| `monumento` | Solo queda el monumento | `assets/img/coins/monumento.svg` |
+
+El importador también acepta sinónimos (`afloat`, `water`, `on land`, `under cover`, `monument`)
+y busca la variable en una columna `Situacion`/`Situation`, en `Icon URL` o en `Marker Icon`.
+
+Con esa variable se filtra el mapa (chips con el icono) y se marca el dossier, el registro y el
+propio marcador. Las monedas tipo *challenge coin* se generan con `python scripts/make_coins.py`
+a partir de los mismos dibujos, en SVG sin recursos de terceros.
+
 ### Filtros
 
-Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre y estado:
+Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre, situación y estado:
 
+- **SITUACIÓN** — A flote, En el agua, En tierra, Bajo techo, Solo monumento (multi-selección).
 - **CON MEDIA / CON VIDEO** — media disponible o video reproducible.
-- **A FLOTE / EN SECO** — mutuamente excluyentes; muestran unidades aún en el agua o ya en tierra.
 - **PRÓXIMAMENTE** — unidades anunciadas pero todavía no visitables.
 
 ### Dossier
@@ -81,6 +102,7 @@ python scripts/import_sheets.py --points-file puntos.csv --config-file config.cs
 | `lat`, `lng` | Coordenadas. |
 | `launchYear` | Año de botadura. |
 | `image`, `videoUrl`, `link` | Media y enlace de la fuente. |
+| `situation`, `situationLabel` | Situación del museo (`flote`, `agua`, `tierra`, `cerrado`, `monumento`) y su etiqueta. |
 | `featured`, `afloat` | Destacado (columna `Featured` o lista `featured_submarine_names`) y si sigue a flote. |
 | `status` | `open` o `coming-soon`. |
 | `description` | Texto breve autogenerado. |
@@ -106,8 +128,11 @@ assets/
   js/app.js
   img/logo.jpg
   img/cobia.webp
+  img/coins/          # monedas SVG por situación
+  img/situation/      # iconos originales de referencia (legacy/)
 scripts/
   import_sheets.py
+  make_coins.py
 ```
 
 ## Créditos y licencias

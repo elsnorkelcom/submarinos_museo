@@ -63,6 +63,64 @@ TYPE_KEYS = {
     "Hand-crank": "hand-crank",
 }
 
+# Situación del museo. En la hoja puedes escribir la variable (flote, agua, tierra,
+# cerrado, monumento) o pegar la URL del icono: el importador la reconoce igual.
+SITUATION_LABELS = {
+    "flote": "A flote",
+    "agua": "En el agua",
+    "tierra": "En tierra",
+    "cerrado": "Bajo techo",
+    "monumento": "Solo monumento",
+}
+
+SITUATION_SYNONYMS = (
+    ("flote", ("a flote", "flote", "afloat", "velas", "boyante", "superficie")),
+    ("agua", ("en el agua", "en agua", "agua", "water", "sumergid")),
+    ("tierra", ("en tierra", "tierra", "en seco", "seco", "on land", "land", "dry")),
+    (
+        "cerrado",
+        ("bajo techo", "en cerrado", "cerrado", "cubierto", "under cover", "indoor", "closed"),
+    ),
+    ("monumento", ("monumento", "monument", "memorial")),
+)
+
+# Orden de prioridad: columna propia, luego la URL del icono y por último la columna antigua.
+SITUATION_COLUMNS = ("Situacion", "Situation", "Icon URL", "Icon", "Marker Icon")
+
+
+def normalize_token(value: str | None) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_value = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    ascii_value = ascii_value.lower()
+    for char in ("+", "%20", "_", "-", "/", "\\"):
+        ascii_value = ascii_value.replace(char, " ")
+    return re.sub(r"\s+", " ", ascii_value).strip()
+
+
+def field(row: dict[str, str], *names: str) -> str:
+    """Busca una columna por nombre sin importar mayúsculas ni acentos."""
+    wanted = {normalize_token(name) for name in names}
+    for key, value in row.items():
+        if not key:
+            continue
+        if normalize_token(key) in wanted:
+            cleaned = clean(value)
+            if cleaned:
+                return cleaned
+    return ""
+
+
+def pick_situation(row: dict[str, str]) -> str:
+    for column in SITUATION_COLUMNS:
+        raw = field(row, column)
+        if not raw:
+            continue
+        token = normalize_token(raw)
+        for key, synonyms in SITUATION_SYNONYMS:
+            if any(synonym in token for synonym in synonyms):
+                return key
+    return ""
+
 
 def fetch_bytes(source: str) -> bytes:
     if source.startswith(("http://", "https://")):
@@ -170,6 +228,7 @@ def build_submarines(
             clean(row.get("Featured")).upper() == "TRUE"
             or name.strip().lower() in featured_lookup
         )
+        situation = pick_situation(row)
 
         base_id = slugify(name)
         sub_id = base_id
@@ -207,8 +266,11 @@ def build_submarines(
                 "image": image,
                 "videoUrl": video,
                 "link": link,
+                "situation": situation,
+                "situationLabel": SITUATION_LABELS.get(situation, ""),
                 "featured": is_featured,
-                "afloat": "a flote" in clean(row.get("Marker Icon")).lower(),
+                "afloat": situation in ("flote", "agua")
+                or "a flote" in clean(row.get("Marker Icon")).lower(),
                 "status": status,
                 "description": " ".join(description_parts),
             }
@@ -304,12 +366,21 @@ def main() -> None:
 
     types: dict[str, int] = {}
     countries: set[str] = set()
+    situations: dict[str, int] = {}
     for submarine in submarines:
         types[submarine["typeLabel"]] = types.get(submarine["typeLabel"], 0) + 1
         countries.add(submarine["country"])
+        if submarine["situationLabel"]:
+            situations[submarine["situationLabel"]] = (
+                situations.get(submarine["situationLabel"], 0) + 1
+            )
 
     print(f"OK: {len(submarines)} submarinos, {len(countries)} países")
     print("Tipos:", ", ".join(f"{name} {count}" for name, count in types.items()))
+    print(
+        "Situación:",
+        ", ".join(f"{name} {count}" for name, count in situations.items()) or "sin datos",
+    )
     print(f"Escrito en {DATA_DIR}")
 
 

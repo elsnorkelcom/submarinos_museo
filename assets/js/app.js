@@ -14,6 +14,16 @@ const TYPE_META = {
 };
 
 const TYPE_ORDER = ["diesel", "nuclear", "electric", "hand-crank"];
+
+const SITUATION_META = {
+  flote: { label: "A flote", icon: "sit-flote", color: "#9fb3c8" },
+  agua: { label: "En el agua", icon: "sit-agua", color: "#38a3ff" },
+  tierra: { label: "En tierra", icon: "sit-tierra", color: "#d16bff" },
+  cerrado: { label: "Bajo techo", icon: "sit-cerrado", color: "#35d64a" },
+  monumento: { label: "Solo monumento", icon: "sit-monumento", color: "#e0532b" }
+};
+
+const SITUATION_ORDER = ["flote", "agua", "tierra", "cerrado", "monumento"];
 const BASE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const LABEL_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
 
@@ -31,10 +41,10 @@ const state = {
   filters: {
     q: "",
     types: new Set(),
+    situations: new Set(),
     country: "all",
     media: false,
     video: false,
-    water: "all",
     coming: false
   },
   searchFrame: 0,
@@ -89,8 +99,7 @@ function cacheDom() {
   dom.countryFilter = byId("country-filter");
   dom.mediaFilter = byId("media-filter");
   dom.videoFilter = byId("video-filter");
-  dom.afloatFilter = byId("afloat-filter");
-  dom.dryFilter = byId("dry-filter");
+  dom.situationFilters = byId("situation-filters");
   dom.comingFilter = byId("coming-filter");
   dom.resetFilters = byId("reset-filters");
 
@@ -215,6 +224,20 @@ function typeMeta(typeKey) {
   return TYPE_META[typeKey] || TYPE_META.diesel;
 }
 
+function situationMeta(key) {
+  return SITUATION_META[key] || null;
+}
+
+function resolveSituation(raw) {
+  const key = String(raw.situation || "")
+    .toLowerCase()
+    .trim();
+
+  if (SITUATION_META[key]) return key;
+  if (raw.afloat === true) return "flote";
+  return "";
+}
+
 function pad2(value) {
   return String(value).padStart(2, "0");
 }
@@ -314,6 +337,7 @@ function normalizeUnit(raw, index) {
   const typeKey = resolveType(raw);
   const meta = TYPE_META[typeKey];
   const launchYear = Number(raw.launchYear);
+  const situationKey = resolveSituation(raw);
 
   const unit = {
     id: String(raw.id || "").trim() || `unit-${index + 1}`,
@@ -333,8 +357,10 @@ function normalizeUnit(raw, index) {
     image: firstUrl(raw.image),
     videoUrl: firstUrl(raw.videoUrl),
     link: firstUrl(raw.link),
+    situation: situationKey,
+    situationLabel: situationKey ? SITUATION_META[situationKey].label : "",
     featured: raw.featured === true,
-    afloat: raw.afloat === true,
+    afloat: raw.afloat === true || situationKey === "flote" || situationKey === "agua",
     status: raw.status === "coming-soon" ? "coming-soon" : "open",
     description: String(raw.description || "").trim(),
     verticalVideo: raw.verticalVideo === true || raw.videoVertical === true
@@ -349,7 +375,8 @@ function normalizeUnit(raw, index) {
       unit.country,
       unit.nationality,
       unit.class,
-      unit.typeLabel
+      unit.typeLabel,
+      unit.situationLabel
     ].join(" ")
   );
 
@@ -480,6 +507,30 @@ function buildTypeFilters() {
     }</span>
     </button>`;
   }).join("");
+}
+
+function buildSituationFilters() {
+  if (!dom.situationFilters) return;
+
+  const counts = new Map();
+
+  for (const unit of state.units) {
+    if (!unit.situation) continue;
+    counts.set(unit.situation, (counts.get(unit.situation) || 0) + 1);
+  }
+
+  const keys = SITUATION_ORDER.filter((key) => counts.get(key));
+  dom.situationFilters.hidden = keys.length === 0;
+  dom.situationFilters.innerHTML = keys
+    .map((key) => {
+      const meta = SITUATION_META[key];
+      return `<button class="chip" type="button" data-situation="${key}" aria-pressed="false" style="--sit-color:${meta.color}">
+        <span class="sit-icon" aria-hidden="true"><svg class="icon"><use href="#${meta.icon}"></use></svg></span>${esc(
+        meta.label
+      )}<span class="chip__count">${counts.get(key)}</span>
+      </button>`;
+    })
+    .join("");
 }
 
 function buildCountryFilter() {
@@ -652,10 +703,14 @@ function initMap() {
     state.bounds.extend([unit.lat, unit.lng]);
 
     const meta = typeMeta(unit.typeKey);
+    const sit = situationMeta(unit.situation);
+    const sitBadge = sit
+      ? `<span class="snk-marker__sit" style="--sit-color:${sit.color}" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>`
+      : "";
     const marker = L.marker([unit.lat, unit.lng], {
       icon: L.divIcon({
         className: "snk-marker-wrap",
-        html: `<span class="snk-marker" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg></span>`,
+        html: `<span class="snk-marker" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg>${sitBadge}</span>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15]
       }),
@@ -749,10 +804,10 @@ function filtersActive() {
   return Boolean(
     filters.q.trim() ||
       filters.types.size ||
+      filters.situations.size ||
       filters.country !== "all" ||
       filters.media ||
       filters.video ||
-      filters.water !== "all" ||
       filters.coming
   );
 }
@@ -763,11 +818,10 @@ function applyFilters() {
 
   state.filtered = state.units.filter((unit) => {
     if (filters.types.size && !filters.types.has(unit.typeKey)) return false;
+    if (filters.situations.size && !filters.situations.has(unit.situation)) return false;
     if (filters.country !== "all" && unit.country !== filters.country) return false;
     if (filters.media && !hasMedia(unit)) return false;
     if (filters.video && !getVideoUrl(unit)) return false;
-    if (filters.water === "afloat" && !unit.afloat) return false;
-    if (filters.water === "dry" && unit.afloat) return false;
     if (filters.coming && unit.status !== "coming-soon") return false;
     if (query && !unit._search.includes(query)) return false;
     return true;
@@ -779,10 +833,14 @@ function applyFilters() {
     });
   }
 
+  if (dom.situationFilters) {
+    dom.situationFilters.querySelectorAll("[data-situation]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(filters.situations.has(button.dataset.situation)));
+    });
+  }
+
   if (dom.mediaFilter) dom.mediaFilter.setAttribute("aria-pressed", String(filters.media));
   if (dom.videoFilter) dom.videoFilter.setAttribute("aria-pressed", String(filters.video));
-  if (dom.afloatFilter) dom.afloatFilter.setAttribute("aria-pressed", String(filters.water === "afloat"));
-  if (dom.dryFilter) dom.dryFilter.setAttribute("aria-pressed", String(filters.water === "dry"));
   if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", String(filters.coming));
   if (dom.resetFilters) dom.resetFilters.hidden = !filtersActive();
 
@@ -844,7 +902,11 @@ function sortUnits(list) {
 function rowMarkup(unit) {
   const selected = unit.id === state.selectedId;
   const meta = typeMeta(unit.typeKey);
+  const sit = situationMeta(unit.situation);
   const coming = unit.status === "coming-soon";
+  const sitInline = sit
+    ? `<span class="sit-inline" style="--sit-color:${sit.color}" title="${esc(sit.label)}" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>`
+    : "";
 
   return `<button class="unit-row${selected ? " is-selected" : ""}" type="button" data-unit="${esc(
     unit.id
@@ -856,7 +918,7 @@ function rowMarkup(unit) {
     coming ? " · PRÓXIMAMENTE" : ""
   }</span>
     </span>
-    <span class="unit-row__type" style="--type-color:${meta.color}"><span class="unit-row__dot" aria-hidden="true"></span>${esc(
+    <span class="unit-row__type" style="--type-color:${meta.color}">${sitInline}<span class="unit-row__dot" aria-hidden="true"></span>${esc(
     unit.typeLabel
   )}</span>
     <span class="unit-row__country">${esc(unit.country || "—")}</span>
@@ -902,10 +964,10 @@ function refreshSelectionStyles() {
 function resetFilters() {
   state.filters.q = "";
   state.filters.types.clear();
+  state.filters.situations.clear();
   state.filters.country = "all";
   state.filters.media = false;
   state.filters.video = false;
-  state.filters.water = "all";
   state.filters.coming = false;
 
   if (dom.search) dom.search.value = "";
@@ -986,9 +1048,16 @@ function renderDossier(unit) {
   if (!dom.dossierContent) return;
 
   const meta = typeMeta(unit.typeKey);
+  const sit = situationMeta(unit.situation);
   const statusBadges = [
     unit.status === "coming-soon" ? '<span class="status-badge">PRÓXIMAMENTE</span>' : "",
-    unit.afloat ? '<span class="status-badge status-badge--afloat">A FLOTE</span>' : ""
+    sit
+      ? `<span class="sit-badge" style="--sit-color:${sit.color}"><span class="sit-icon" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>${esc(
+          sit.label
+        )}</span>`
+      : unit.afloat
+        ? '<span class="status-badge status-badge--afloat">A FLOTE</span>'
+        : ""
   ].join("");
 
   const linkButton = unit.link
@@ -1004,10 +1073,8 @@ function renderDossier(unit) {
     specMarkup("Armada / origen", unit.nationality || unit.country),
     specMarkup("Ciudad", unit.city),
     specMarkup("Museo", unit.museum),
-    specMarkup(
-      "Estado",
-      unit.status === "coming-soon" ? "En apertura" : unit.afloat ? "A flote" : "Museo abierto"
-    ),
+    specMarkup("Situación", sit ? sit.label : "No documentada"),
+    specMarkup("Estado", unit.status === "coming-soon" ? "En apertura" : "Museo abierto"),
     specMarkup("Coordenadas", formatCoords(unit))
   ].join("");
 
@@ -1344,16 +1411,15 @@ function bindEvents() {
     });
   }
 
-  if (dom.afloatFilter) {
-    dom.afloatFilter.addEventListener("click", () => {
-      state.filters.water = state.filters.water === "afloat" ? "all" : "afloat";
-      applyFilters();
-    });
-  }
+  if (dom.situationFilters) {
+    dom.situationFilters.addEventListener("click", (event) => {
+      const chip = event.target.closest("[data-situation]");
+      if (!chip) return;
 
-  if (dom.dryFilter) {
-    dom.dryFilter.addEventListener("click", () => {
-      state.filters.water = state.filters.water === "dry" ? "all" : "dry";
+      const key = chip.dataset.situation;
+      if (state.filters.situations.has(key)) state.filters.situations.delete(key);
+      else state.filters.situations.add(key);
+
       applyFilters();
     });
   }
@@ -1485,6 +1551,7 @@ async function init() {
     renderStats();
     renderFeatured();
     buildTypeFilters();
+    buildSituationFilters();
     buildCountryFilter();
     buildLegend();
     buildTypeBars();

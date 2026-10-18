@@ -24,6 +24,11 @@
   --nuclear: #9dff4d;
   --electric: #4db8ff;
   --hand-crank: #c9b98f;
+  --sit-flote: #9fb3c8;
+  --sit-agua: #38a3ff;
+  --sit-tierra: #d16bff;
+  --sit-cerrado: #35d64a;
+  --sit-monumento: #e0532b;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
   --display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
   --body: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
@@ -848,6 +853,72 @@ a {
   background: rgba(255, 90, 69, 0.07);
 }
 
+/* ---------- Situación del museo ---------- */
+
+.filters--situation .chip {
+  gap: 5px;
+  padding: 0 9px 0 6px;
+}
+
+.filters--situation {
+  padding-left: 11px;
+  border-left: 1px solid var(--line);
+}
+
+.sit-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  flex: none;
+  border: 1.5px solid var(--sit-color, var(--muted));
+  border-radius: 50%;
+  color: var(--sit-color, var(--muted));
+  background: radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.07), transparent 62%);
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+.sit-icon .icon {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.6;
+}
+
+.chip[aria-pressed="true"] .sit-icon {
+  border-color: #07100a;
+  color: #07100a;
+}
+
+.sit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 4px 5px;
+  border: 1px solid var(--line-2);
+  background: rgba(6, 10, 8, 0.5);
+  color: var(--sit-color, var(--muted));
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sit-inline {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--sit-color, var(--dim));
+}
+
+.sit-inline .icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.7;
+}
+
 .select-wrap {
   position: relative;
   display: inline-flex;
@@ -1071,6 +1142,31 @@ a {
 
 .snk-marker.is-hover {
   transform: rotate(45deg) scale(1.18);
+}
+
+.snk-marker .snk-marker__sit {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--sit-color, var(--muted));
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--sit-color, var(--muted));
+  transform: rotate(-45deg);
+}
+
+.snk-marker .snk-marker__sit .icon {
+  width: 9px;
+  height: 9px;
+  stroke-width: 2;
+}
+
+.snk-marker.is-active .snk-marker__sit {
+  background: var(--bg);
 }
 
 .snk-halo-wrap {
@@ -2301,6 +2397,11 @@ a {
 
   .filters {
     width: 100%;
+  }
+
+  .filters--situation {
+    padding-left: 0;
+    border-left: 0;
   }
 
   #map {
