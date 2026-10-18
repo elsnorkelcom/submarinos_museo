@@ -71,22 +71,27 @@ visible y **no** hay `prefers-reduced-motion`; en cualquier otro caso se queda e
 La sección `// 03 — DESTACADOS` funciona como un catálogo: un **cartel** grande con la unidad
 más fotogénica y debajo **filas horizontales** con scroll-snap.
 
-Se consideran destacadas las unidades con `Featured=TRUE` en la hoja **y** las que aportan
-media reproducible (video). Cualquier tarjeta abre su dossier; el cartel ofrece además
-*Ver en el mapa*.
+Se consideran destacadas **solo** las unidades marcadas con `Featured=TRUE` en la hoja (o en la
+lista `featured_submarine_names`). Tener vídeo **no** convierte una unidad en destacada: el
+vídeo tiene fila propia (*Con vídeo*), porque al rellenar los vídeos de la lista de YouTube
+Destacados pasaba de 11 a 35 unidades. Cualquier tarjeta abre su dossier; el cartel ofrece
+además *Ver en el mapa*.
 
 Las filas se generan solas a partir de los datos:
 
 | Grupo | Filas | Qué agrupa |
 | --- | --- | --- |
-| — | Destacados | Unidades destacadas (6 fichas, las que tienen imagen primero). |
+| — | Destacados | Unidades marcadas en la hoja (6 fichas, las que tienen imagen primero). |
+| — | Con vídeo | Unidades con `videoUrl` (o `URL` de YouTube): 27 hoy. |
 | POR PROPULSIÓN | Diésel, Nuclear, Eléctrico, Manivela | El `typeKey` de cada unidad. |
 | POR ÉPOCA | Precursores, Gran Guerra, Entreguerras, Segunda Guerra, Guerra Fría, Modernos | Derivadas del año de botadura. |
 
-Cada fila muestra hasta **6 fichas** (`RAIL_LIMIT` en `app.js`) y el total entre paréntesis en
-el botón *Ver todas*, que limpia los filtros, aplica el de esa fila y baja al registro. En
-escritorio hay flechas `‹ ›` a los lados (se ocultan si la fila no desborda); en móvil se
-desliza con el dedo.
+Cada fila muestra hasta **6 fichas** (`RAIL_LIMIT` en `app.js`). Las de tipo y época llevan el
+total en el botón *Ver todas*, que limpia los filtros, aplica el de esa fila y baja al registro.
+Las de *Destacados* y *Con vídeo* son filas de escaparate: no llevan *Ver todas* porque su
+listado completo vive en el registro, que se filtra por `featured` y por vídeo en la página de
+registro. En escritorio hay flechas `‹ ›` a los lados (se ocultan si la fila no desborda); en
+móvil se desliza con el dedo.
 
 #### Épocas
 
@@ -281,6 +286,65 @@ Opcionalmente con CSV locales:
 python scripts/import_sheets.py --points-file puntos.csv --config-file config.csv
 ```
 
+### Vídeos de la lista de YouTube
+
+Los vídeos de museo no se escriben a mano uno a uno: están en la lista pública del proyecto.
+Dos scripts los traen y los cruzan con el archivo. Ninguno usa la API de datos ni credenciales.
+
+```bash
+# 1) Baja la lista curada (60 vídeos) a data/youtube.json
+python scripts/import_youtube.py
+
+# 2) Cruza cada vídeo con su unidad y prepara la hoja con la columna Video rellena
+python scripts/match_youtube.py --hoja
+
+# 3) Con la hoja ya actualizada, regenera los JSON del sitio
+python scripts/import_sheets.py
+```
+
+`import_youtube.py` lee la página pública de la lista y sigue los tokens de continuación del
+reproductor. Es una extracción de un solo uso: si YouTube cambia su HTML, se retoca el
+extractor y el sitio no se entera. Con `--canal` añade también las subidas propias (segunda
+etapa; hoy no hay).
+
+`match_youtube.py` puntúa cada vídeo contra las 160 unidades con cinco señales, de más a menos
+fiable: nombre completo, numeral de casco (`U-995`, `Б-413`), nombre sin prefijo de armada,
+museo y ciudad. Translitera cirílico y griego, pliega letras que NFKD no descompone (`ł`, `ø`,
+`æ`) y exige que las coincidencias compactas sean ventanas de palabras enteras, para que
+`marinemuseum` no case dentro de `submarinemuseum`.
+
+| Archivo | Para qué |
+| --- | --- |
+| `data/youtube.json` | Los 60 vídeos en crudo (título, canal, vistas, URL). |
+| `data/youtube_matches.csv` | La propuesta por vídeo: unidad, puntaje, señal y alternativas. |
+| `data/youtube_matches.md` | El mismo informe para leerlo de un tirón. |
+| `data/hoja_con_videos.csv` | La hoja publicada con la columna `Video` rellena. Fuera de git. |
+
+Los casos que el automático no puede decidir (un Seehund en el museo del U-10, un U-17 en el
+museo del U-9) se fijan a mano en la tabla `DECISIONES` del script: se revisan una vez y quedan
+documentados con su motivo. Hoy queda en **42 vídeos para 27 unidades** (un vídeo por unidad,
+el primero de la lista curada).
+
+Ruta hasta la hoja, que sigue siendo la fuente de verdad:
+
+1. En Sheets: **Archivo → Importar → Insertar hoja nueva** con `data/hoja_con_videos.csv`.
+2. Copiar la columna `Video` a la hoja de datos que lee el importador.
+3. Comprobar que la hoja publicada ya trae la columna (el importador lee la versión publicada).
+4. `python scripts/import_sheets.py`.
+
+Vídeos que la lista destapa y **no tienen ficha** en el archivo (candidatos a añadir):
+
+| Unidad | Museo |
+| --- | --- |
+| B-39 | Maritime Museum of San Diego |
+| HMAS Otama | Western Port, Australia |
+| U-17 | Technik Museum Speyer / Sinsheim |
+| B-380 | Museo del objeto 825 GTS, Balaclava |
+
+También aparecieron dos fichas a revisar: `SNK-003 K-434` y `SNK-008 U-434` son el mismo barco
+(B-515, Tango, Hamburgo) duplicado, y `SNK-094 South Korea[edit]` tiene los datos cruzados
+(ciudad Çanakkale, país Corea del Sur).
+
 ### Esquema de `data/submarines.json`
 
 | Campo | Descripción |
@@ -302,10 +366,18 @@ python scripts/import_sheets.py --points-file puntos.csv --config-file config.cs
 
 ### Columnas de la hoja
 
-El importador busca la columna de video por nombre (`Video`, `Video URL`, `YouTube`, etc.),
-así que puedes añadirla cuando quieras sin tocar el código. Los destacados de la hoja de
-configuración (`featured_submarine_names`) se marcan automáticamente junto con `Featured=TRUE`.
-El año del `footer_text` se normaliza al año actual en cada importación.
+El importador busca la columna de video por nombre (`Video`, `Video URL`, `YouTube`, `Youtube`,
+`video_url`), así que se puede añadir cuando haga falta sin tocar el código. Van separadas:
+
+- **`Video`** → vídeo (YouTube o fichero). Es lo que muestra el dossier y lo que llena la fila
+  *Con vídeo* de Destacados.
+- **`URL`** → enlace de *+Info* (el artículo del blog o la web del museo). Si `Video` está vacío
+  y `URL` es un enlace de YouTube, el sitio lo usa como vídeo: así sigue funcionando la ficha
+  que ya tenía el vídeo en `URL` antes de que existiera la columna.
+
+Los destacados de la hoja de configuración (`featured_submarine_names`) se marcan
+automáticamente junto con `Featured=TRUE`. El año del `footer_text` se normaliza al año actual
+en cada importación.
 
 En la hoja de **configuración** (columna `Setting` / `Value`) también se leen:
 
@@ -331,6 +403,10 @@ data/
   submarines.json
   config.json
   i18n.json
+  youtube.json          # caché de la lista curada (60 vídeos)
+  youtube_matches.csv   # propuesta de cruce vídeo -> unidad
+  youtube_matches.md    # el mismo informe, legible
+  hoja_con_videos.csv   # hoja con la columna Video rellena (fuera de git)
 assets/
   css/app.css
   js/app.js
@@ -341,6 +417,8 @@ assets/
   img/situation/      # iconos originales de referencia (legacy/)
 scripts/
   import_sheets.py
+  import_youtube.py
+  match_youtube.py
   make_coins.py
 ```
 

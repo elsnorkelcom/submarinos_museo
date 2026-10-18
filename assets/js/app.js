@@ -249,6 +249,8 @@ function cacheDom() {
   dom.toast = byId("toast");
 
   dom.headerCount = byId("header-count");
+  dom.hudHeader = document.querySelector(".hud-header");
+  dom.hudMenu = byId("hud-menu");
   dom.hero = document.querySelector(".hero");
   dom.heroBg = byId("hero-bg");
   dom.heroVideo = byId("hero-video");
@@ -266,6 +268,9 @@ function cacheDom() {
   dom.featuredCountLabel = byId("featured-count-label");
   dom.featuredBillboard = byId("featured-billboard");
   dom.featuredRails = byId("featured-rails");
+
+  dom.eraCards = byId("era-cards");
+  dom.eraCardsNote = byId("era-cards-note");
 
   dom.mapSection = byId("map-section");
   dom.map = byId("map");
@@ -408,7 +413,12 @@ function hasMedia(unit) {
 }
 
 function isFeatured(unit) {
-  return unit.featured || Boolean(getVideoUrl(unit));
+  /*
+   * Solo la marca de la hoja. Tener vídeo llegó a contar como destacado y, con
+   * los vídeos de la lista rellenados, Destacados pasaba de 11 a 35 unidades:
+   * el vídeo tiene su propia fila.
+   */
+  return unit.featured === true;
 }
 
 function normalizeText(value) {
@@ -811,10 +821,49 @@ const SHARE_NETWORKS = [
   }
 ];
 
+/*
+ * El archivo tiene dos páginas: la home (index.html) y el registro
+ * (registro.html). Los enlaces públicos apuntan siempre a la home, que es
+ * donde vive el expediente, y arrastran el idioma activo.
+ */
+function siteRoot() {
+  const url = new URL(window.location.href);
+  return `${url.origin}${url.pathname.replace(/[^/]*$/, "")}`;
+}
+
+function langParams(params) {
+  if (state.lang && state.lang !== DEFAULT_LANG) params.set("lang", state.lang);
+  return params;
+}
+
+/* Enlace a la home, opcionalmente con una unidad abierta. */
+function homeUrlFor(unit) {
+  const params = langParams(new URLSearchParams());
+  if (unit) params.set("unit", unit.id);
+
+  const query = params.toString();
+  return `index.html${query ? `?${query}` : ""}`;
+}
+
+/* Enlace a la página del registro con los filtros ya puestos. */
+function registryUrlFor({ era = "", type = "", situation = "", q = "" } = {}) {
+  const params = langParams(new URLSearchParams());
+  if (era) params.set("era", era);
+  if (type) params.set("type", type);
+  if (situation) params.set("situacion", situation);
+  if (q) params.set("q", q);
+
+  const query = params.toString();
+  return `registro.html${query ? `?${query}` : ""}`;
+}
+
 /* Enlace público de una unidad, o el del archivo entero si no se pasa ninguna. */
 function shareUrlFor(unit) {
-  const base = `${window.location.origin}${window.location.pathname}`;
-  return unit ? `${base}?unit=${encodeURIComponent(unit.id)}` : base;
+  const params = langParams(new URLSearchParams());
+  if (unit) params.set("unit", unit.id);
+
+  const query = params.toString();
+  return `${siteRoot()}${query ? `?${query}` : ""}`;
 }
 
 function shareBarMarkup({ url, title, label = "", withCopy = true }) {
@@ -1328,6 +1377,14 @@ function typeRails() {
   }).filter(Boolean);
 }
 
+/*
+ * Unidades con vídeo reproducible. Es una fila propia: los vídeos de museo son
+ * material externo y no convierten una unidad en destacada.
+ */
+function videoRailData() {
+  return state.units.filter((unit) => Boolean(getVideoUrl(unit)));
+}
+
 /* Una fila por época, derivada del año de botadura. */
 function eraRails() {
   return ERA_ORDER.map((eraKey) => {
@@ -1388,6 +1445,20 @@ function renderFeatured() {
         color: "var(--accent)",
         count: featured.length,
         units: railSlice(featured, byMediaFirst),
+        filterKey: ""
+      })
+    );
+  }
+
+  const videos = videoRailData();
+  if (videos.length) {
+    html.push(
+      railMarkup({
+        key: "video",
+        title: t("rail.withVideo"),
+        color: "var(--sonar)",
+        count: videos.length,
+        units: railSlice(videos, byMediaFirst),
         filterKey: ""
       })
     );

@@ -2,3 +2,7 @@
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Volcado de la hoja publicada con la columna Video rellena: es un puente para
+# importar en Sheets, se regenera con `python scripts/match_youtube.py --hoja`.
+data/hoja_con_videos.csv
