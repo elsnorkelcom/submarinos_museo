@@ -19,6 +19,32 @@ const TYPE_META = {
 
 const TYPE_ORDER = ["diesel", "nuclear", "electric", "hand-crank"];
 
+/*
+ * Épocas del archivo. Se derivan del año de botadura (`launchYear`), así que
+ * no hace falta ninguna columna nueva en la hoja. Los tramos son amplios a
+ * propósito: cada uno tiene que dar material suficiente para una fila.
+ */
+const ERA_META = {
+  precursores: { min: 0, max: 1899, range: "≤ 1899", color: "#c9b98f" },
+  "gran-guerra": { min: 1900, max: 1918, range: "1900–1918", color: "#e0a35c" },
+  entreguerras: { min: 1919, max: 1938, range: "1919–1938", color: "#9ec46f" },
+  "segunda-guerra": { min: 1939, max: 1945, range: "1939–1945", color: "#57e6c0" },
+  "guerra-fria": { min: 1946, max: 1991, range: "1946–1991", color: "#4db8ff" },
+  modernos: { min: 1992, max: 9999, range: "1992 →", color: "#c6ff3d" }
+};
+
+const ERA_ORDER = [
+  "precursores",
+  "gran-guerra",
+  "entreguerras",
+  "segunda-guerra",
+  "guerra-fria",
+  "modernos"
+];
+
+/* Cuántas fichas muestra cada fila antes de «ver todas». */
+const RAIL_LIMIT = 6;
+
 const SITUATION_META = {
   flote: { label: "A flote", icon: "sit-flote", color: "#8ee2ff" },
   agua: { label: "En el agua", icon: "sit-agua", color: "#2f9bff" },
@@ -51,12 +77,14 @@ const state = {
     types: new Set(),
     situations: new Set(),
     country: "all",
+    era: "all",
     media: false,
     video: false,
     coming: false
   },
   searchFrame: 0,
   toastTimer: 0,
+  railFrame: 0,
   prefersReduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches
 };
 
@@ -234,7 +262,8 @@ function cacheDom() {
   dom.featuredTitle = byId("featured-title");
   dom.featuredCount = byId("featured-count");
   dom.featuredCountLabel = byId("featured-count-label");
-  dom.featuredGrid = byId("featured-grid");
+  dom.featuredBillboard = byId("featured-billboard");
+  dom.featuredRails = byId("featured-rails");
 
   dom.mapSection = byId("map-section");
   dom.map = byId("map");
@@ -247,6 +276,7 @@ function cacheDom() {
   dom.search = byId("search");
   dom.typeFilters = byId("type-filters");
   dom.countryFilter = byId("country-filter");
+  dom.eraFilter = byId("era-filter");
   dom.mediaFilter = byId("media-filter");
   dom.videoFilter = byId("video-filter");
   dom.situationFilters = byId("situation-filters");
@@ -372,6 +402,30 @@ function normalizeText(value) {
 
 function typeMeta(typeKey) {
   return TYPE_META[typeKey] || TYPE_META.diesel;
+}
+
+function eraMeta(eraKey) {
+  return ERA_META[eraKey] || null;
+}
+
+/*
+ * Época de una unidad a partir del año de botadura. Devuelve "" si la hoja aún
+ * no tiene año, que es el caso de 65 de las 160 unidades.
+ */
+function eraOf(year) {
+  const value = Number(year);
+  if (!Number.isFinite(value) || value <= 0) return "";
+
+  for (const key of ERA_ORDER) {
+    const meta = ERA_META[key];
+    if (value >= meta.min && value <= meta.max) return key;
+  }
+
+  return "";
+}
+
+function eraLabelOf(eraKey) {
+  return ERA_META[eraKey] ? t(`era.${eraKey}`) : "";
 }
 
 function situationMeta(key) {
@@ -793,6 +847,46 @@ function buildCountryFilter() {
   state.filters.country = dom.countryFilter.value;
 }
 
+/*
+ * Filtro por época. Solo aparecen los tramos con unidades, así que si la hoja
+ * no trae años (o no hay nadie en un tramo) la opción no se muestra.
+ */
+function buildEraFilter() {
+  if (!dom.eraFilter) return;
+
+  const counts = new Map();
+
+  for (const unit of state.units) {
+    const key = eraOf(unit.launchYear);
+    if (!key) continue;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+
+  const keys = ERA_ORDER.filter((key) => counts.get(key));
+  const selected = state.filters.era;
+
+  dom.eraFilter.innerHTML = "";
+
+  const all = document.createElement("option");
+  all.value = "all";
+  all.textContent = t("filter.allEras");
+  dom.eraFilter.append(all);
+
+  for (const key of keys) {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = `${eraLabelOf(key)} · ${ERA_META[key].range} (${counts.get(key)})`;
+    dom.eraFilter.append(option);
+  }
+
+  dom.eraFilter.value = selected === "all" || counts.has(selected) ? selected : "all";
+  state.filters.era = dom.eraFilter.value;
+
+  /* Si no hay ninguna época con datos, el control no aporta nada. */
+  const wrapper = dom.eraFilter.closest(".select-wrap");
+  if (wrapper) wrapper.hidden = keys.length === 0;
+}
+
 function buildLegend() {
   if (!dom.mapLegend) return;
 
@@ -846,9 +940,11 @@ function featuredCardMarkup(unit) {
   return `<button class="featured-card" type="button" data-unit="${esc(unit.id)}">
     <span class="featured-card__media">
       ${image}
+      <span class="featured-card__shade" aria-hidden="true"></span>
       <span class="featured-card__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
     meta.icon
   }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
+      ${unit.launchYear ? `<span class="featured-card__year">${esc(unit.launchYear)}</span>` : ""}
     </span>
     <span class="featured-card__body">
       <span class="featured-card__code">${esc(unit.dossier || unit.id)}</span>
@@ -858,14 +954,234 @@ function featuredCardMarkup(unit) {
   </button>`;
 }
 
+/* ---------- Destacados: cartel + filas ---------- */
+
+/*
+ * Orden de las filas: primero las unidades con imagen, porque la fila se lee
+ * mejor y el resto cae al plano técnico. Dentro de cada bloque se respeta el
+ * orden del archivo.
+ */
+function byMediaFirst(a, b) {
+  return Number(hasMedia(b)) - Number(hasMedia(a));
+}
+
+/* Cronológico: es el orden natural de una época, y las sin año van al final. */
+function byYearAsc(a, b) {
+  const ya = a.launchYear || 9999;
+  const yb = b.launchYear || 9999;
+  return ya - yb || a.name.localeCompare(b.name, state.lang, { sensitivity: "base" });
+}
+
+function railSlice(units, sorter) {
+  return [...units].sort(sorter).slice(0, RAIL_LIMIT);
+}
+
+function billboardMarkup(unit) {
+  const meta = typeMeta(unit.typeKey);
+  const media = unit.image
+    ? `<img src="${esc(unit.image)}" alt="${esc(t("alt.view", { name: unit.name }))}" referrerpolicy="no-referrer" data-card-fallback>`
+    : blueprintMarkup();
+
+  const place = [countryLabel(unit.country), unit.city].filter(Boolean).join(" · ");
+  const facts = [unit.museum, place, unit.launchYear ? String(unit.launchYear) : ""].filter(Boolean);
+
+  return `<div class="billboard__media" aria-hidden="true">
+      ${media}
+      <span class="billboard__scrim"></span>
+      <span class="billboard__code">${esc(unit.dossier || unit.id)}</span>
+    </div>
+    <div class="billboard__body">
+      <p class="kicker"><span class="kicker__line"></span>${esc(t("billboard.kicker"))}</p>
+      <p class="billboard__name">${esc(unit.name)}</p>
+      <p class="billboard__facts">
+        <span class="billboard__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
+    meta.icon
+  }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
+        ${facts.map((fact) => `<span class="billboard__fact">${esc(fact)}</span>`).join("")}
+      </p>
+      <p class="billboard__text">${esc(unit.description || "")}</p>
+      <div class="billboard__actions">
+        <button class="btn btn--primary" type="button" data-unit-action="dossier" data-unit="${esc(unit.id)}">
+          <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg><span>${esc(
+            t("billboard.open")
+          )}</span>
+        </button>
+        <button class="btn btn--ghost" type="button" data-unit-action="map" data-unit="${esc(unit.id)}">
+          <svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg><span>${esc(
+            t("billboard.map")
+          )}</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+function railMarkup(rail) {
+  const cards = rail.units.map(featuredCardMarkup).join("");
+  const more = rail.filterKey
+    ? `<button class="rail__more" type="button" ${rail.filterKey}>${esc(t("rail.seeAll"))}</button>`
+    : "";
+
+  return `<div class="rail" data-rail="${esc(rail.key)}" style="--rail-color:${rail.color}">
+    <div class="rail__head">
+      <p class="rail__title"><span class="rail__dot" aria-hidden="true"></span>${esc(rail.title)}${
+    rail.note ? `<span class="rail__note">${esc(rail.note)}</span>` : ""
+  }<span class="rail__count">${rail.count}</span></p>
+      ${more}
+    </div>
+    <div class="rail__viewport">
+      <button class="rail__arrow rail__arrow--prev" type="button" data-rail-nav="-1" aria-label="${esc(
+        t("rail.prev")
+      )}"><svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></button>
+      <div class="rail__track" data-rail-track tabindex="0" role="group" aria-label="${esc(rail.title)}">${cards}</div>
+      <button class="rail__arrow rail__arrow--next" type="button" data-rail-nav="1" aria-label="${esc(
+        t("rail.next")
+      )}"><svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></button>
+    </div>
+  </div>`;
+}
+
+function railGroupMarkup(groupKey, title, rails) {
+  return `<section class="rail-group" data-group="${esc(groupKey)}">
+    <h3 class="rail-group__title"><span>${esc(title)}</span></h3>
+    ${rails.map(railMarkup).join("")}
+  </section>`;
+}
+
+/* Una fila por propulsión. */
+function typeRails() {
+  return TYPE_ORDER.map((typeKey) => {
+    const units = state.units.filter((unit) => unit.typeKey === typeKey);
+    if (!units.length) return null;
+
+    return {
+      key: `type-${typeKey}`,
+      title: typeLabelOf(typeKey),
+      color: TYPE_META[typeKey].color,
+      count: units.length,
+      units: railSlice(units, byYearAsc),
+      filterKey: `data-rail-type="${esc(typeKey)}"`
+    };
+  }).filter(Boolean);
+}
+
+/* Una fila por época, derivada del año de botadura. */
+function eraRails() {
+  return ERA_ORDER.map((eraKey) => {
+    const units = state.units.filter((unit) => eraOf(unit.launchYear) === eraKey);
+    if (!units.length) return null;
+
+    const meta = ERA_META[eraKey];
+
+    return {
+      key: `era-${eraKey}`,
+      title: eraLabelOf(eraKey),
+      note: meta.range,
+      color: meta.color,
+      count: units.length,
+      units: railSlice(units, byYearAsc),
+      filterKey: `data-rail-era="${esc(eraKey)}"`
+    };
+  }).filter(Boolean);
+}
+
+function renderBillboard(featured) {
+  const host = dom.featuredBillboard;
+  if (!host) return;
+
+  /* El cartel pide imagen: si ninguna destacada la tiene, se cae al plano. */
+  const unit = featured.find(hasMedia) || featured[0];
+
+  if (!unit) {
+    host.hidden = true;
+    host.innerHTML = "";
+    return;
+  }
+
+  host.hidden = false;
+  host.innerHTML = billboardMarkup(unit);
+}
+
 function renderFeatured() {
-  if (!dom.featuredGrid) return;
+  if (!dom.featuredRails) return;
 
-  const list = state.units.filter(isFeatured);
+  const featured = state.units.filter(isFeatured);
 
-  setText(dom.featuredCount, list.length);
-  setText(dom.featuredCountLabel, t(list.length === 1 ? "section.featured.one" : "section.featured.many"));
-  dom.featuredGrid.innerHTML = list.map(featuredCardMarkup).join("");
+  setText(dom.featuredCount, featured.length);
+  setText(
+    dom.featuredCountLabel,
+    t(featured.length === 1 ? "section.featured.one" : "section.featured.many")
+  );
+
+  renderBillboard(featured);
+
+  const html = [];
+
+  if (featured.length) {
+    html.push(
+      railMarkup({
+        key: "featured",
+        title: t("rail.featured"),
+        color: "var(--accent)",
+        count: featured.length,
+        units: railSlice(featured, byMediaFirst),
+        filterKey: ""
+      })
+    );
+  }
+
+  const byType = typeRails();
+  if (byType.length) html.push(railGroupMarkup("type", t("rail.byType"), byType));
+
+  const byEra = eraRails();
+  if (byEra.length) html.push(railGroupMarkup("era", t("rail.byEra"), byEra));
+
+  dom.featuredRails.innerHTML = html.join("");
+
+  syncRailArrows();
+}
+
+/* Habilita o deshabilita las flechas según la posición de cada fila. */
+function syncRailArrows() {
+  if (!dom.featuredRails) return;
+
+  dom.featuredRails.querySelectorAll(".rail").forEach((rail) => {
+    const track = rail.querySelector("[data-rail-track]");
+    if (!track) return;
+
+    const max = track.scrollWidth - track.clientWidth;
+    const scrollable = max > 4;
+
+    rail.classList.toggle("is-static", !scrollable);
+
+    const prev = rail.querySelector('[data-rail-nav="-1"]');
+    const next = rail.querySelector('[data-rail-nav="1"]');
+
+    if (prev) prev.disabled = !scrollable || track.scrollLeft <= 2;
+    if (next) next.disabled = !scrollable || track.scrollLeft >= max - 2;
+  });
+}
+
+/*
+ * «Ver todas» de una fila: limpia el resto de filtros, aplica el de la fila y
+ * baja al registro, que es donde está la lista completa.
+ */
+function applyRailFilter(dataset) {
+  resetFilters({ apply: false });
+
+  if (dataset.railType) state.filters.types.add(dataset.railType);
+  if (dataset.railEra) state.filters.era = dataset.railEra;
+
+  applyFilters();
+
+  const target = document.getElementById("registry");
+  if (target) {
+    target.scrollIntoView({
+      behavior: state.prefersReduced ? "auto" : "smooth",
+      block: "start"
+    });
+  }
+
+  showToast(t("rail.filtered", { count: state.filtered.length }));
 }
 
 function handleFeaturedMediaError(event) {
@@ -1057,6 +1373,7 @@ function filtersActive() {
       filters.types.size ||
       filters.situations.size ||
       filters.country !== "all" ||
+      filters.era !== "all" ||
       filters.media ||
       filters.video ||
       filters.coming
@@ -1071,6 +1388,7 @@ function applyFilters() {
     if (filters.types.size && !filters.types.has(unit.typeKey)) return false;
     if (filters.situations.size && !filters.situations.has(unit.situation)) return false;
     if (filters.country !== "all" && unit.country !== filters.country) return false;
+    if (filters.era !== "all" && eraOf(unit.launchYear) !== filters.era) return false;
     if (filters.media && !hasMedia(unit)) return false;
     if (filters.video && !getVideoUrl(unit)) return false;
     if (filters.coming && unit.status !== "coming-soon") return false;
@@ -1214,19 +1532,21 @@ function refreshSelectionStyles() {
   }
 }
 
-function resetFilters() {
+function resetFilters({ apply = true } = {}) {
   state.filters.q = "";
   state.filters.types.clear();
   state.filters.situations.clear();
   state.filters.country = "all";
+  state.filters.era = "all";
   state.filters.media = false;
   state.filters.video = false;
   state.filters.coming = false;
 
   if (dom.search) dom.search.value = "";
   if (dom.countryFilter) dom.countryFilter.value = "all";
+  if (dom.eraFilter) dom.eraFilter.value = "all";
 
-  applyFilters();
+  if (apply) applyFilters();
 }
 
 /* ---------- Dossier ---------- */
@@ -1408,7 +1728,7 @@ function clearSelection({ updateUrl = true } = {}) {
 
 function selectUnit(
   id,
-  { scroll = false, focusMap = false, updateUrl = true, instant = false } = {}
+  { scroll = false, focusMap = false, toMap = false, updateUrl = true, instant = false } = {}
 ) {
   const unit = state.unitById.get(id);
   if (!unit) return;
@@ -1427,7 +1747,9 @@ function selectUnit(
     });
   }
 
-  if (scroll) {
+  if (toMap) {
+    setTimeout(() => scrollToMap(), 260);
+  } else if (scroll) {
     setTimeout(() => scrollToDossier(instant), focusMap ? 260 : 70);
   }
 }
@@ -1667,6 +1989,13 @@ function bindEvents() {
     });
   }
 
+  if (dom.eraFilter) {
+    dom.eraFilter.addEventListener("change", () => {
+      state.filters.era = dom.eraFilter.value;
+      applyFilters();
+    });
+  }
+
   if (dom.mediaFilter) {
     dom.mediaFilter.addEventListener("click", () => {
       state.filters.media = !state.filters.media;
@@ -1701,12 +2030,67 @@ function bindEvents() {
     });
   }
 
-  if (dom.featuredGrid) {
-    dom.featuredGrid.addEventListener("error", handleFeaturedMediaError, true);
-    dom.featuredGrid.addEventListener("click", (event) => {
+  if (dom.featuredRails) {
+    dom.featuredRails.addEventListener("error", handleFeaturedMediaError, true);
+
+    dom.featuredRails.addEventListener("click", (event) => {
       if (!(event.target instanceof Element)) return;
+
+      const nav = event.target.closest("[data-rail-nav]");
+      if (nav) {
+        const track = nav.closest(".rail")?.querySelector("[data-rail-track]");
+        if (!track) return;
+
+        track.scrollBy({
+          left: track.clientWidth * 0.85 * Number(nav.dataset.railNav),
+          behavior: state.prefersReduced ? "auto" : "smooth"
+        });
+        return;
+      }
+
+      const seeAll = event.target.closest("[data-rail-type], [data-rail-era]");
+      if (seeAll) {
+        applyRailFilter(seeAll.dataset);
+        return;
+      }
+
       const card = event.target.closest("[data-unit]");
       if (card) selectUnit(card.dataset.unit, { scroll: true, focusMap: true });
+    });
+
+    dom.featuredRails.addEventListener(
+      "scroll",
+      () => {
+        if (state.railFrame) cancelAnimationFrame(state.railFrame);
+        state.railFrame = requestAnimationFrame(syncRailArrows);
+      },
+      true
+    );
+
+    window.addEventListener("resize", () => {
+      if (state.railFrame) cancelAnimationFrame(state.railFrame);
+      state.railFrame = requestAnimationFrame(syncRailArrows);
+    });
+  }
+
+  if (dom.featuredBillboard) {
+    dom.featuredBillboard.addEventListener("error", handleFeaturedMediaError, true);
+
+    dom.featuredBillboard.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element)) return;
+
+      const button = event.target.closest("[data-unit-action]");
+      if (!button) return;
+
+      const unitId = button.dataset.unit;
+      const action = button.dataset.unitAction;
+
+      if (action === "map") {
+        selectUnit(unitId, { focusMap: true, toMap: true });
+        return;
+      }
+
+      selectUnit(unitId, { scroll: true, focusMap: false });
     });
   }
 
@@ -2023,6 +2407,7 @@ function renderAll() {
   buildTypeFilters();
   buildSituationFilters();
   buildCountryFilter();
+  buildEraFilter();
   buildLegend();
   buildTypeBars();
   applyFilters();
@@ -2112,6 +2497,9 @@ async function init() {
     bindEvents();
     initHeroScene();
     applyFilters();
+
+    /* Las filas recién se pueden medir ahora que #app es visible. */
+    syncRailArrows();
 
     state.map.invalidateSize();
     fitAll();

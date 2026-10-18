@@ -221,7 +221,8 @@
           </div>
           <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label" data-i18n="section.featured.many">UNIDADES CLAVE</span></p>
         </div>
-        <div class="featured-grid" id="featured-grid"></div>
+        <div class="billboard" id="featured-billboard" hidden></div>
+        <div class="rails" id="featured-rails"></div>
       </section>
 
       <section class="section" id="map-section">
@@ -244,6 +245,12 @@
               <span class="sr-only" data-i18n="filter.country">Filtrar por país</span>
               <select id="country-filter">
                 <option value="all" data-i18n="filter.allCountries">TODOS LOS PAÍSES</option>
+              </select>
+            </label>
+            <label class="select-wrap select-wrap--sm" for="era-filter">
+              <span class="sr-only" data-i18n="filter.era">Filtrar por época</span>
+              <select id="era-filter">
+                <option value="all" data-i18n="filter.allEras">TODAS LAS ÉPOCAS</option>
               </select>
             </label>
             <div class="filters filters--situation" id="situation-filters" role="group" aria-label="Filtrar por situación" data-i18n-attr="aria-label:filter.situation"></div>

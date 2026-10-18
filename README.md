@@ -64,9 +64,43 @@ visible y **no** hay `prefers-reduced-motion`; en cualquier otro caso se queda e
 
 ### Destacados
 
-La sección `// 01 — DESTACADOS` reúne las unidades clave. Se consideran destacadas las que
-tienen `Featured=TRUE` en la hoja **y** las que aportan media reproducible (video). Cada tarjeta
-abre el dossier correspondiente y centra el mapa en la unidad.
+La sección `// 01 — DESTACADOS` funciona como un catálogo: un **cartel** grande con la unidad
+más fotogénica y debajo **filas horizontales** con scroll-snap.
+
+Se consideran destacadas las unidades con `Featured=TRUE` en la hoja **y** las que aportan
+media reproducible (video). Cualquier tarjeta abre su dossier; el cartel ofrece además
+*Ver en el mapa*.
+
+Las filas se generan solas a partir de los datos:
+
+| Grupo | Filas | Qué agrupa |
+| --- | --- | --- |
+| — | Destacados | Unidades destacadas (6 fichas, las que tienen imagen primero). |
+| POR PROPULSIÓN | Diésel, Nuclear, Eléctrico, Manivela | El `typeKey` de cada unidad. |
+| POR ÉPOCA | Precursores, Gran Guerra, Entreguerras, Segunda Guerra, Guerra Fría, Modernos | Derivadas del año de botadura. |
+
+Cada fila muestra hasta **6 fichas** (`RAIL_LIMIT` en `app.js`) y el total entre paréntesis en
+el botón *Ver todas*, que limpia los filtros, aplica el de esa fila y baja al registro. En
+escritorio hay flechas `‹ ›` a los lados (se ocultan si la fila no desborda); en móvil se
+desliza con el dedo.
+
+#### Épocas
+
+Las épocas se derivan de `launchYear`, así que **no hace falta ninguna columna nueva** en la
+hoja: en cuanto una unidad tiene año, aparece en su fila y en el filtro.
+
+| Época | Rango |
+| --- | --- |
+| `precursores` | ≤ 1899 |
+| `gran-guerra` | 1900 – 1918 |
+| `entreguerras` | 1919 – 1938 |
+| `segunda-guerra` | 1939 – 1945 |
+| `guerra-fria` | 1946 – 1991 |
+| `modernos` | 1992 → |
+
+Las filas y las opciones del filtro solo aparecen si el tramo tiene unidades. Hoy 65 de las 160
+unidades no traen año, así que quedan fuera de las filas de época (sí están en las de propulsión
+y en el registro).
 
 ### Situación del museo
 
@@ -98,6 +132,7 @@ leyenda) y la versión de marcador.
 Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre, situación y estado:
 
 - **SITUACIÓN** — A flote, En el agua, En tierra, Bajo techo, Solo monumento (multi-selección).
+- **ÉPOCA** — un tramo histórico derivado del año de botadura (solo los tramos con unidades).
 - **CON MEDIA / CON VIDEO** — media disponible o video reproducible.
 - **PRÓXIMAMENTE** — unidades anunciadas pero todavía no visitables.
 
