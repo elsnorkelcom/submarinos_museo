@@ -5,6 +5,10 @@
 
 const DATA_URL = "data/submarines.json";
 const CONFIG_URL = "data/config.json";
+const I18N_URL = "data/i18n.json";
+const LANG_STORAGE_KEY = "snk-lang";
+const LANGS = ["es", "en"];
+const DEFAULT_LANG = "es";
 
 const TYPE_META = {
   diesel: { label: "Diésel", icon: "i-sub", color: "#ffb020" },
@@ -38,6 +42,8 @@ const state = {
   bounds: null,
   halo: null,
   config: {},
+  i18n: {},
+  lang: DEFAULT_LANG,
   filters: {
     q: "",
     types: new Set(),
@@ -66,6 +72,129 @@ const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ES
 
 const nextFrame = () =>
   new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+/* ---------- Idioma (ES / EN) ---------- */
+
+function tOrNull(key) {
+  const dictionary = state.i18n[state.lang];
+  if (!dictionary) return null;
+  const value = dictionary[key];
+  return typeof value === "string" ? value : null;
+}
+
+function t(key, vars) {
+  let value = key;
+
+  for (const dictionary of [state.i18n[state.lang], state.i18n[DEFAULT_LANG]]) {
+    if (dictionary && typeof dictionary[key] === "string") {
+      value = dictionary[key];
+      break;
+    }
+  }
+
+  if (!vars) return value;
+
+  return Object.entries(vars).reduce(
+    (accumulator, [name, replacement]) =>
+      accumulator.replaceAll(`{${name}}`, String(replacement)),
+    value
+  );
+}
+
+function typeLabelOf(typeKey) {
+  return t(`type.${typeKey}`);
+}
+
+function situationLabelOf(key) {
+  return SITUATION_META[key] ? t(`situation.${key}`) : "";
+}
+
+function countryLabel(name) {
+  const raw = String(name || "").trim();
+  if (!raw) return "";
+
+  const key = `country.${raw}`;
+  return (
+    tOrNull(key) ??
+    (state.i18n[DEFAULT_LANG] ? state.i18n[DEFAULT_LANG][key] : null) ??
+    raw
+  );
+}
+
+function bilingualCountry(name) {
+  const raw = String(name || "").trim();
+  if (!raw) return "";
+
+  return LANGS.map((lang) => {
+    const dictionary = state.i18n[lang];
+    return dictionary ? dictionary[`country.${raw}`] || "" : "";
+  })
+    .filter(Boolean)
+    .join(" ");
+}
+
+function translateNode(node) {
+  const key = node.dataset.i18n;
+  if (!key) return;
+
+  const value = tOrNull(key);
+  if (value == null) return;
+
+  if (value.includes("\n")) {
+    node.innerHTML = value
+      .split("\n")
+      .map((line) => esc(line))
+      .join("<br>");
+  } else {
+    node.textContent = value;
+  }
+}
+
+function applyStaticI18n() {
+  document.documentElement.lang = state.lang;
+
+  document.querySelectorAll("[data-i18n]").forEach(translateNode);
+
+  document.querySelectorAll("[data-i18n-attr]").forEach((node) => {
+    for (const pair of node.dataset.i18nAttr.split(";")) {
+      const [attribute, key] = pair.split(":").map((part) => part.trim());
+      if (!attribute || !key) continue;
+
+      const value = tOrNull(key);
+      if (value != null) node.setAttribute(attribute, value);
+    }
+  });
+
+  document.querySelectorAll("[data-lang]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.lang === state.lang));
+  });
+}
+
+function resolveLang() {
+  const requested = (new URLSearchParams(window.location.search).get("lang") || "").toLowerCase();
+  if (LANGS.includes(requested)) return requested;
+
+  try {
+    const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+    if (stored && LANGS.includes(stored)) return stored;
+  } catch {
+    /* localStorage puede no estar disponible en este contexto. */
+  }
+
+  const preferred = (navigator.language || "").slice(0, 2).toLowerCase();
+  return LANGS.includes(preferred) ? preferred : DEFAULT_LANG;
+}
+
+function configText(key, sheetValue) {
+  const translated = tOrNull(`config.${key}`);
+  if (state.lang !== DEFAULT_LANG && translated != null) return translated;
+  return sheetValue || translated || "";
+}
+
+function normalizeFooterYear(text) {
+  const year = String(new Date().getFullYear());
+  return String(text || "").replace(/(©\s*)(\d{4})/, `$1${year}`);
+}
 
 function cacheDom() {
   const byId = (id) => document.getElementById(id);
@@ -228,6 +357,17 @@ function situationMeta(key) {
   return SITUATION_META[key] || null;
 }
 
+function bilingualWords(prefix, key) {
+  if (!key) return "";
+
+  return LANGS.map((lang) => {
+    const dictionary = state.i18n[lang];
+    return dictionary ? dictionary[`${prefix}.${key}`] || "" : "";
+  })
+    .filter(Boolean)
+    .join(" ");
+}
+
 function resolveSituation(raw) {
   const key = String(raw.situation || "")
     .toLowerCase()
@@ -376,7 +516,10 @@ function normalizeUnit(raw, index) {
       unit.nationality,
       unit.class,
       unit.typeLabel,
-      unit.situationLabel
+      unit.situationLabel,
+      bilingualWords("type", typeKey),
+      bilingualWords("situation", situationKey),
+      bilingualCountry(unit.country)
     ].join(" ")
   );
 
@@ -387,7 +530,7 @@ async function fetchJSON(url) {
   const response = await fetch(url, { cache: "no-cache" });
 
   if (!response.ok) {
-    throw new Error(`No se pudo cargar ${url} (HTTP ${response.status}).`);
+    throw new Error(`${t("error.file")} ${url} (HTTP ${response.status}).`);
   }
 
   return response.json();
@@ -398,11 +541,14 @@ async function fetchJSON(url) {
 function hydrateConfig(config) {
   const cfg = config || {};
 
-  if (cfg.heroSubtitle) setText(dom.heroSubtitle, cfg.heroSubtitle);
-  if (cfg.featuredTitle) setText(dom.featuredTitle, cfg.featuredTitle);
-  if (cfg.aboutTitle) setText(dom.aboutTitle, cfg.aboutTitle);
-  if (cfg.aboutText) dom.aboutText.innerHTML = sanitizeRich(cfg.aboutText);
-  if (cfg.footerText) setText(dom.footerText, cfg.footerText);
+  setText(dom.heroSubtitle, configText("heroSubtitle", cfg.heroSubtitle));
+  setText(dom.featuredTitle, configText("featuredTitle", cfg.featuredTitle));
+  setText(dom.aboutTitle, configText("aboutTitle", cfg.aboutTitle));
+
+  const aboutText = configText("aboutText", cfg.aboutText);
+  if (aboutText) dom.aboutText.innerHTML = sanitizeRich(aboutText);
+
+  setText(dom.footerText, normalizeFooterYear(configText("footerText", cfg.footerText)));
 
   const logo = safeUrl(cfg.logo);
   if (logo) {
@@ -502,7 +648,7 @@ function buildTypeFilters() {
   dom.typeFilters.innerHTML = TYPE_ORDER.map((key) => {
     const meta = TYPE_META[key];
     return `<button class="chip" type="button" data-type="${key}" aria-pressed="false" style="--type-color:${meta.color}">
-      <span class="chip__dot" aria-hidden="true"></span>${esc(meta.label)}<span class="chip__count">${
+      <span class="chip__dot" aria-hidden="true"></span>${esc(typeLabelOf(key))}<span class="chip__count">${
       counts[key] || 0
     }</span>
     </button>`;
@@ -526,7 +672,7 @@ function buildSituationFilters() {
       const meta = SITUATION_META[key];
       return `<button class="chip" type="button" data-situation="${key}" aria-pressed="false" style="--sit-color:${meta.color}">
         <span class="sit-icon" aria-hidden="true"><svg class="icon"><use href="#${meta.icon}"></use></svg></span>${esc(
-        meta.label
+        situationLabelOf(key)
       )}<span class="chip__count">${counts.get(key)}</span>
       </button>`;
     })
@@ -543,16 +689,27 @@ function buildCountryFilter() {
     counts.set(unit.country, (counts.get(unit.country) || 0) + 1);
   }
 
-  const countries = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b, "es"));
+  const countries = Array.from(counts.keys()).sort((a, b) =>
+    countryLabel(a).localeCompare(countryLabel(b), state.lang)
+  );
+  const selected = state.filters.country;
 
-  dom.countryFilter.innerHTML = '<option value="all">TODOS LOS PAÍSES</option>';
+  dom.countryFilter.innerHTML = "";
+
+  const all = document.createElement("option");
+  all.value = "all";
+  all.textContent = t("filter.allCountries");
+  dom.countryFilter.append(all);
 
   for (const country of countries) {
     const option = document.createElement("option");
     option.value = country;
-    option.textContent = `${country} (${counts.get(country)})`;
+    option.textContent = `${countryLabel(country)} (${counts.get(country)})`;
     dom.countryFilter.append(option);
   }
+
+  dom.countryFilter.value = selected === "all" || counts.has(selected) ? selected : "all";
+  state.filters.country = dom.countryFilter.value;
 }
 
 function buildLegend() {
@@ -563,7 +720,7 @@ function buildLegend() {
   dom.mapLegend.innerHTML = TYPE_ORDER.map((key) => {
     const meta = TYPE_META[key];
     return `<span class="legend-item" style="--type-color:${meta.color}">
-      <span class="legend-dot" aria-hidden="true"></span>${esc(meta.label)} <b>${
+      <span class="legend-dot" aria-hidden="true"></span>${esc(typeLabelOf(key))} <b>${
       counts[key] || 0
     }</b>
     </span>`;
@@ -583,9 +740,9 @@ function buildTypeBars() {
     const percent = total ? Math.round((count / total) * 100) : 0;
     const width = Math.max(2, Math.round((count / max) * 100));
 
-    return `<div class="type-row" title="${percent}% del archivo">
+    return `<div class="type-row" title="${esc(t("intel.ofArchive", { percent }))}">
       <span class="type-row__label"><span class="legend-dot" style="--type-color:${meta.color}" aria-hidden="true"></span>${esc(
-      meta.label
+      typeLabelOf(key)
     )}</span>
       <span class="type-row__bar"><span style="--w:${width}%;--type-color:${meta.color}"></span></span>
       <span class="type-row__num">${count}</span>
@@ -597,20 +754,20 @@ function featuredCardMarkup(unit) {
   const meta = typeMeta(unit.typeKey);
   const image = unit.image
     ? `<img src="${esc(unit.image)}" alt="${esc(
-        `Submarino museo ${unit.name}`
+        t("alt.featured", { name: unit.name })
       )}" loading="lazy" referrerpolicy="no-referrer" data-card-fallback>`
     : `<span class="featured-card__fallback">${blueprintMarkup()}</span>`;
   const location =
     [unit.museum, unit.city].filter(Boolean).join(" · ") ||
-    unit.country ||
-    "Ubicación no documentada";
+    countryLabel(unit.country) ||
+    t("featured.locationUndocumented");
 
   return `<button class="featured-card" type="button" data-unit="${esc(unit.id)}">
     <span class="featured-card__media">
       ${image}
       <span class="featured-card__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
     meta.icon
-  }"></use></svg>${esc(unit.typeLabel)}</span>
+  }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
     </span>
     <span class="featured-card__body">
       <span class="featured-card__code">${esc(unit.dossier || unit.id)}</span>
@@ -624,10 +781,9 @@ function renderFeatured() {
   if (!dom.featuredGrid) return;
 
   const list = state.units.filter(isFeatured);
-  const label = list.length === 1 ? "UNIDAD CLAVE" : "UNIDADES CLAVE";
 
   setText(dom.featuredCount, list.length);
-  setText(dom.featuredCountLabel, label);
+  setText(dom.featuredCountLabel, t(list.length === 1 ? "section.featured.one" : "section.featured.many"));
   dom.featuredGrid.innerHTML = list.map(featuredCardMarkup).join("");
 }
 
@@ -683,7 +839,9 @@ function initMap() {
 
       return L.divIcon({
         className: "snk-cluster-wrap",
-        html: `<span class="snk-cluster${variant}" style="--size:${size}px" role="img" aria-label="${count} unidades en este sector">${count}</span>`,
+        html: `<span class="snk-cluster${variant}" style="--size:${size}px" role="img" aria-label="${esc(
+          t("map.cluster", { count })
+        )}">${count}</span>`,
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2]
       });
@@ -733,7 +891,9 @@ function initMap() {
       element.setAttribute("role", "button");
       element.setAttribute(
         "aria-label",
-        `${unit.name}. ${unit.museum || unit.city || unit.country}. Abrir expediente`
+        `${unit.name}. ${
+          unit.museum || unit.city || countryLabel(unit.country)
+        }. ${t("map.openDossier")}`
       );
 
       const markerElement = element.querySelector(".snk-marker");
@@ -762,8 +922,8 @@ function addRecenterControl(map) {
   recenter.onAdd = () => {
     const button = L.DomUtil.create("button", "map-recenter");
     button.type = "button";
-    button.title = "Ver todo el archivo";
-    button.setAttribute("aria-label", "Ver todas las unidades en el mapa");
+    button.title = t("map.recenter");
+    button.setAttribute("aria-label", t("map.recenterAria"));
     button.innerHTML =
       '<svg class="icon" aria-hidden="true"><use href="#i-crosshair"></use></svg>';
 
@@ -847,7 +1007,7 @@ function applyFilters() {
   setText(dom.mapCount, state.filtered.length);
   setText(
     dom.mapCountLabel,
-    state.filtered.length === 1 ? "UNIDAD LOCALIZADA" : "UNIDADES LOCALIZADAS"
+    t(state.filtered.length === 1 ? "section.map.one" : "section.map.many")
   );
   syncMarkers();
   renderRegistry();
@@ -868,9 +1028,9 @@ function syncMarkers() {
 
 function sortUnits(list) {
   const sorted = [...list];
-  const byName = (a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" });
+  const byName = (a, b) => a.name.localeCompare(b.name, state.lang, { sensitivity: "base" });
   const byCountry = (a, b) =>
-    a.country.localeCompare(b.country, "es", { sensitivity: "base" }) || byName(a, b);
+    a.country.localeCompare(b.country, state.lang, { sensitivity: "base" }) || byName(a, b);
 
   switch (dom.sortSelect ? dom.sortSelect.value : "default") {
     case "name":
@@ -905,7 +1065,9 @@ function rowMarkup(unit) {
   const sit = situationMeta(unit.situation);
   const coming = unit.status === "coming-soon";
   const sitInline = sit
-    ? `<span class="sit-inline" style="--sit-color:${sit.color}" title="${esc(sit.label)}" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>`
+    ? `<span class="sit-inline" style="--sit-color:${sit.color}" title="${esc(
+        situationLabelOf(unit.situation)
+      )}" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>`
     : "";
 
   return `<button class="unit-row${selected ? " is-selected" : ""}" type="button" data-unit="${esc(
@@ -914,14 +1076,14 @@ function rowMarkup(unit) {
     <span class="unit-row__code">${esc(unit.dossier || unit.id)}</span>
     <span class="unit-row__main">
       <span class="unit-row__name">${esc(unit.name)}</span>
-      <span class="unit-row__museum">${esc(unit.museum || "Museo no documentado")}${
-    coming ? " · PRÓXIMAMENTE" : ""
+      <span class="unit-row__museum">${esc(unit.museum || t("dossier.museumUndocumented"))}${
+    coming ? ` · ${esc(t("dossier.badgeComing"))}` : ""
   }</span>
     </span>
     <span class="unit-row__type" style="--type-color:${meta.color}">${sitInline}<span class="unit-row__dot" aria-hidden="true"></span>${esc(
-    unit.typeLabel
+    typeLabelOf(unit.typeKey)
   )}</span>
-    <span class="unit-row__country">${esc(unit.country || "—")}</span>
+    <span class="unit-row__country">${esc(countryLabel(unit.country) || "—")}</span>
     <span class="unit-row__year">${unit.launchYear || "—"}</span>
     <span class="unit-row__arrow" aria-hidden="true"><svg class="icon"><use href="#i-arrow"></use></svg></span>
   </button>`;
@@ -933,7 +1095,7 @@ function renderRegistry() {
   const list = sortUnits(state.filtered);
 
   setText(dom.registryCount, list.length);
-  setText(dom.registryCountLabel, list.length === 1 ? "REGISTRO" : "REGISTROS");
+  setText(dom.registryCountLabel, t(list.length === 1 ? "section.registry.one" : "section.registry.many"));
   dom.registryList.hidden = list.length === 0;
   dom.registryEmpty.hidden = list.length !== 0;
 
@@ -990,9 +1152,9 @@ function blueprintMarkup() {
 
 function placeholderMedia(label) {
   return `<div class="dossier__media dossier__media--empty" data-media>
-    <span class="media-tag">${esc(label || "SIN MEDIA")}</span>
+    <span class="media-tag">${esc(label || t("dossier.noMedia"))}</span>
     ${blueprintMarkup()}
-    <span>PLANO TÉCNICO // DIGITALIZACIÓN PENDIENTE</span>
+    <span>${esc(t("dossier.blueprintPending"))}</span>
   </div>`;
 }
 
@@ -1007,10 +1169,12 @@ function mediaMarkup(unit) {
     const thumbnail = unit.image || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
     return `<div class="dossier__media dossier__media--video${vertical ? " is-vertical" : ""}" data-media>
-      <img src="${esc(thumbnail)}" alt="${esc(`Vista de ${unit.name}`)}" referrerpolicy="no-referrer" data-fallback>
+      <img src="${esc(thumbnail)}" alt="${esc(
+        t("alt.view", { name: unit.name })
+      )}" referrerpolicy="no-referrer" data-fallback>
       <span class="media-tag">VIDEO${vertical ? " // VERTICAL" : " // YOUTUBE"}</span>
       <button class="play" type="button" data-play="${esc(videoUrl)}" aria-label="${esc(
-      `Reproducir video de ${unit.name}`
+      t("dossier.playVideo", { name: unit.name })
     )}"><span><svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg></span></button>
     </div>`;
   }
@@ -1025,10 +1189,10 @@ function mediaMarkup(unit) {
   }
 
   if (unit.image) {
-    const tag = unit.link ? "FOTO // ABRIR FUENTE" : "FOTO // ARCHIVO";
+    const tag = unit.link ? t("dossier.photoSource") : t("dossier.photoArchive");
     const inner = `<img src="${esc(unit.image)}" alt="${esc(
-      `Submarino museo ${unit.name}`
-    )}" referrerpolicy="no-referrer" data-fallback><span class="media-tag">${tag}</span>`;
+      t("alt.featured", { name: unit.name })
+    )}" referrerpolicy="no-referrer" data-fallback><span class="media-tag">${esc(tag)}</span>`;
 
     if (unit.link) {
       return `<a class="dossier__media" href="${esc(unit.link)}" target="_blank" rel="noopener noreferrer" data-media>${inner}</a>`;
@@ -1037,7 +1201,7 @@ function mediaMarkup(unit) {
     return `<div class="dossier__media" data-media>${inner}</div>`;
   }
 
-  return placeholderMedia("SIN MEDIA");
+  return placeholderMedia(t("dossier.noMedia"));
 }
 
 function specMarkup(label, value) {
@@ -1050,32 +1214,40 @@ function renderDossier(unit) {
   const meta = typeMeta(unit.typeKey);
   const sit = situationMeta(unit.situation);
   const statusBadges = [
-    unit.status === "coming-soon" ? '<span class="status-badge">PRÓXIMAMENTE</span>' : "",
+    unit.status === "coming-soon"
+      ? `<span class="status-badge">${esc(t("dossier.badgeComing"))}</span>`
+      : "",
     sit
       ? `<span class="sit-badge" style="--sit-color:${sit.color}"><span class="sit-icon" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>${esc(
-          sit.label
+          situationLabelOf(unit.situation)
         )}</span>`
       : unit.afloat
-        ? '<span class="status-badge status-badge--afloat">A FLOTE</span>'
+        ? `<span class="status-badge status-badge--afloat">${esc(t("dossier.badgeAfloat"))}</span>`
         : ""
   ].join("");
 
   const linkButton = unit.link
     ? `<a class="btn btn--primary btn--sm" href="${esc(
         unit.link
-      )}" target="_blank" rel="noopener noreferrer">ABRIR FUENTE <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>`
+      )}" target="_blank" rel="noopener noreferrer">${esc(
+        t("dossier.openSource")
+      )} <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>`
     : "";
 
+  const undocumented = t("dossier.undocumented");
   const specs = [
-    specMarkup("Clase", unit.class || "No documentada"),
-    specMarkup("Botadura", unit.launchYear ? String(unit.launchYear) : "No documentada"),
-    specMarkup("País", unit.country),
-    specMarkup("Armada / origen", unit.nationality || unit.country),
-    specMarkup("Ciudad", unit.city),
-    specMarkup("Museo", unit.museum),
-    specMarkup("Situación", sit ? sit.label : "No documentada"),
-    specMarkup("Estado", unit.status === "coming-soon" ? "En apertura" : "Museo abierto"),
-    specMarkup("Coordenadas", formatCoords(unit))
+    specMarkup(t("dossier.specClass"), unit.class || undocumented),
+    specMarkup(t("dossier.specLaunch"), unit.launchYear ? String(unit.launchYear) : undocumented),
+    specMarkup(t("dossier.specCountry"), countryLabel(unit.country)),
+    specMarkup(t("dossier.specNavy"), unit.nationality || countryLabel(unit.country)),
+    specMarkup(t("dossier.specCity"), unit.city),
+    specMarkup(t("dossier.specMuseum"), unit.museum),
+    specMarkup(t("dossier.specSituation"), sit ? situationLabelOf(unit.situation) : undocumented),
+    specMarkup(
+      t("dossier.specState"),
+      unit.status === "coming-soon" ? t("dossier.stateComing") : t("dossier.stateOpen")
+    ),
+    specMarkup(t("dossier.specCoords"), formatCoords(unit))
   ].join("");
 
   dom.dossierContent.classList.remove("is-empty");
@@ -1084,28 +1256,30 @@ function renderDossier(unit) {
       <div class="dossier__top">
         <span class="type-badge type-badge--icon" style="--type-color:${meta.color}">
           <svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg>${esc(
-    unit.typeLabel
+    typeLabelOf(unit.typeKey)
   )}
         </span>
         ${statusBadges}
         <span class="dossier__code">${esc(unit.dossier || unit.id)}</span>
       </div>
       <h3 class="dossier__title" id="dossier-title">${esc(unit.name)}</h3>
-      <p class="dossier__location">${esc(unit.museum || "Museo no documentado")}<br>${esc(
-    unit.city
-  )}, ${esc(unit.country)} // ${formatCoords(unit)}</p>
-      <p class="dossier__desc">${esc(
-        unit.description || "Sin descripción disponible en el archivo."
-      )}</p>
+      <p class="dossier__location">${esc(
+        unit.museum || t("dossier.museumUndocumented")
+      )}<br>${esc(unit.city)}, ${esc(countryLabel(unit.country))} // ${formatCoords(unit)}</p>
+      <p class="dossier__desc">${esc(unit.description || t("dossier.noDescription"))}</p>
       <dl class="specs">${specs}</dl>
       <div class="actions">
         ${linkButton}
         <button class="btn btn--ghost btn--sm" type="button" data-focus="${esc(
           unit.id
-        )}"><svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg> VER EN MAPA</button>
+        )}"><svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg> ${esc(
+    t("dossier.viewMap")
+  )}</button>
         <button class="btn btn--ghost btn--sm" type="button" data-copy="${esc(
           unit.id
-        )}"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg> COPIAR ENLACE</button>
+        )}"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg> ${esc(
+    t("dossier.copyLink")
+  )}</button>
       </div>
     </article>`;
 
@@ -1118,8 +1292,8 @@ function emptyDossierMarkup() {
       <span></span><span></span><span></span>
       <svg class="icon"><use href="#i-sub"></use></svg>
     </div>
-    <p class="kicker">SIN SELECCIÓN</p>
-    <p>Selecciona una unidad en el mapa o en el registro para abrir su expediente.</p>
+    <p class="kicker">${esc(t("dossier.emptyKicker"))}</p>
+    <p>${esc(t("dossier.emptyText"))}</p>
   </div>`;
 }
 
@@ -1244,7 +1418,7 @@ function playVideo(button) {
   }
 
   const unit = state.unitById.get(state.selectedId);
-  const title = unit ? unit.name : "Video del archivo";
+  const title = unit ? unit.name : t("dossier.videoFallback");
 
   media.classList.add("is-playing");
   media.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(
@@ -1269,7 +1443,7 @@ function handleMediaError(event) {
     return;
   }
 
-  media.outerHTML = placeholderMedia("IMAGEN NO DISPONIBLE");
+  media.outerHTML = placeholderMedia(t("dossier.imageUnavailable"));
 }
 
 /* ---------- Enlaces, URL y avisos ---------- */
@@ -1280,6 +1454,9 @@ function updateURL(id) {
 
     if (id) url.searchParams.set("unit", id);
     else url.searchParams.delete("unit");
+
+    if (state.lang && state.lang !== DEFAULT_LANG) url.searchParams.set("lang", state.lang);
+    else url.searchParams.delete("lang");
 
     window.history.replaceState(
       { unit: id || null },
@@ -1344,9 +1521,9 @@ async function copyUnitLink(id) {
 
   try {
     await copyText(url.toString());
-    showToast("ENLACE DEL EXPEDIENTE COPIADO");
+    showToast(t("toast.copied"));
   } catch {
-    showToast("NO SE PUDO COPIAR EL ENLACE");
+    showToast(t("toast.copyFailed"));
   }
 }
 
@@ -1458,6 +1635,12 @@ function bindEvents() {
     dom.dossierClose.addEventListener("click", () => clearSelection());
   }
 
+  document.querySelectorAll("[data-lang]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.lang !== state.lang) setLang(button.dataset.lang);
+    });
+  });
+
   if (dom.dossierContent) {
     dom.dossierContent.addEventListener("error", handleMediaError, true);
 
@@ -1506,6 +1689,42 @@ function bindEvents() {
 
 /* ---------- Arranque ---------- */
 
+function renderAll() {
+  applyStaticI18n();
+  hydrateConfig(state.config);
+  renderStats();
+  renderFeatured();
+  buildTypeFilters();
+  buildSituationFilters();
+  buildCountryFilter();
+  buildLegend();
+  buildTypeBars();
+  applyFilters();
+
+  if (state.selectedId) {
+    const unit = state.unitById.get(state.selectedId);
+    if (unit) renderDossier(unit);
+  }
+}
+
+function setLang(lang, { persist = true } = {}) {
+  const next = LANGS.includes(lang) ? lang : DEFAULT_LANG;
+  if (next === state.lang) return;
+
+  state.lang = next;
+
+  if (persist) {
+    try {
+      window.localStorage.setItem(LANG_STORAGE_KEY, next);
+    } catch {
+      /* localStorage puede no estar disponible en este contexto. */
+    }
+  }
+
+  renderAll();
+  updateURL(state.selectedId);
+}
+
 function showBootError(message, hint) {
   if (!dom.boot) return;
 
@@ -1514,11 +1733,11 @@ function showBootError(message, hint) {
   dom.boot.classList.remove("is-done");
   dom.boot.setAttribute("role", "alert");
   dom.boot.innerHTML = `<div class="boot__error">
-    <p class="kicker">ERROR DE SISTEMA</p>
-    <h2>ARCHIVO NO DISPONIBLE</h2>
+    <p class="kicker">${esc(t("error.kicker"))}</p>
+    <h2>${esc(t("error.title"))}</h2>
     <p>${esc(message)}</p>
     <p class="boot__sub">${esc(hint)}</p>
-    <button class="btn btn--primary" type="button" id="boot-retry">REINTENTAR</button>
+    <button class="btn btn--primary" type="button" id="boot-retry">${esc(t("error.retry"))}</button>
   </div>`;
 
   const retry = document.getElementById("boot-retry");
@@ -1528,33 +1747,36 @@ function showBootError(message, hint) {
 async function init() {
   cacheDom();
 
+  state.lang = resolveLang();
+
   try {
-    if (!window.L) throw new Error("No se pudo cargar el motor del mapa desde la red.");
+    const dictionary = await fetchJSON(I18N_URL);
+    state.i18n = dictionary && typeof dictionary === "object" ? dictionary : {};
+  } catch (error) {
+    console.warn("No se pudo cargar el diccionario de idiomas.", error);
+    state.i18n = {};
+  }
+
+  try {
+    if (!window.L) throw new Error(t("error.leaflet"));
 
     const [rawUnits, config] = await Promise.all([fetchJSON(DATA_URL), fetchJSON(CONFIG_URL)]);
 
     if (!Array.isArray(rawUnits)) {
-      throw new Error("El archivo de unidades no tiene el formato esperado.");
+      throw new Error(t("error.format"));
     }
 
     const units = rawUnits.map(normalizeUnit).filter(Boolean);
 
     if (!units.length) {
-      throw new Error("El archivo de unidades está vacío o no contiene coordenadas válidas.");
+      throw new Error(t("error.empty"));
     }
 
     state.units = units;
     state.unitById = new Map(units.map((unit) => [unit.id, unit]));
     state.config = config && typeof config === "object" ? config : {};
 
-    hydrateConfig(state.config);
-    renderStats();
-    renderFeatured();
-    buildTypeFilters();
-    buildSituationFilters();
-    buildCountryFilter();
-    buildLegend();
-    buildTypeBars();
+    renderAll();
 
     if (dom.app) dom.app.hidden = false;
 
@@ -1568,8 +1790,11 @@ async function init() {
     fitAll();
 
     const routeId = new URLSearchParams(window.location.search).get("unit");
+    const hasRoute = Boolean(routeId && state.unitById.has(routeId));
 
-    if (routeId && state.unitById.has(routeId)) {
+    updateURL(hasRoute ? routeId : null);
+
+    if (hasRoute) {
       window.setTimeout(() => {
         selectUnit(routeId, {
           scroll: true,
@@ -1586,13 +1811,10 @@ async function init() {
   } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof Error ? error.message : "Ocurrió un error inesperado al abrir el archivo.";
+    const message = error instanceof Error ? error.message : t("error.unexpected");
 
     const hint =
-      window.location.protocol === "file:"
-        ? "Abre el sitio desde un servidor local. Por ejemplo: python -m http.server 8000"
-        : "Revisa la conexión y vuelve a intentarlo. Los datos se sirven como archivos estáticos.";
+      window.location.protocol === "file:" ? t("error.fileHint") : t("error.networkHint");
 
     showBootError(message, hint);
   }

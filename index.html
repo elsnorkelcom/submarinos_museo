@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#070b09">
-  <title>Submarinos Museo del Mundo // Archivo Naval</title>
-  <meta name="description" content="Archivo interactivo de 160 submarinos preservados como museo en 35 países. Mapa táctico, expedientes técnicos y multimedia.">
+  <title data-i18n="meta.title">Submarinos Museo del Mundo // Archivo Naval</title>
+  <meta name="description" content="Archivo interactivo de 160 submarinos preservados como museo en 35 países. Mapa táctico, expedientes técnicos y multimedia." data-i18n-attr="content:meta.description">
   <link rel="canonical" href="https://submarinos-museo-del-mundo.elsnorkel.com/">
-  <meta property="og:title" content="Submarinos Museo del Mundo // Archivo Naval">
-  <meta property="og:description" content="160 submarinos museo. 35 países. Un mapa táctico para explorar el archivo.">
+  <meta property="og:title" content="Submarinos Museo del Mundo // Archivo Naval" data-i18n-attr="content:meta.ogTitle">
+  <meta property="og:description" content="160 submarinos museo. 35 países. Un mapa táctico para explorar el archivo." data-i18n-attr="content:meta.ogDescription">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://submarinos-museo-del-mundo.elsnorkel.com/">
   <meta property="og:site_name" content="Submarinos Museo del Mundo">
@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
-  <a class="skip-link" href="#map-section">Saltar al mapa táctico</a>
+  <a class="skip-link" href="#map-section" data-i18n="skip">Saltar al mapa táctico</a>
 
   <svg class="svg-sprite" aria-hidden="true" width="0" height="0">
     <symbol id="i-sub" viewBox="0 0 24 24">
@@ -115,31 +115,35 @@
 
   <div id="boot" class="boot" role="status" aria-live="polite">
     <div class="boot__radar" aria-hidden="true"><span></span></div>
-    <p class="boot__label">CARGANDO ARCHIVO NAVAL</p>
-    <p class="boot__sub">SINCRONIZANDO UNIDADES...</p>
+    <p class="boot__label" data-i18n="boot.loading">CARGANDO ARCHIVO NAVAL</p>
+    <p class="boot__sub" data-i18n="boot.sync">SINCRONIZANDO UNIDADES...</p>
   </div>
 
   <div id="app" hidden>
     <header class="hud-header">
-      <a class="brand" href="#top" aria-label="elSnorkel, inicio">
+      <a class="brand" href="#top" aria-label="elSnorkel, inicio" data-i18n-attr="aria-label:brand.home">
         <img src="assets/img/logo.jpg" alt="" class="brand__mark" width="40" height="40">
         <span class="brand__text">
           <strong>ELSNORKEL</strong>
-          <small>ARCHIVO SUBMARINO</small>
+          <small data-i18n="brand.tagline">ARCHIVO SUBMARINO</small>
         </span>
       </a>
       <div class="hud-status">
         <span class="status-dot" aria-hidden="true"></span>
-        <span>SISTEMA ONLINE</span>
+        <span data-i18n="header.online">SISTEMA ONLINE</span>
         <span class="hud-status__sep" aria-hidden="true">/</span>
-        <span><b id="header-count">--</b> UNIDADES</span>
+        <span><b id="header-count">--</b> <span data-i18n="header.units">UNIDADES</span></span>
       </div>
-      <nav class="hud-nav" aria-label="Secciones">
-        <a href="#featured">DESTACADOS</a>
-        <a href="#map-section">MAPA</a>
-        <a href="#registry">REGISTRO</a>
-        <a href="#intel">INTEL</a>
+      <nav class="hud-nav" aria-label="Secciones" data-i18n-attr="aria-label:nav.aria">
+        <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
+        <a href="#map-section" data-i18n="nav.map">MAPA</a>
+        <a href="#registry" data-i18n="nav.registry">REGISTRO</a>
+        <a href="#intel" data-i18n="nav.intel">INTEL</a>
       </nav>
+      <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-attr="aria-label:lang.switch">
+        <button class="lang-switch__btn" type="button" data-lang="es" aria-pressed="true" title="Español">ES</button>
+        <button class="lang-switch__btn" type="button" data-lang="en" aria-pressed="false" title="English">EN</button>
+      </div>
     </header>
 
     <main>
@@ -160,23 +164,23 @@
           <svg class="hero__sub" viewBox="0 0 24 24"><use href="#i-sub"></use></svg>
         </div>
         <div class="hero__content">
-          <p class="kicker"><span class="kicker__line"></span>ARCHIVO NAVAL // ACCESO PÚBLICO</p>
+          <p class="kicker"><span class="kicker__line"></span><span data-i18n="hero.kicker">ARCHIVO NAVAL // ACCESO PÚBLICO</span></p>
           <h1 class="hero__title">
-            <span class="hero__title-solid">SUBMARINOS</span>
-            <span class="hero__title-outline">MUSEO DEL MUNDO</span>
+            <span class="hero__title-solid" data-i18n="hero.title1">SUBMARINOS</span>
+            <span class="hero__title-outline" data-i18n="hero.title2">MUSEO DEL MUNDO</span>
           </h1>
           <p class="hero__subtitle" id="hero-subtitle">Un archivo interactivo de gigantes de acero y sus historias.</p>
           <div class="hero__actions">
             <a href="#map-section" class="btn btn--primary btn--lg">
-              ABRIR MAPA TÁCTICO <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+              <span data-i18n="hero.cta">ABRIR MAPA TÁCTICO</span> <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
             </a>
-            <a href="#registry" class="btn btn--ghost">VER REGISTRO</a>
+            <a href="#registry" class="btn btn--ghost" data-i18n="hero.cta2">VER REGISTRO</a>
           </div>
           <dl class="hero__stats">
-            <div><dt>UNIDADES</dt><dd id="hero-total">--</dd></div>
-            <div><dt>PAÍSES</dt><dd id="hero-countries">--</dd></div>
-            <div><dt>PROPULSIONES</dt><dd id="hero-types">04</dd></div>
-            <div><dt>CON MEDIA</dt><dd id="hero-media">--</dd></div>
+            <div><dt data-i18n="hero.stat1">UNIDADES</dt><dd id="hero-total">--</dd></div>
+            <div><dt data-i18n="hero.stat2">PAÍSES</dt><dd id="hero-countries">--</dd></div>
+            <div><dt data-i18n="hero.stat3">PROPULSIONES</dt><dd id="hero-types">04</dd></div>
+            <div><dt data-i18n="hero.stat4">CON MEDIA</dt><dd id="hero-media">--</dd></div>
           </dl>
         </div>
         <span class="corner corner--tl" aria-hidden="true"></span>
@@ -188,10 +192,10 @@
       <section class="section" id="featured">
         <div class="section__head">
           <div>
-            <p class="kicker">// 01 — DESTACADOS</p>
+            <p class="kicker" data-i18n="section.featured.kicker">// 01 — DESTACADOS</p>
             <h2 class="section__title" id="featured-title">GIGANTES DE LA HISTORIA</h2>
           </div>
-          <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label">UNIDADES CLAVE</span></p>
+          <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label" data-i18n="section.featured.many">UNIDADES CLAVE</span></p>
         </div>
         <div class="featured-grid" id="featured-grid"></div>
       </section>
@@ -199,35 +203,35 @@
       <section class="section" id="map-section">
         <div class="section__head">
           <div>
-            <p class="kicker">// 02 — TEATRO DE OPERACIONES</p>
-            <h2 class="section__title">MAPA TÁCTICO</h2>
+            <p class="kicker" data-i18n="section.map.kicker">// 02 — TEATRO DE OPERACIONES</p>
+            <h2 class="section__title" data-i18n="section.map.title">MAPA TÁCTICO</h2>
           </div>
-          <p class="section__note"><b id="map-count">--</b> <span id="map-count-label">UNIDADES LOCALIZADAS</span></p>
+          <p class="section__note"><b id="map-count">--</b> <span id="map-count-label" data-i18n="section.map.many">UNIDADES LOCALIZADAS</span></p>
         </div>
 
         <div class="map-shell panel">
           <div class="map-controls">
             <label class="search" for="search">
               <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
-              <input id="search" type="search" placeholder="BUSCAR UNIDAD, MUSEO O CIUDAD..." autocomplete="off" spellcheck="false">
+              <input id="search" type="search" placeholder="BUSCAR UNIDAD, MUSEO O CIUDAD..." autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:filter.search">
             </label>
-            <div class="filters" id="type-filters" role="group" aria-label="Filtrar por propulsión"></div>
+            <div class="filters" id="type-filters" role="group" aria-label="Filtrar por propulsión" data-i18n-attr="aria-label:filter.propulsion"></div>
             <label class="select-wrap" for="country-filter">
-              <span class="sr-only">Filtrar por país</span>
+              <span class="sr-only" data-i18n="filter.country">Filtrar por país</span>
               <select id="country-filter">
-                <option value="all">TODOS LOS PAÍSES</option>
+                <option value="all" data-i18n="filter.allCountries">TODOS LOS PAÍSES</option>
               </select>
             </label>
-            <div class="filters filters--situation" id="situation-filters" role="group" aria-label="Filtrar por situación"></div>
-            <button class="chip chip--toggle" id="media-filter" type="button" aria-pressed="false">CON MEDIA</button>
-            <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false">CON VIDEO</button>
-            <button class="chip chip--toggle" id="coming-filter" type="button" aria-pressed="false">PRÓXIMAMENTE</button>
-            <button class="chip chip--reset" id="reset-filters" type="button" hidden>LIMPIAR</button>
+            <div class="filters filters--situation" id="situation-filters" role="group" aria-label="Filtrar por situación" data-i18n-attr="aria-label:filter.situation"></div>
+            <button class="chip chip--toggle" id="media-filter" type="button" aria-pressed="false" data-i18n="filter.media">CON MEDIA</button>
+            <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false" data-i18n="filter.video">CON VIDEO</button>
+            <button class="chip chip--toggle" id="coming-filter" type="button" aria-pressed="false" data-i18n="filter.coming">PRÓXIMAMENTE</button>
+            <button class="chip chip--reset" id="reset-filters" type="button" hidden data-i18n="filter.clear">LIMPIAR</button>
           </div>
 
           <div class="map-wrap">
-            <div id="map" role="application" aria-label="Mapa de submarinos museo"></div>
-            <div class="map-legend" id="map-legend" aria-label="Leyenda de propulsiones"></div>
+            <div id="map" role="application" aria-label="Mapa de submarinos museo" data-i18n-attr="aria-label:map.aria"></div>
+            <div class="map-legend" id="map-legend" aria-label="Leyenda de propulsiones" data-i18n-attr="aria-label:map.legend"></div>
             <div class="map-hud" aria-hidden="true">
               <span id="map-zoom">Z 02</span>
               <span id="map-coords">20.0N / 0.0E</span>
@@ -239,11 +243,11 @@
       <section class="section dossier-section" id="dossier">
         <div class="section__head">
           <div>
-            <p class="kicker">// 03 — EXPEDIENTE</p>
-            <h2 class="section__title">DOSSIER DE UNIDAD</h2>
+            <p class="kicker" data-i18n="section.dossier.kicker">// 03 — EXPEDIENTE</p>
+            <h2 class="section__title" data-i18n="section.dossier.title">DOSSIER DE UNIDAD</h2>
           </div>
           <button class="btn btn--ghost btn--sm" id="dossier-close" type="button" hidden>
-            CERRAR <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+            <span data-i18n="dossier.close">CERRAR</span> <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
           </button>
         </div>
         <div id="dossier-content" class="dossier panel is-empty" aria-live="polite">
@@ -252,8 +256,8 @@
               <span></span><span></span><span></span>
               <svg class="icon"><use href="#i-sub"></use></svg>
             </div>
-            <p class="kicker">SIN SELECCIÓN</p>
-            <p>Selecciona una unidad en el mapa o en el registro para abrir su expediente.</p>
+            <p class="kicker" data-i18n="dossier.emptyKicker">SIN SELECCIÓN</p>
+            <p data-i18n="dossier.emptyText">Selecciona una unidad en el mapa o en el registro para abrir su expediente.</p>
           </div>
         </div>
       </section>
@@ -261,19 +265,19 @@
       <section class="section" id="registry">
         <div class="section__head">
           <div>
-            <p class="kicker">// 04 — REGISTRO</p>
-            <h2 class="section__title">UNIDADES DOCUMENTADAS</h2>
+            <p class="kicker" data-i18n="section.registry.kicker">// 04 — REGISTRO</p>
+            <h2 class="section__title" data-i18n="section.registry.title">UNIDADES DOCUMENTADAS</h2>
           </div>
           <div class="registry-tools">
-            <span class="section__note"><b id="registry-count">--</b> <span id="registry-count-label">REGISTROS</span></span>
+            <span class="section__note"><b id="registry-count">--</b> <span id="registry-count-label" data-i18n="section.registry.many">REGISTROS</span></span>
             <label class="select-wrap select-wrap--sm" for="sort-select">
-              <span class="sr-only">Ordenar registro</span>
+              <span class="sr-only" data-i18n="filter.sort">Ordenar registro</span>
               <select id="sort-select">
-                <option value="default">ORDEN DE ARCHIVO</option>
-                <option value="name">NOMBRE A–Z</option>
-                <option value="year-desc">BOTADURA ↓</option>
-                <option value="year-asc">BOTADURA ↑</option>
-                <option value="country">PAÍS A–Z</option>
+                <option value="default" data-i18n="sort.default">ORDEN DE ARCHIVO</option>
+                <option value="name" data-i18n="sort.name">NOMBRE A–Z</option>
+                <option value="year-desc" data-i18n="sort.yearDesc">BOTADURA ↓</option>
+                <option value="year-asc" data-i18n="sort.yearAsc">BOTADURA ↑</option>
+                <option value="country" data-i18n="sort.country">PAÍS A–Z</option>
               </select>
             </label>
           </div>
@@ -281,18 +285,18 @@
 
         <div class="registry panel">
           <div class="registry__head" aria-hidden="true">
-            <span>COD</span>
-            <span>UNIDAD / MUSEO</span>
-            <span>TIPO</span>
-            <span>PAÍS</span>
-            <span>AÑO</span>
+            <span data-i18n="registry.code">COD</span>
+            <span data-i18n="registry.unit">UNIDAD / MUSEO</span>
+            <span data-i18n="registry.type">TIPO</span>
+            <span data-i18n="registry.country">PAÍS</span>
+            <span data-i18n="registry.year">AÑO</span>
             <span></span>
           </div>
           <div class="registry__list" id="registry-list"></div>
           <div class="registry__empty" id="registry-empty" hidden>
-            <p class="kicker">SIN COINCIDENCIAS</p>
-            <p>No hay unidades que coincidan con los filtros activos.</p>
-            <button class="btn btn--ghost btn--sm" id="registry-reset" type="button">LIMPIAR FILTROS</button>
+            <p class="kicker" data-i18n="registry.emptyKicker">SIN COINCIDENCIAS</p>
+            <p data-i18n="registry.emptyText">No hay unidades que coincidan con los filtros activos.</p>
+            <button class="btn btn--ghost btn--sm" id="registry-reset" type="button" data-i18n="filter.clearAll">LIMPIAR FILTROS</button>
           </div>
         </div>
       </section>
@@ -300,33 +304,33 @@
       <section class="section" id="intel">
         <div class="section__head">
           <div>
-            <p class="kicker">// 05 — INTEL</p>
-            <h2 class="section__title">EL ARCHIVO EN NÚMEROS</h2>
+            <p class="kicker" data-i18n="section.intel.kicker">// 05 — INTEL</p>
+            <h2 class="section__title" data-i18n="intel.title">EL ARCHIVO EN NÚMEROS</h2>
           </div>
           <p class="section__note">SNAPSHOT <span id="generated-at">--</span></p>
         </div>
 
         <div class="intel-grid">
-          <article class="intel-card panel"><span class="kicker">TOTAL</span><strong id="stat-total">--</strong><small>UNIDADES</small></article>
-          <article class="intel-card panel"><span class="kicker">PAÍSES</span><strong id="stat-countries">--</strong><small>CON PRESENCIA</small></article>
-          <article class="intel-card panel"><span class="kicker">MUSEOS</span><strong id="stat-museums">--</strong><small>SEDES ÚNICAS</small></article>
-          <article class="intel-card panel"><span class="kicker">MEDIA</span><strong id="stat-media">--</strong><small>CON FOTO O VIDEO</small></article>
-          <article class="intel-card panel"><span class="kicker">PRÓXIMAMENTE</span><strong id="stat-coming">--</strong><small>EN APERTURA</small></article>
-          <article class="intel-card panel"><span class="kicker">WWII</span><strong id="stat-ww2">--</strong><small>BOTADOS 1939–45</small></article>
+          <article class="intel-card panel"><span class="kicker" data-i18n="intel.total">TOTAL</span><strong id="stat-total">--</strong><small data-i18n="intel.totalSmall">UNIDADES</small></article>
+          <article class="intel-card panel"><span class="kicker" data-i18n="intel.countries">PAÍSES</span><strong id="stat-countries">--</strong><small data-i18n="intel.countriesSmall">CON PRESENCIA</small></article>
+          <article class="intel-card panel"><span class="kicker" data-i18n="intel.museums">MUSEOS</span><strong id="stat-museums">--</strong><small data-i18n="intel.museumsSmall">SEDES ÚNICAS</small></article>
+          <article class="intel-card panel"><span class="kicker" data-i18n="intel.media">MEDIA</span><strong id="stat-media">--</strong><small data-i18n="intel.mediaSmall">CON FOTO O VIDEO</small></article>
+          <article class="intel-card panel"><span class="kicker" data-i18n="intel.coming">PRÓXIMAMENTE</span><strong id="stat-coming">--</strong><small data-i18n="intel.comingSmall">EN APERTURA</small></article>
+          <article class="intel-card panel"><span class="kicker" data-i18n="intel.ww2">WWII</span><strong id="stat-ww2">--</strong><small data-i18n="intel.ww2Small">BOTADOS 1939–45</small></article>
         </div>
 
         <div class="intel-panels">
           <article class="panel type-panel">
-            <div class="panel__head"><span class="kicker">DISTRIBUCIÓN</span><h3>POR PROPULSIÓN</h3></div>
+            <div class="panel__head"><span class="kicker" data-i18n="intel.distribution">DISTRIBUCIÓN</span><h3 data-i18n="intel.byPropulsion">POR PROPULSIÓN</h3></div>
             <div id="type-bars" class="type-bars"></div>
           </article>
           <article class="panel coverage-panel">
-            <div class="panel__head"><span class="kicker">COBERTURA</span><h3>ARCHIVO MULTIMEDIA</h3></div>
+            <div class="panel__head"><span class="kicker" data-i18n="intel.coverage">COBERTURA</span><h3 data-i18n="intel.coverageTitle">ARCHIVO MULTIMEDIA</h3></div>
             <div class="coverage">
               <strong id="coverage-pct">--%</strong>
-              <p>de las unidades tiene foto o video validado.</p>
+              <p data-i18n="intel.coverageText">de las unidades tiene foto o video validado.</p>
               <div class="coverage__bar"><span id="coverage-bar"></span></div>
-              <p class="coverage__fine">El resto se muestra con plano técnico hasta completar la digitalización.</p>
+              <p class="coverage__fine" data-i18n="intel.coverageFine">El resto se muestra con plano técnico hasta completar la digitalización.</p>
             </div>
           </article>
         </div>
@@ -335,18 +339,18 @@
       <section class="section about" id="about">
         <div class="about__grid">
           <div class="about__logo">
-            <img src="assets/img/logo.jpg" alt="elSnorkel.com — Comunidad Submarinista Latinoamericana" width="180" height="180">
-            <span class="about__stamp">ARCHIVO<br>ABIERTO</span>
+            <img src="assets/img/logo.jpg" alt="elSnorkel.com — Comunidad Submarinista Latinoamericana" width="180" height="180" data-i18n-attr="alt:about.logoAlt">
+            <span class="about__stamp" data-i18n="about.stamp">ARCHIVO<br>ABIERTO</span>
           </div>
           <div class="about__body">
-            <p class="kicker">// 06 — ORIGEN</p>
+            <p class="kicker" data-i18n="section.about.kicker">// 06 — ORIGEN</p>
             <h2 class="section__title" id="about-title">SOBRE EL ARCHIVO</h2>
             <div id="about-text" class="about__text"></div>
             <dl class="about__meta">
-              <div><dt>FUENTE</dt><dd>Archivo elSnorkel.com</dd></div>
-              <div><dt>MAPA</dt><dd>Leaflet + Esri Dark Gray</dd></div>
-              <div><dt>DATOS</dt><dd>Snapshot estático validado</dd></div>
-              <div><dt>LICENCIA</dt><dd>Contenido del proyecto</dd></div>
+              <div><dt data-i18n="about.source">FUENTE</dt><dd data-i18n="about.sourceValue">Archivo elSnorkel.com</dd></div>
+              <div><dt data-i18n="about.map">MAPA</dt><dd>Leaflet + Esri Dark Gray</dd></div>
+              <div><dt data-i18n="about.data">DATOS</dt><dd data-i18n="about.dataValue">Snapshot estático validado</dd></div>
+              <div><dt data-i18n="about.license">LICENCIA</dt><dd data-i18n="about.licenseValue">Contenido del proyecto</dd></div>
             </dl>
           </div>
         </div>
@@ -357,20 +361,20 @@
       <div class="footer__top">
         <a class="brand brand--footer" href="#top">
           <img src="assets/img/logo.jpg" alt="" class="brand__mark" width="36" height="36">
-          <span class="brand__text"><strong>ELSNORKEL</strong><small>ARCHIVO SUBMARINO</small></span>
+          <span class="brand__text"><strong>ELSNORKEL</strong><small data-i18n="brand.tagline">ARCHIVO SUBMARINO</small></span>
         </a>
-        <nav class="footer__nav" aria-label="Enlaces de pie">
-          <a href="#featured">DESTACADOS</a>
-          <a href="#map-section">MAPA</a>
-          <a href="#registry">REGISTRO</a>
-          <a href="#intel">INTEL</a>
-          <a href="#about">ORIGEN</a>
+        <nav class="footer__nav" aria-label="Enlaces de pie" data-i18n-attr="aria-label:footer.navAria">
+          <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
+          <a href="#map-section" data-i18n="nav.map">MAPA</a>
+          <a href="#registry" data-i18n="nav.registry">REGISTRO</a>
+          <a href="#intel" data-i18n="nav.intel">INTEL</a>
+          <a href="#about" data-i18n="nav.origin">ORIGEN</a>
         </nav>
         <div class="social" id="social-links"></div>
       </div>
       <div class="footer__bottom">
         <p id="footer-text">© 2026 elSnorkel.com. Todos los derechos reservados.</p>
-        <p class="footer__fine">UN PROYECTO DE ELSNORKEL.COM · DATOS: GOOGLE SHEETS SNAPSHOT <span id="footer-date"></span></p>
+        <p class="footer__fine"><span data-i18n="footer.fine">UN PROYECTO DE ELSNORKEL.COM · DATOS: GOOGLE SHEETS SNAPSHOT</span> <span id="footer-date"></span></p>
       </div>
     </footer>
   </div>

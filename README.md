@@ -14,6 +14,7 @@ para cada unidad, pensado primero para móvil.
 - `assets/js/app.js` — carga de datos, mapa, filtros, registro y dossier.
 - `data/submarines.json` — 160 unidades normalizadas con coordenadas, tipo, país, museo y media.
 - `data/config.json` — textos, logo, imagen de héroe y redes sociales.
+- `data/i18n.json` — diccionario de la interfaz en español e inglés.
 - `scripts/import_sheets.py` — genera los JSON a partir de las hojas publicadas de Google Sheets.
 - `scripts/make_coins.py` — genera las monedas SVG de las 5 situaciones del museo.
 
@@ -66,6 +67,23 @@ Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre, situaci�
 Al seleccionar una unidad (en el mapa, en el registro o en destacados) se abre su expediente:
 tipo con icono, estado, ubicación, especificaciones y media. La media admite imagen o
 video público de YouTube; si no hay media se muestra un plano técnico provisional.
+
+### Idiomas (ES / EN)
+
+El sitio es bilingüe. El conmutador `ES | EN` está en la cabecera y la elección se guarda en
+`localStorage`; también se puede forzar con `?lang=en` (el parámetro se sincroniza en la URL).
+
+- Los textos de la interfaz viven en `data/i18n.json` (`es` y `en`), aplicados por
+  `data-i18n` / `data-i18n-attr` en el HTML y por la función `t()` en JavaScript.
+- Los nombres de país se traducen con las claves `country.*`.
+- Los textos de `data/config.json` (subtítulo del héroe, título y texto de «acerca de», pie)
+  usan la versión inglesa de `config.*` cuando el idioma es `en`.
+- El **contenido de las fichas** (nombre, museo, ciudad, clase y descripción) se muestra tal
+  como llega de la hoja. Para traducirlo, añade columnas en inglés (por ejemplo
+  `Name_EN`, `Description_EN`) y amplía `scripts/import_sheets.py`.
+
+Para añadir otro idioma: copia el bloque `en` en `data/i18n.json`, traduce los valores y añade
+el código a la lista `LANGS` de `assets/js/app.js` y un botón en el conmutador de la cabecera.
 
 ## Desarrollo local
 
@@ -123,6 +141,7 @@ CNAME
 data/
   submarines.json
   config.json
+  i18n.json
 assets/
   css/app.css
   js/app.js
