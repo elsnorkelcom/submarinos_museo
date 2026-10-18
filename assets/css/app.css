@@ -930,8 +930,8 @@ a {
 .sit-badge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 9px 4px 5px;
+  gap: 8px;
+  padding: 3px 10px 3px 3px;
   border: 1px solid var(--line-2);
   background: rgba(6, 10, 8, 0.5);
   color: var(--sit-color, var(--muted));
@@ -940,6 +940,14 @@ a {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.sit-badge__coin {
+  display: block;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  filter: drop-shadow(0 0 6px var(--sit-color, var(--accent)));
 }
 
 .sit-inline {

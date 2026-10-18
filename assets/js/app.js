@@ -1230,7 +1230,9 @@ function renderDossier(unit) {
       ? `<span class="status-badge">${esc(t("dossier.badgeComing"))}</span>`
       : "",
     sit
-      ? `<span class="sit-badge" style="--sit-color:${sit.color}"><span class="sit-icon" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>${esc(
+      ? `<span class="sit-badge" style="--sit-color:${sit.color}"><img class="sit-badge__coin" src="assets/img/coins/${esc(
+          unit.situation
+        )}.svg" alt="" aria-hidden="true" loading="lazy" decoding="async">${esc(
           situationLabelOf(unit.situation)
         )}</span>`
       : unit.afloat
