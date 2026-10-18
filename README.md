@@ -21,6 +21,22 @@ para cada unidad, pensado primero para móvil.
 El sitio **no** consulta Google Sheets en tiempo de ejecución: lee siempre los JSON locales,
 por lo que la oferta puede actualizarse por lotes sin tocar el frontend.
 
+### Héroe: visor de periscopio
+
+El héroe monta tres capas decorativas (todas `aria-hidden`, sin coste de accesibilidad):
+
+- **Canvas de ambiente** (`#hero-canvas`): nieve marina, burbujas y un eco de sonar dibujados
+  en 2D. Se pausa cuando el héroe sale de pantalla, cuando la pestaña se oculta y con
+  `prefers-reduced-motion` (dibuja un único fotograma fijo).
+- **Visor de periscopio** (`.periscope`): cristal tintado, cáusticas, burbujas, un submarino
+  de perfil (símbolo SVG `#i-sub-side`, dibujado a mano), anillo de demoras, retículo con
+  cruz y corchetes, y las lecturas **BRG** / **DEP**.
+- **Paralaje de scroll**: la variable `--hero-scroll` desplaza el fondo y el bloque de texto;
+  las lecturas BRG/DEP se derivan del scroll para dar sensación de inmersión.
+
+No usa imágenes de terceros: el perfil del submarino es un SVG propio y el resto se resuelve
+con CSS y canvas.
+
 ### Mapa
 
 - Leaflet 1.9.4 + Leaflet.markercluster.

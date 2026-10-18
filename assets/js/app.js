@@ -73,7 +73,20 @@ const ESCAPES = {
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ESCAPES[character]);
 
 const nextFrame = () =>
-  new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  new Promise((resolve) => {
+    let settled = false;
+
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+
+    // Con la pestaña en segundo plano requestAnimationFrame no se dispara:
+    // el temporizador evita que el arranque se quede colgado.
+    requestAnimationFrame(() => requestAnimationFrame(done));
+    window.setTimeout(done, 400);
+  });
 
 /* ---------- Idioma (ES / EN) ---------- */
 
@@ -206,6 +219,10 @@ function cacheDom() {
   dom.toast = byId("toast");
 
   dom.headerCount = byId("header-count");
+  dom.hero = document.querySelector(".hero");
+  dom.heroCanvas = byId("hero-canvas");
+  dom.periBrg = byId("peri-brg");
+  dom.periDep = byId("peri-dep");
   dom.heroSubtitle = byId("hero-subtitle");
   dom.heroTotal = byId("hero-total");
   dom.heroCountries = byId("hero-countries");
@@ -382,6 +399,10 @@ function resolveSituation(raw) {
 
 function pad2(value) {
   return String(value).padStart(2, "0");
+}
+
+function pad3(value) {
+  return String(Math.max(0, Math.round(value))).padStart(3, "0");
 }
 
 function parseDossierNumber(value) {
@@ -1703,6 +1724,217 @@ function bindEvents() {
 
 /* ---------- Arranque ---------- */
 
+/* ---------- Héroe: escena (paralaje, lectura y canvas) ---------- */
+
+function initHeroScene() {
+  const hero = dom.hero;
+  if (!hero) return;
+
+  const reduce = state.prefersReduced;
+  let ticking = false;
+
+  const updateParallax = () => {
+    ticking = false;
+
+    const y = Math.min(window.scrollY || window.pageYOffset || 0, window.innerHeight * 1.4);
+
+    hero.style.setProperty("--hero-scroll", y.toFixed(1));
+
+    if (dom.periBrg) dom.periBrg.textContent = pad3((y * 0.42) % 360);
+    if (dom.periDep) dom.periDep.textContent = pad3(20 + y * 0.06);
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateParallax);
+    },
+    { passive: true }
+  );
+
+  updateParallax();
+
+  const canvas = dom.heroCanvas;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) return;
+
+  let width = 1;
+  let height = 1;
+  let frame = 0;
+  let last = 0;
+  let pulse = 0;
+  let onScreen = true;
+  let snow = [];
+  let bubbles = [];
+  let pings = [];
+
+  const seed = () => {
+    snow = [];
+    bubbles = [];
+    pings = [];
+
+    const snowCount = Math.min(80, Math.max(24, Math.round((width * height) / 30000)));
+
+    for (let i = 0; i < snowCount; i += 1) {
+      snow.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: 0.6 + Math.random() * 1.8,
+        s: 0.05 + Math.random() * 0.22,
+        a: 0.05 + Math.random() * 0.28,
+        ph: Math.random() * Math.PI * 2
+      });
+    }
+
+    const bubbleCount = Math.min(14, Math.max(6, Math.round(width / 110)));
+
+    for (let i = 0; i < bubbleCount; i += 1) {
+      bubbles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: 0.8 + Math.random() * 2.4,
+        s: 0.16 + Math.random() * 0.5,
+        d: 0.4 + Math.random() * 1.4,
+        ph: Math.random() * Math.PI * 2
+      });
+    }
+  };
+
+  const draw = (dt) => {
+    ctx.clearRect(0, 0, width, height);
+
+    for (const flake of snow) {
+      if (dt) {
+        flake.y += flake.s * dt * 0.06;
+        flake.x += Math.sin(flake.ph + flake.y * 0.01) * 0.14;
+
+        if (flake.y - flake.r > height) {
+          flake.y = -flake.r;
+          flake.x = Math.random() * width;
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(198, 255, 61, ${flake.a})`;
+      ctx.fill();
+    }
+
+    for (const bubble of bubbles) {
+      if (dt) {
+        bubble.y -= bubble.s * dt * 0.06;
+        bubble.x += Math.sin(bubble.ph + bubble.y * 0.02) * bubble.d * 0.14;
+
+        if (bubble.y + bubble.r < 0) {
+          bubble.y = height + bubble.r;
+          bubble.x = Math.random() * width;
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(87, 230, 192, 0.38)";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+
+    if (dt) {
+      pulse += dt;
+
+      if (pulse > 4200) {
+        pulse = 0;
+        pings.push({ x: width * 0.72, y: height * 0.44, r: 0, life: 0 });
+      }
+    }
+
+    for (let i = pings.length - 1; i >= 0; i -= 1) {
+      const ping = pings[i];
+
+      if (dt) {
+        ping.r += dt * 0.16;
+        ping.life += dt;
+
+        if (ping.life > 4200) {
+          pings.splice(i, 1);
+          continue;
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(ping.x, ping.y, ping.r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(87, 230, 192, ${Math.max(0, 0.42 * (1 - ping.life / 4200))})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  };
+
+  const loop = (now) => {
+    frame = requestAnimationFrame(loop);
+
+    const dt = Math.min(now - last || 16, 48);
+    last = now;
+    draw(dt);
+  };
+
+  const start = () => {
+    if (frame) return;
+    last = performance.now();
+    frame = requestAnimationFrame(loop);
+  };
+
+  const stop = () => {
+    if (!frame) return;
+    cancelAnimationFrame(frame);
+    frame = 0;
+  };
+
+  const resize = () => {
+    const rect = hero.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+    width = Math.max(1, Math.round(rect.width));
+    height = Math.max(1, Math.round(rect.height));
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    seed();
+    draw(0);
+  };
+
+  resize();
+  window.addEventListener("resize", resize);
+
+  if (reduce) return;
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        onScreen = entries.some((entry) => entry.isIntersecting);
+
+        if (onScreen && !document.hidden) start();
+        else stop();
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(hero);
+  } else {
+    start();
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stop();
+    else if (onScreen) start();
+  });
+}
+
 function renderAll() {
   applyStaticI18n();
   hydrateConfig(state.config);
@@ -1798,6 +2030,7 @@ async function init() {
 
     initMap();
     bindEvents();
+    initHeroScene();
     applyFilters();
 
     state.map.invalidateSize();

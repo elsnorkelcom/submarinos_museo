@@ -511,6 +511,7 @@ a {
   padding-left: max(var(--gutter), calc((100vw - var(--maxw)) / 2));
   padding-right: max(var(--gutter), calc((100vw - var(--maxw)) / 2));
   overflow: hidden;
+  isolation: isolate;
   border-bottom: 1px solid var(--line);
 }
 
@@ -521,7 +522,8 @@ a {
   background: var(--hero-image, url("../img/cobia.jpg")) center 58% / cover no-repeat;
   filter: grayscale(1) contrast(1.12) brightness(0.4);
   opacity: 0.62;
-  transform: scale(1.04);
+  transform: translate3d(0, min(calc(var(--hero-scroll, 0) * 0.05px), 22px), 0) scale(1.1);
+  will-change: transform;
 }
 
 .hero::after {
@@ -531,7 +533,7 @@ a {
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(6, 10, 8, 0.98) 0%, rgba(6, 10, 8, 0.82) 40%, rgba(6, 10, 8, 0.14) 100%),
+    linear-gradient(90deg, rgba(6, 10, 8, 0.98) 0%, rgba(6, 10, 8, 0.9) 50%, rgba(6, 10, 8, 0.32) 100%),
     linear-gradient(0deg, var(--bg) 0%, transparent 30%);
 }
 
@@ -570,6 +572,7 @@ a {
   z-index: 3;
   width: 100%;
   max-width: 800px;
+  transform: translate3d(0, calc(min(var(--hero-scroll, 0), 500) * -0.06px), 0);
 }
 
 .hero__title {
@@ -639,89 +642,325 @@ a {
   line-height: 1;
 }
 
-.hero__visual {
-  position: absolute;
-  right: 3.5%;
-  bottom: 7%;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: min(40vw, 540px);
-  aspect-ratio: 1;
-  pointer-events: none;
-  opacity: 0.7;
-}
+/* ---------- Héroe: canvas de ambiente ---------- */
 
-.radar {
+.hero__canvas {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(198, 255, 61, 0.22);
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+
+/* ---------- Héroe: visor de periscopio ---------- */
+
+.periscope {
+  position: absolute;
+  right: clamp(10px, 3vw, 62px);
+  top: 53%;
+  translate: 0 -50%;
+  z-index: 2;
+  width: min(30vw, 430px);
+  aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgba(198, 255, 61, 0.3),
+    0 0 0 13px rgba(4, 8, 6, 0.55),
+    0 0 0 14px rgba(198, 255, 61, 0.13),
+    0 34px 90px rgba(0, 0, 0, 0.6);
+  animation: peri-float 13s ease-in-out infinite;
 }
 
-.radar__ring {
-  position: absolute;
-  border: 1px solid rgba(198, 255, 61, 0.13);
-  border-radius: 50%;
-}
-
-.radar__ring--1 {
-  inset: 18%;
-}
-
-.radar__ring--2 {
-  inset: 34%;
-}
-
-.radar__ring--3 {
-  inset: 50%;
-}
-
-.radar__sweep {
+.periscope__glass {
   position: absolute;
   inset: 0;
-  background: conic-gradient(from 0deg, transparent 0 72%, rgba(198, 255, 61, 0.2) 88%, rgba(198, 255, 61, 0.42) 100%);
-  border-radius: 50%;
-  animation: sweep 7s linear infinite;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 32%, rgba(87, 230, 192, 0.18), transparent 58%),
+    radial-gradient(circle at 50% 50%, rgba(8, 21, 15, 0.78) 0%, rgba(5, 11, 9, 0.6) 62%, rgba(2, 5, 4, 0.4) 100%);
 }
 
-.radar__blip {
+.periscope__caustics {
   position: absolute;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
-  animation: pulse 3.4s ease-in-out infinite;
+  inset: -30%;
+  z-index: 1;
+  opacity: 0.2;
+  background:
+    repeating-linear-gradient(112deg, transparent 0 22px, rgba(87, 230, 192, 0.18) 22px 30px, transparent 30px 58px),
+    repeating-linear-gradient(64deg, transparent 0 34px, rgba(198, 255, 61, 0.09) 34px 40px, transparent 40px 74px);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 8%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 8%, transparent 70%);
+  animation: peri-caustics 19s ease-in-out infinite alternate;
 }
 
-.radar__blip--1 {
-  top: 28%;
-  left: 62%;
+.periscope__beam {
+  position: absolute;
+  top: -14%;
+  left: 4%;
+  width: 46%;
+  height: 76%;
+  z-index: 1;
+  opacity: 0.3;
+  background: linear-gradient(178deg, rgba(198, 255, 61, 0.24), transparent 72%);
+  filter: blur(10px);
+  transform: rotate(12deg);
 }
 
-.radar__blip--2 {
-  top: 58%;
-  left: 34%;
-  animation-delay: 0.8s;
-}
-
-.radar__blip--3 {
-  top: 72%;
-  left: 68%;
-  animation-delay: 1.6s;
-}
-
-.hero__sub {
-  position: relative;
-  width: 72%;
+.periscope__sub {
+  position: absolute;
+  left: 7%;
+  top: 43%;
+  z-index: 2;
+  width: 82%;
+  height: auto;
   fill: none;
   stroke: var(--accent);
-  stroke-width: 0.65;
-  opacity: 0.55;
-  transform: rotate(-9deg);
-  filter: drop-shadow(0 0 18px rgba(198, 255, 61, 0.25));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
+  filter: drop-shadow(0 0 14px rgba(198, 255, 61, 0.32));
+  animation: peri-sub-drift 24s ease-in-out infinite;
+}
+
+.periscope__bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.periscope__bubbles i {
+  position: absolute;
+  bottom: 6%;
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgba(87, 230, 192, 0.7);
+  border-radius: 50%;
+  opacity: 0;
+  animation: peri-bubble 9s linear infinite;
+}
+
+.periscope__bubbles i:nth-child(1) {
+  left: 26%;
+  animation-delay: 0s;
+}
+
+.periscope__bubbles i:nth-child(2) {
+  left: 38%;
+  width: 3px;
+  height: 3px;
+  animation-delay: 2.4s;
+}
+
+.periscope__bubbles i:nth-child(3) {
+  left: 52%;
+  animation-delay: 4.1s;
+}
+
+.periscope__bubbles i:nth-child(4) {
+  left: 64%;
+  width: 4px;
+  height: 4px;
+  animation-delay: 1.3s;
+}
+
+.periscope__bubbles i:nth-child(5) {
+  left: 74%;
+  animation-delay: 6s;
+}
+
+.periscope__bubbles i:nth-child(6) {
+  left: 84%;
+  width: 3px;
+  height: 3px;
+  animation-delay: 3.2s;
+}
+
+.periscope__ticks {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from -0.35deg, rgba(198, 255, 61, 0.72) 0 0.7deg, transparent 0.7deg 10deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 0 90%, #000 90.5% 100%);
+  mask-image: radial-gradient(circle closest-side, transparent 0 90%, #000 90.5% 100%);
+  animation: peri-spin 130s linear infinite;
+}
+
+.periscope__ticks--fine {
+  background: repeating-conic-gradient(from -0.12deg, rgba(198, 255, 61, 0.38) 0 0.24deg, transparent 0.24deg 2deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 0 95.5%, #000 96% 100%);
+  mask-image: radial-gradient(circle closest-side, transparent 0 95.5%, #000 96% 100%);
+  animation-duration: 220s;
+}
+
+.periscope__sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 50%;
+  opacity: 0.45;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 52%,
+    rgba(87, 230, 192, 0.05) 70%,
+    rgba(87, 230, 192, 0.16) 86%,
+    rgba(87, 230, 192, 0.34) 96%,
+    transparent 100%
+  );
+  animation: sweep 6.5s linear infinite;
+}
+
+.periscope__reticle {
+  position: absolute;
+  inset: 15%;
+  z-index: 4;
+  border: 1px solid rgba(198, 255, 61, 0.3);
+  border-radius: 50%;
+  color: rgba(198, 255, 61, 0.45);
+  background:
+    linear-gradient(90deg, currentColor 0 44%, transparent 44% 56%, currentColor 56% 100%) center / 100% 1px no-repeat,
+    linear-gradient(0deg, currentColor 0 44%, transparent 44% 56%, currentColor 56% 100%) center / 1px 100% no-repeat;
+}
+
+.periscope__reticle::before {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border: 1px dashed rgba(198, 255, 61, 0.28);
+  border-radius: 50%;
+}
+
+.periscope__reticle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.periscope__brackets {
+  position: absolute;
+  inset: 9%;
+  z-index: 5;
+  background:
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) left top / 14px 1px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) left top / 1px 14px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) right top / 14px 1px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) right top / 1px 14px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) left bottom / 14px 1px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) left bottom / 1px 14px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) right bottom / 14px 1px no-repeat,
+    linear-gradient(rgba(198, 255, 61, 0.55), rgba(198, 255, 61, 0.55)) right bottom / 1px 14px no-repeat;
+}
+
+.periscope__rd {
+  position: absolute;
+  left: 50%;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid rgba(198, 255, 61, 0.3);
+  background: rgba(4, 8, 6, 0.72);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  transform: translateX(-50%);
+}
+
+.periscope__rd b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.periscope__rd small {
+  color: var(--dim);
+  font-size: 8px;
+}
+
+.periscope__rd--brg {
+  top: 11%;
+}
+
+.periscope__rd--dep {
+  bottom: 17%;
+}
+
+.periscope__caption {
+  position: absolute;
+  left: 50%;
+  bottom: 6.5%;
+  z-index: 6;
+  transform: translateX(-50%);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+@keyframes peri-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+}
+
+@keyframes peri-caustics {
+  from {
+    transform: translate3d(-3%, -2%, 0) rotate(0.6deg);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) rotate(-0.6deg);
+  }
+}
+
+@keyframes peri-sub-drift {
+  0%,
+  100% {
+    transform: translate3d(-2%, 0, 0) rotate(-0.6deg);
+  }
+  50% {
+    transform: translate3d(3%, -6px, 0) rotate(0.8deg);
+  }
+}
+
+@keyframes peri-bubble {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-320px) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes peri-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .corner {
@@ -2371,15 +2610,21 @@ a {
 
 /* ---------- Responsive ---------- */
 
+@media (max-width: 1400px) {
+  .periscope {
+    width: min(28vw, 380px);
+  }
+}
+
 @media (max-width: 1100px) {
   .intel-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .hero__visual {
-    right: -4%;
-    width: 46vw;
-    opacity: 0.5;
+  .periscope {
+    right: -2%;
+    width: 38vw;
+    opacity: 0.55;
   }
 }
 
@@ -2392,11 +2637,15 @@ a {
     min-height: 660px;
   }
 
-  .hero__visual {
-    right: -12%;
-    bottom: 2%;
-    width: 62vw;
-    opacity: 0.32;
+  .periscope {
+    right: -16%;
+    width: 56vw;
+    opacity: 0.34;
+  }
+
+  .periscope__rd,
+  .periscope__caption {
+    display: none;
   }
 
   .dossier {
@@ -2586,9 +2835,9 @@ a {
     flex: 1 1 auto;
   }
 
-  .hero__visual {
-    right: -24%;
-    width: 78vw;
+  .periscope {
+    right: -28%;
+    width: 74vw;
     opacity: 0.22;
   }
 
