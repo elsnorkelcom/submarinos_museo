@@ -2315,6 +2315,280 @@ a {
   line-height: 1.4;
 }
 
+/* ---------- Compartir ---------- */
+
+/*
+ * Fila reutilizable: en el expediente comparte esa unidad concreta y en el pie
+ * comparte el archivo entero. Los destinos son enlaces de verdad, así que
+ * funcionan con clic normal, con «abrir en pestaña nueva» y con el teclado.
+ */
+
+.share {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.share--dossier {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.share__label {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.share__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.share__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+}
+
+.share__btn:hover,
+.share__btn:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.share__btn--native {
+  border-color: var(--line-2);
+  color: var(--text);
+}
+
+/* ---------- Canal de vídeo ---------- */
+
+.channel-panel {
+  margin-top: 22px;
+}
+
+/*
+ * Antes de reproducir es una banda ancha que se va abriendo con la pantalla
+ * (casi 16:9 en móvil, panorámica en escritorio). Al pulsar reproducir la caja
+ * recupera su 16:9, que es lo que espera el reproductor de YouTube.
+ *
+ * Nota: el alto va explícito a propósito. Con aspect-ratio + max-height el
+ * navegador transfiere el ancho desde el alto y la caja encoge dejando hueco.
+ */
+
+.channel {
+  position: relative;
+  height: clamp(176px, 30vw + 60px, 420px);
+  margin: 16px 18px 0;
+  border: 1px solid var(--line);
+  background: #040705;
+  overflow: hidden;
+}
+
+.channel.is-playing {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.channel__facade {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+}
+
+.channel__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(87, 230, 192, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(87, 230, 192, 0.07) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.channel__facade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0) 8%, rgba(3, 6, 4, 0.8) 76%);
+}
+
+.channel__play,
+.channel__title,
+.channel__cta {
+  position: relative;
+  z-index: 1;
+}
+
+.channel__play {
+  display: grid;
+  place-items: center;
+  width: clamp(52px, 8vw, 64px);
+  height: clamp(52px, 8vw, 64px);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: rgba(6, 10, 8, 0.72);
+  color: var(--accent);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.channel__play .icon {
+  width: 22px;
+  height: 22px;
+  margin-left: 3px;
+}
+
+.channel__facade:hover .channel__play,
+.channel__facade:focus-visible .channel__play {
+  background: rgba(198, 255, 61, 0.14);
+  transform: scale(1.06);
+}
+
+.channel__title {
+  max-width: 32ch;
+  font-family: var(--display);
+  font-size: clamp(1.1rem, 3.4vw, 1.5rem);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.channel__cta {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.channel__iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.channel__note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 18px 18px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.channel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+
+.channel__link:hover {
+  color: var(--accent);
+}
+
+/* ---------- Aviso de idioma sugerido ---------- */
+
+/*
+ * Barra flotante y discreta: aparece solo cuando el navegador pide un idioma
+ * distinto del que se está mostrando, y no vuelve si se descarta.
+ */
+
+.lang-nudge {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  z-index: 2400;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  background: rgba(13, 22, 17, 0.96);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+  animation: nudge-in 0.3s ease both;
+}
+
+.lang-nudge__mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-2);
+  color: var(--sonar);
+}
+
+.lang-nudge__text {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
+.lang-nudge__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+/* El toast sube para no pisar el aviso cuando están los dos en pantalla. */
+.lang-nudge:not([hidden]) ~ .toast {
+  bottom: 96px;
+}
+
+@keyframes nudge-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ---------- Footer ---------- */
 
 .footer {
@@ -2377,6 +2651,23 @@ a {
 .social__link:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.footer__share {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.footer__share-label {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .footer__bottom {
@@ -2936,6 +3227,366 @@ a {
   line-height: 1.4;
 }
 
+/* ---------- Cronología ---------- */
+
+/*
+ * Una fila por época. Cada año de la época ocupa una columna de ancho fijo
+ * (`--tl-yw`), así que la escala es lineal dentro de la fila y los años sin
+ * unidades quedan como huecos reales. Los puntos se apilan hacia arriba: el
+ * alto de la pila es la densidad de botaduras de ese año.
+ */
+
+.timeline {
+  --tl-yw: 20px;
+  --tl-dot: 9px;
+  display: grid;
+  gap: 16px;
+  padding: 18px 16px 20px;
+}
+
+.timeline__note {
+  margin: 0;
+  max-width: 80ch;
+  color: var(--dim);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.timeline__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Lectura del punto bajo el cursor o el foco. */
+.tl-readout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: rgba(6, 10, 8, 0.72);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.tl-readout__hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-readout__img {
+  flex: none;
+  width: 46px;
+  height: 32px;
+  border: 1px solid var(--line-2);
+  object-fit: cover;
+  filter: saturate(0.85);
+}
+
+.tl-readout__code,
+.tl-readout__year,
+.tl-readout__type {
+  flex: none;
+}
+
+.tl-readout__year {
+  color: var(--sand);
+}
+
+.tl-readout__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-readout__type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border: 1px solid var(--line-2);
+  color: var(--type-color, var(--accent));
+}
+
+.tl-readout__type .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.tl-readout__place {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Carriles por época */
+.timeline__lanes {
+  display: grid;
+  gap: 18px;
+}
+
+.tl-lane {
+  display: grid;
+  gap: 9px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.tl-lane__head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tl-lane__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--era-color, var(--accent));
+  box-shadow: 0 0 9px var(--era-color, var(--accent));
+}
+
+.tl-lane__name {
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+}
+
+.tl-lane__range,
+.tl-lane__count {
+  color: var(--dim);
+}
+
+.tl-lane__filter {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.tl-lane__filter:hover,
+.tl-lane__filter:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tl-lane__scroll {
+  padding-bottom: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: var(--line-2) transparent;
+  scrollbar-width: thin;
+}
+
+.tl-lane__track {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.tl-years {
+  display: flex;
+  align-items: flex-end;
+  width: max-content;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tl-year {
+  display: flex;
+  flex: 0 0 var(--tl-yw, 20px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+.tl-year.is-decade {
+  border-left: 1px solid var(--line);
+}
+
+.tl-dot {
+  flex: none;
+  width: var(--tl-dot, 9px);
+  height: var(--tl-dot, 9px);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--type-color, var(--accent));
+  box-shadow: 0 0 6px var(--type-color, var(--accent));
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+}
+
+.tl-dot:hover,
+.tl-dot:focus-visible {
+  transform: scale(1.45);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 3px var(--type-color, var(--accent)),
+    0 0 12px var(--type-color, var(--accent));
+}
+
+/* Lo que no pasa el filtro activo se atenúa en vez de desaparecer. */
+.tl-dot.is-muted {
+  opacity: 0.15;
+  box-shadow: none;
+}
+
+.tl-dot.is-selected {
+  transform: scale(1.5);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 3px var(--accent),
+    0 0 14px var(--accent);
+}
+
+/* Regla de décadas */
+.tl-rule {
+  display: flex;
+  width: max-content;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+.tl-decade {
+  flex: 0 0 calc(var(--tl-yw, 20px) * var(--span, 10));
+  min-width: 0;
+  padding-left: 4px;
+  border-left: 1px solid var(--line-2);
+  white-space: nowrap;
+}
+
+/* Bandeja de unidades todavía sin año */
+.tl-undated {
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.tl-undated__summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tl-undated__summary::-webkit-details-marker {
+  display: none;
+}
+
+.tl-undated__summary::before {
+  content: "+";
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--line-2);
+  color: var(--dim);
+}
+
+.tl-undated[open] .tl-undated__summary::before {
+  content: "–";
+}
+
+.tl-undated__summary b {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  color: var(--sand);
+  font-weight: 500;
+}
+
+.tl-undated__note {
+  margin: 11px 0 12px;
+  color: var(--dim);
+  font-size: 0.76rem;
+}
+
+.tl-undated__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.tl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  background: rgba(6, 10, 8, 0.5);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.tl-chip:hover,
+.tl-chip:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.tl-chip.is-muted {
+  opacity: 0.3;
+}
+
+.tl-chip__dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--type-color, var(--accent));
+  box-shadow: 0 0 6px var(--type-color, var(--accent));
+}
+
+.tl-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1400px) {
@@ -2959,6 +3610,11 @@ a {
 @media (max-width: 900px) {
   .hud-nav {
     display: none;
+  }
+
+  .timeline {
+    --tl-yw: 16px;
+    --tl-dot: 10px;
   }
 
   .hero {
@@ -3017,6 +3673,10 @@ a {
 
   .section__title {
     font-size: clamp(2rem, 8vw, 3rem);
+  }
+
+  .tl-readout__place {
+    display: none;
   }
 
   .hero__stats {
@@ -3118,6 +3778,56 @@ a {
 @media (max-width: 560px) {
   .hud-header {
     height: 58px;
+  }
+
+  /* El aviso de idioma ocupa el ancho y deja los botones en su propia fila. */
+  .lang-nudge {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    flex-wrap: wrap;
+    max-width: none;
+    animation: none;
+    transform: none;
+  }
+
+  .lang-nudge__actions {
+    width: 100%;
+  }
+
+  .lang-nudge__actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .lang-nudge:not([hidden]) ~ .toast {
+    bottom: 148px;
+  }
+
+  .share__btn {
+    padding: 7px 10px;
+  }
+
+  .channel {
+    margin: 14px 14px 0;
+  }
+
+  .channel__note {
+    margin: 12px 14px 16px;
+  }
+
+  .timeline {
+    --tl-yw: 15px;
+    --tl-dot: 11px;
+    padding: 14px 12px 16px;
+  }
+
+  .tl-readout__img {
+    display: none;
+  }
+
+  .tl-lane__range {
+    display: none;
   }
 
   .brand__mark {

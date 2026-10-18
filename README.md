@@ -9,14 +9,18 @@ para cada unidad, pensado primero para móvil.
 
 ## Cómo funciona
 
-- `index.html` — estructura de la página (héroe, destacados, mapa, dossier, registro, intel y acerca de).
+- `index.html` — estructura de la página (héroe, mapa, dossier, destacados, registro, cronología, intel y origen).
 - `assets/css/app.css` — sistema visual completo (táctico/oscuro, mobile first).
-- `assets/js/app.js` — carga de datos, mapa, filtros, registro y dossier.
+- `assets/js/app.js` — carga de datos, mapa, filtros, cronología, registro, dossier y compartir.
 - `data/submarines.json` — 160 unidades normalizadas con coordenadas, tipo, país, museo y media.
-- `data/config.json` — textos, logo, imagen de héroe y redes sociales.
+- `data/config.json` — textos, logo, imagen de héroe, canal de vídeo y redes sociales.
 - `data/i18n.json` — diccionario de la interfaz en español e inglés.
 - `scripts/import_sheets.py` — genera los JSON a partir de las hojas publicadas de Google Sheets.
 - `scripts/make_coins.py` — genera las monedas SVG de las 5 situaciones del museo.
+
+El orden de las secciones es: **héroe → 01 mapa → 02 expediente → 03 destacados → 04 registro →
+05 cronología → 06 intel → 07 origen**. El mapa va justo debajo del héroe porque es la puerta de
+entrada al archivo; el expediente lo acompaña para no perder de vista lo que se pulsa en el mapa.
 
 El sitio **no** consulta Google Sheets en tiempo de ejecución: lee siempre los JSON locales,
 por lo que la oferta puede actualizarse por lotes sin tocar el frontend.
@@ -64,7 +68,7 @@ visible y **no** hay `prefers-reduced-motion`; en cualquier otro caso se queda e
 
 ### Destacados
 
-La sección `// 01 — DESTACADOS` funciona como un catálogo: un **cartel** grande con la unidad
+La sección `// 03 — DESTACADOS` funciona como un catálogo: un **cartel** grande con la unidad
 más fotogénica y debajo **filas horizontales** con scroll-snap.
 
 Se consideran destacadas las unidades con `Featured=TRUE` en la hoja **y** las que aportan
@@ -127,6 +131,23 @@ Las monedas tipo *challenge coin* se generan con `python scripts/make_coins.py` 
 mismos dibujos, en SVG sin recursos de terceros. El script produce la moneda completa (con
 leyenda) y la versión de marcador.
 
+**Cambiar los iconos por un rediseño.** El script solo sobrescribe los SVG que llevan su sello,
+así que el arte entregado a mano nunca se pierde:
+
+```bash
+# el diseñador deja sus 5 SVG ya terminados en assets/img/coins/<situacion>.svg
+# (y su versión de marcador en assets/img/coins/marker/), y a partir de ahí el
+# script los respeta y solo regenera lo que falte.
+python scripts/make_coins.py
+
+# si lo que quieres es volver a generar TODO desde los dibujos del script:
+python scripts/make_coins.py --force
+```
+
+Si el rediseño llega como glifo vectorial sobre rejilla de 24×24, lo más cómodo es pegar cada
+glifo en el diccionario `GLYPHS` de `scripts/make_coins.py` y ejecutar el script: la moneda y su
+versión de marcador salen ya con el acabado metálico, las letras y el color de cada situación.
+
 ### Filtros
 
 Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre, situación y estado:
@@ -142,10 +163,90 @@ Al seleccionar una unidad (en el mapa, en el registro o en destacados) se abre s
 tipo con icono, estado, ubicación, especificaciones y media. La media admite imagen o
 video público de YouTube; si no hay media se muestra un plano técnico provisional.
 
+### Cronología
+
+La sección `// 05 — CRONOLOGÍA` dibuja la línea de tiempo real del archivo: **una fila por época**
+y, dentro de cada fila, **una columna por año** a escala (ancho fijo por año). Los puntos se apilan
+hacia arriba, así que el alto de una columna es la densidad: cuántas unidades se botaron ese año.
+
+- La fila arranca en el **primer año con unidad**, no en el inicio nominal de la época, para no
+  arrastrar décadas vacías.
+- Debajo de cada fila va la **regla de décadas**; las celdas parciales (menos de 3 años) van sin
+  rótulo para que el ancho cuadre exactamente con las columnas de años.
+- Una **lectura fija** (readout) muestra la unidad bajo el cursor o el foco: nombre, año, tipo y
+  lugar. Se usa una lectura fija en vez de una tarjeta flotante porque en móvil la tarjeta se
+  recortaba contra el borde.
+- Pulsar un punto abre el expediente de esa unidad; `FILTRAR` aplica la época al mapa y al registro
+  (la propia línea se atenúa y el aviso confirma la operación).
+- Las unidades **sin fecha** van a una bandeja plegable `SIN FECHA` al final del eje, con sus chips
+  clicables.
+
+Las épocas son las mismas que las del filtro y se derivan de `launchYear` (ver la tabla en
+*Destacados → Épocas*), así que no hace falta ninguna columna nueva en la hoja.
+
+### Compartir y redes
+
+Hay dos filas de compartir, y en ambas los destinos son **enlaces de verdad** (funcionan con clic
+normal, teclado, «abrir en pestaña nueva» y menú contextual):
+
+- En el **expediente** — comparte esa unidad concreta, con `?unit=<id>` en la URL.
+- En el **pie** — comparte el archivo entero.
+
+Destinos: WhatsApp, Telegram, X, Facebook, LinkedIn y correo electrónico, más **copiar enlace**.
+En móvil aparece además un botón **Compartir…** que abre el menú nativo del sistema
+(`navigator.share`). El expediente no repite el botón de copiar porque ya lo tiene en sus acciones.
+
+> **Nota sobre las previsualizaciones.** Los enlaces `?unit=<id>` abren el expediente correcto,
+> pero la tarjeta que muestran WhatsApp o X es la genérica del archivo: los rastreadores de esas
+> redes no ejecutan JavaScript y solo leen las etiquetas `og:` del HTML. Para tener tarjetas por
+> unidad haría falta prerenderizar una página estática por submarino; es una ampliación posible
+> (un generador que escriba 160 HTML con sus propias `og:`), pero no está hecha.
+
+Las **redes del proyecto** se pintan solas en el pie a partir de `data/config.json → social`
+(y por tanto de la hoja de configuración):
+
+| Ajuste en la hoja | Red |
+| --- | --- |
+| `website_url` | WEB |
+| `facebook_url` | FACEBOOK |
+| `instagram_url` | INSTAGRAM |
+| `twitter_url` | X |
+| `linkedin_url` | LINKEDIN |
+| `youtube_url` | YOUTUBE |
+| `tiktok_url` | TIKTOK |
+
+Una casilla vacía simplemente no se pinta. El importador trae de respaldo las redes ya conocidas
+del proyecto (`SOCIAL_DEFAULTS`), de modo que **regenerar los datos no borra los enlaces** si la
+hoja todavía no tiene esas filas; la hoja siempre manda.
+
+#### Canal de vídeo
+
+Al final de `// 06 — INTEL` hay un panel con la **lista de reproducción de YouTube** del proyecto
+(`youtube_playlist` en la hoja; por defecto la lista de *Submarinos Museos Del Mundo*). El panel
+es una **fachada**: no se carga absolutamente nada de YouTube —ni cookies ni peticiones— hasta que
+el visitante pulsa *Reproducir la lista*. En ese momento se inyecta el reproductor con
+`youtube-nocookie.com` en 16:9.
+
+`youtube_title` permite fijar el rótulo de la fachada; si se deja vacío se usa el nombre de la
+lista por defecto.
+
 ### Idiomas (ES / EN)
 
 El sitio es bilingüe. El conmutador `ES | EN` está en la cabecera y la elección se guarda en
 `localStorage`; también se puede forzar con `?lang=en` (el parámetro se sincroniza en la URL).
+
+El idioma se resuelve en este orden: `?lang=` → lo elegido antes → **el del navegador** → español.
+Es decir, si el navegador viene en inglés el sitio entra directamente en inglés.
+
+Cuando el navegador prefiere un idioma que no está catalogado (ruso, francés…) aparece abajo un
+**aviso discreto** que ofrece el archivo en inglés, el idioma puente:
+
+- **VER EN INGLÉS** cambia el idioma y lo recuerda.
+- **AHORA NO** lo descarta y no vuelve a salir (se guarda en `snk-lang-nudge`).
+
+El aviso nunca aparece si el idioma viene forzado por `?lang=` o si ya se eligió uno a mano, así
+que no molesta a quien ya decidió. No se usa ningún traductor automático: las traducciones siguen
+siendo las de `data/i18n.json`, escritas para la interfaz táctica.
 
 - Los textos de la interfaz viven en `data/i18n.json` (`es` y `en`), aplicados por
   `data-i18n` / `data-i18n-attr` en el HTML y por la función `t()` en JavaScript.
@@ -206,9 +307,19 @@ así que puedes añadirla cuando quieras sin tocar el código. Los destacados de
 configuración (`featured_submarine_names`) se marcan automáticamente junto con `Featured=TRUE`.
 El año del `footer_text` se normaliza al año actual en cada importación.
 
-En la hoja de **configuración** (columna `Setting` / `Value`) también se leen `hero_video` y
-`hero_video_mobile` para el vídeo de fondo del héroe. Solo se aceptan URLs `http(s)` o rutas
-`assets/...`, así que un valor raro se ignora en vez de acabar en el atributo `src`.
+En la hoja de **configuración** (columna `Setting` / `Value`) también se leen:
+
+| Ajuste | Para qué |
+| --- | --- |
+| `hero_video` / `hero_video_mobile` | Vídeo de fondo del héroe (escritorio y móvil). |
+| `youtube_playlist` | Lista de reproducción del panel de INTEL. |
+| `youtube_title` | Rótulo de la fachada de esa lista (opcional). |
+| `*_url` | Redes del pie (`website_url`, `facebook_url`, `instagram_url`, `twitter_url`, `linkedin_url`, `youtube_url`, `tiktok_url`). |
+
+Los ajustes de vídeo y lista solo aceptan URLs `http(s)` o rutas `assets/...`, así que un valor
+raro se ignora en vez de acabar en el atributo `src`. Los ajustes nuevos se buscan ignorando
+mayúsculas y separadores (`youtube_playlist`, `Youtube Playlist` y `youtube-playlist` son lo
+mismo), de modo que se pueden escribir con el nombre que resulte más cómodo en la hoja.
 
 ## Estructura
 

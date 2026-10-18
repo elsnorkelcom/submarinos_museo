@@ -149,9 +149,10 @@
         <span><b id="header-count">--</b> <span data-i18n="header.units">UNIDADES</span></span>
       </div>
       <nav class="hud-nav" aria-label="Secciones" data-i18n-attr="aria-label:nav.aria">
-        <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
         <a href="#map-section" data-i18n="nav.map">MAPA</a>
+        <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
         <a href="#registry" data-i18n="nav.registry">REGISTRO</a>
+        <a href="#timeline" data-i18n="nav.timeline">CRONOLOGÍA</a>
         <a href="#intel" data-i18n="nav.intel">INTEL</a>
       </nav>
       <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-attr="aria-label:lang.switch">
@@ -195,8 +196,8 @@
           </h1>
           <p class="hero__subtitle" id="hero-subtitle">Un archivo interactivo de gigantes de acero y sus historias.</p>
           <div class="hero__actions">
-            <a href="#map-section" class="btn btn--primary btn--lg">
-              <span data-i18n="hero.cta">ABRIR MAPA TÁCTICO</span> <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+            <a href="#featured" class="btn btn--primary btn--lg">
+              <span data-i18n="hero.cta">EXPLORAR EL ARCHIVO</span> <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
             </a>
             <a href="#registry" class="btn btn--ghost" data-i18n="hero.cta2">VER REGISTRO</a>
           </div>
@@ -213,22 +214,10 @@
         <span class="corner corner--br" aria-hidden="true"></span>
       </section>
 
-      <section class="section" id="featured">
-        <div class="section__head">
-          <div>
-            <p class="kicker" data-i18n="section.featured.kicker">// 01 — DESTACADOS</p>
-            <h2 class="section__title" id="featured-title">GIGANTES DE LA HISTORIA</h2>
-          </div>
-          <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label" data-i18n="section.featured.many">UNIDADES CLAVE</span></p>
-        </div>
-        <div class="billboard" id="featured-billboard" hidden></div>
-        <div class="rails" id="featured-rails"></div>
-      </section>
-
       <section class="section" id="map-section">
         <div class="section__head">
           <div>
-            <p class="kicker" data-i18n="section.map.kicker">// 02 — TEATRO DE OPERACIONES</p>
+            <p class="kicker" data-i18n="section.map.kicker">// 01 — TEATRO DE OPERACIONES</p>
             <h2 class="section__title" data-i18n="section.map.title">MAPA TÁCTICO</h2>
           </div>
           <p class="section__note"><b id="map-count">--</b> <span id="map-count-label" data-i18n="section.map.many">UNIDADES LOCALIZADAS</span></p>
@@ -274,7 +263,7 @@
       <section class="section dossier-section" id="dossier">
         <div class="section__head">
           <div>
-            <p class="kicker" data-i18n="section.dossier.kicker">// 03 — EXPEDIENTE</p>
+            <p class="kicker" data-i18n="section.dossier.kicker">// 02 — EXPEDIENTE</p>
             <h2 class="section__title" data-i18n="section.dossier.title">DOSSIER DE UNIDAD</h2>
           </div>
           <button class="btn btn--ghost btn--sm" id="dossier-close" type="button" hidden>
@@ -291,6 +280,18 @@
             <p data-i18n="dossier.emptyText">Selecciona una unidad en el mapa o en el registro para abrir su expediente.</p>
           </div>
         </div>
+      </section>
+
+      <section class="section" id="featured">
+        <div class="section__head">
+          <div>
+            <p class="kicker" data-i18n="section.featured.kicker">// 03 — DESTACADOS</p>
+            <h2 class="section__title" id="featured-title">GIGANTES DE LA HISTORIA</h2>
+          </div>
+          <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label" data-i18n="section.featured.many">UNIDADES CLAVE</span></p>
+        </div>
+        <div class="billboard" id="featured-billboard" hidden></div>
+        <div class="rails" id="featured-rails"></div>
       </section>
 
       <section class="section" id="registry">
@@ -332,10 +333,39 @@
         </div>
       </section>
 
+      <section class="section" id="timeline">
+        <div class="section__head">
+          <div>
+            <p class="kicker" data-i18n="section.timeline.kicker">// 05 — CRONOLOGÍA</p>
+            <h2 class="section__title" data-i18n="section.timeline.title">LÍNEA DE TIEMPO</h2>
+          </div>
+          <p class="section__note"><b id="timeline-count">--</b> <span id="timeline-count-label" data-i18n="section.timeline.many">UNIDADES FECHADAS</span></p>
+        </div>
+
+        <div class="timeline panel">
+          <p class="timeline__note" data-i18n="timeline.note">Cada fila es una época con sus años a escala; el alto muestra cuántas unidades se botaron ese año. Los huecos son años sin unidades en el archivo.</p>
+
+          <div class="tl-readout is-idle" id="timeline-readout"></div>
+
+          <div class="timeline__lanes" id="timeline-lanes" role="group" aria-label="Línea de tiempo por época" data-i18n-attr="aria-label:timeline.aria"></div>
+
+          <p class="timeline__empty" id="timeline-empty" hidden data-i18n="timeline.empty">Todavía no hay unidades con año de botadura.</p>
+
+          <details class="tl-undated" id="timeline-undated" hidden>
+            <summary class="tl-undated__summary">
+              <span data-i18n="timeline.undated">SIN FECHA</span>
+              <b id="timeline-undated-count">--</b>
+            </summary>
+            <p class="tl-undated__note" data-i18n="timeline.undatedNote">Unidades que todavía no tienen año de botadura en la hoja.</p>
+            <div class="tl-undated__list" id="timeline-undated-list"></div>
+          </details>
+        </div>
+      </section>
+
       <section class="section" id="intel">
         <div class="section__head">
           <div>
-            <p class="kicker" data-i18n="section.intel.kicker">// 05 — INTEL</p>
+            <p class="kicker" data-i18n="section.intel.kicker">// 06 — INTEL</p>
             <h2 class="section__title" data-i18n="intel.title">EL ARCHIVO EN NÚMEROS</h2>
           </div>
           <p class="section__note">SNAPSHOT <span id="generated-at">--</span></p>
@@ -365,6 +395,25 @@
             </div>
           </article>
         </div>
+
+        <article class="panel channel-panel">
+          <div class="panel__head">
+            <span class="kicker" data-i18n="intel.channel">CANAL DE VÍDEO</span>
+            <h3 data-i18n="intel.channelTitle">LA FLOTA EN MOVIMIENTO</h3>
+          </div>
+          <div class="channel" id="channel" hidden>
+            <button class="channel__facade" type="button" id="channel-play">
+              <span class="channel__grid" aria-hidden="true"></span>
+              <span class="channel__play" aria-hidden="true"><svg class="icon"><use href="#i-play"></use></svg></span>
+              <span class="channel__title" id="channel-title"></span>
+              <span class="channel__cta" data-i18n="intel.channelPlay">REPRODUCIR LA LISTA</span>
+            </button>
+          </div>
+          <p class="channel__note" id="channel-note" hidden>
+            <span data-i18n="intel.channelNote">No se carga nada de YouTube hasta que pulses reproducir.</span>
+            <a class="channel__link" id="channel-link" href="" target="_blank" rel="noopener noreferrer">YOUTUBE <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>
+          </p>
+        </article>
       </section>
 
       <section class="section about" id="about">
@@ -374,7 +423,7 @@
             <span class="about__stamp" data-i18n="about.stamp">ARCHIVO<br>ABIERTO</span>
           </div>
           <div class="about__body">
-            <p class="kicker" data-i18n="section.about.kicker">// 06 — ORIGEN</p>
+            <p class="kicker" data-i18n="section.about.kicker">// 07 — ORIGEN</p>
             <h2 class="section__title" id="about-title">SOBRE EL ARCHIVO</h2>
             <div id="about-text" class="about__text"></div>
             <dl class="about__meta">
@@ -395,19 +444,33 @@
           <span class="brand__text"><strong>ELSNORKEL</strong><small data-i18n="brand.tagline">ARCHIVO SUBMARINO</small></span>
         </a>
         <nav class="footer__nav" aria-label="Enlaces de pie" data-i18n-attr="aria-label:footer.navAria">
-          <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
           <a href="#map-section" data-i18n="nav.map">MAPA</a>
+          <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
           <a href="#registry" data-i18n="nav.registry">REGISTRO</a>
+          <a href="#timeline" data-i18n="nav.timeline">CRONOLOGÍA</a>
           <a href="#intel" data-i18n="nav.intel">INTEL</a>
           <a href="#about" data-i18n="nav.origin">ORIGEN</a>
         </nav>
         <div class="social" id="social-links"></div>
+      </div>
+      <div class="footer__share">
+        <span class="footer__share-label" data-i18n="share.siteLabel">COMPARTIR EL ARCHIVO</span>
+        <div class="share" id="share-site"></div>
       </div>
       <div class="footer__bottom">
         <p id="footer-text">© 2026 elSnorkel.com. Todos los derechos reservados.</p>
         <p class="footer__fine"><span data-i18n="footer.fine">UN PROYECTO DE ELSNORKEL.COM · DATOS: GOOGLE SHEETS SNAPSHOT</span> <span id="footer-date"></span></p>
       </div>
     </footer>
+  </div>
+
+  <div class="lang-nudge" id="lang-nudge" hidden>
+    <span class="lang-nudge__mark" aria-hidden="true"><svg class="icon"><use href="#i-sonar"></use></svg></span>
+    <p class="lang-nudge__text" id="lang-nudge-text"></p>
+    <div class="lang-nudge__actions">
+      <button class="btn btn--primary btn--sm" type="button" id="lang-nudge-accept"></button>
+      <button class="btn btn--ghost btn--sm" type="button" id="lang-nudge-dismiss"></button>
+    </div>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

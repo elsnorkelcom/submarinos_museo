@@ -85,6 +85,8 @@ const state = {
   searchFrame: 0,
   toastTimer: 0,
   railFrame: 0,
+  channel: null,
+  langSuggestion: "",
   prefersReduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches
 };
 
@@ -293,6 +295,26 @@ function cacheDom() {
   dom.registryCountLabel = byId("registry-count-label");
   dom.registryReset = byId("registry-reset");
   dom.sortSelect = byId("sort-select");
+
+  dom.timelineCount = byId("timeline-count");
+  dom.timelineCountLabel = byId("timeline-count-label");
+  dom.timelineLanes = byId("timeline-lanes");
+  dom.timelineEmpty = byId("timeline-empty");
+  dom.timelineReadout = byId("timeline-readout");
+  dom.timelineUndated = byId("timeline-undated");
+  dom.timelineUndatedCount = byId("timeline-undated-count");
+  dom.timelineUndatedList = byId("timeline-undated-list");
+
+  dom.shareSite = byId("share-site");
+  dom.langNudge = byId("lang-nudge");
+  dom.langNudgeText = byId("lang-nudge-text");
+  dom.langNudgeAccept = byId("lang-nudge-accept");
+  dom.langNudgeDismiss = byId("lang-nudge-dismiss");
+  dom.channel = byId("channel");
+  dom.channelPlay = byId("channel-play");
+  dom.channelTitle = byId("channel-title");
+  dom.channelNote = byId("channel-note");
+  dom.channelLink = byId("channel-link");
 
   dom.generatedAt = byId("generated-at");
   dom.statTotal = byId("stat-total");
@@ -651,6 +673,8 @@ function hydrateConfig(config) {
 
   renderSocial(cfg.social);
 
+  mountChannel(cfg);
+
   const snapshot = formatDate(cfg.generatedAt);
   setText(dom.generatedAt, snapshot);
   setText(dom.footerDate, snapshot);
@@ -719,6 +743,9 @@ function socialLabel(key, url) {
   if (name.includes("twit") || name === "x" || name.includes("x_")) return "X";
   if (name.includes("link")) return "LINKEDIN";
   if (name.includes("tik")) return "TIKTOK";
+  if (name.includes("telegram")) return "TELEGRAM";
+  if (name.includes("whats")) return "WHATSAPP";
+  if (name.includes("thread")) return "THREADS";
   if (name.includes("web") || name.includes("site")) return "WEB";
 
   try {
@@ -744,6 +771,243 @@ function renderSocial(social) {
         )}</a>`
     )
     .join("");
+}
+
+/* ---------- Compartir ---------- */
+
+/*
+ * Los enlaces de compartir se construyen al pintar, no al pulsar: así son
+ * enlaces normales y el navegador los puede abrir en otra pestaña.
+ */
+const SHARE_NETWORKS = [
+  {
+    key: "share.whatsapp",
+    href: (url, text) => `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`
+  },
+  {
+    key: "share.telegram",
+    href: (url, text) =>
+      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`
+  },
+  {
+    key: "share.x",
+    href: (url, text) =>
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+        url
+      )}&text=${encodeURIComponent(text)}`
+  },
+  {
+    key: "share.facebook",
+    href: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+  },
+  {
+    key: "share.linkedin",
+    href: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
+  },
+  {
+    key: "share.email",
+    href: (url, text) =>
+      `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`
+  }
+];
+
+/* Enlace público de una unidad, o el del archivo entero si no se pasa ninguna. */
+function shareUrlFor(unit) {
+  const base = `${window.location.origin}${window.location.pathname}`;
+  return unit ? `${base}?unit=${encodeURIComponent(unit.id)}` : base;
+}
+
+function shareBarMarkup({ url, title, label = "", withCopy = true }) {
+  const links = SHARE_NETWORKS.map(
+    (network) =>
+      `<a class="share__btn" href="${esc(
+        network.href(url, title)
+      )}" target="_blank" rel="noopener noreferrer">${esc(t(network.key))}</a>`
+  ).join("");
+
+  const native =
+    typeof navigator !== "undefined" && typeof navigator.share === "function"
+      ? `<button class="share__btn share__btn--native" type="button" data-share-native>${esc(
+          t("share.native")
+        )}</button>`
+      : "";
+
+  /* En el expediente ya hay un botón de copiar arriba, así que no se repite. */
+  const copy = withCopy
+    ? `<button class="share__btn" type="button" data-share-copy>${esc(t("share.copy"))}</button>`
+    : "";
+
+  return `${label ? `<span class="share__label">${esc(label)}</span>` : ""}<span class="share__row" data-share-url="${esc(
+    url
+  )}" data-share-title="${esc(title)}">${native}${links}${copy}</span>`;
+}
+
+function renderShareSite() {
+  if (!dom.shareSite) return;
+
+  dom.shareSite.innerHTML = shareBarMarkup({
+    url: shareUrlFor(null),
+    title: t("share.siteTitle")
+  });
+}
+
+/* Un solo escuchador sirve para el pie y para el expediente. */
+function handleShareClick(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target) return;
+
+  const row = target.closest("[data-share-url]");
+  if (!row) return;
+
+  if (target.closest("[data-share-native]")) {
+    if (typeof navigator.share === "function") {
+      navigator
+        .share({ title: row.dataset.shareTitle, url: row.dataset.shareUrl })
+        .catch(() => {});
+    }
+    return;
+  }
+
+  if (target.closest("[data-share-copy]")) {
+    event.preventDefault();
+    copyText(row.dataset.shareUrl)
+      .then(() => showToast(t("share.copied")))
+      .catch(() => showToast(t("toast.copyFailed")));
+  }
+}
+
+/* ---------- Canal de vídeo (lista de YouTube) ---------- */
+
+function youtubeListId(raw) {
+  const value = safeUrl(raw);
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    const host = url.hostname.replace(/^www\./, "");
+    if (!/(^|\.)youtube\.com$/.test(host)) return "";
+    return url.searchParams.get("list") || "";
+  } catch {
+    return "";
+  }
+}
+
+/*
+ * La lista se anuncia, pero no se carga nada de YouTube hasta que el visitante
+ * pulsa reproducir: así no hay cookies ni peticiones a terceros de entrada.
+ */
+function mountChannel(config) {
+  if (!dom.channel) return;
+
+  const cfg = config || {};
+  const raw = cfg.youtubePlaylist || "";
+  const listId = youtubeListId(raw);
+
+  if (!listId) {
+    dom.channel.hidden = true;
+    if (dom.channelNote) dom.channelNote.hidden = true;
+    state.channel = null;
+    return;
+  }
+
+  state.channel = { url: safeUrl(raw), listId };
+
+  setText(dom.channelTitle, cfg.youtubeTitle || t("intel.channelFallback"));
+  if (dom.channelNote) dom.channelNote.hidden = false;
+  if (dom.channelLink) dom.channelLink.href = state.channel.url;
+  dom.channel.hidden = false;
+}
+
+function playChannel() {
+  if (!state.channel || !dom.channel) return;
+
+  const iframe = document.createElement("iframe");
+  iframe.className = "channel__iframe";
+  iframe.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(
+    state.channel.listId
+  )}&autoplay=1&rel=0`;
+  iframe.title = t("intel.channelTitle");
+  iframe.setAttribute("loading", "lazy");
+  iframe.setAttribute(
+    "allow",
+    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  );
+  iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+  iframe.setAttribute("allowfullscreen", "");
+
+  dom.channel.classList.add("is-playing");
+  dom.channel.innerHTML = "";
+  dom.channel.appendChild(iframe);
+}
+
+/* ---------- Aviso de idioma sugerido por el navegador ---------- */
+
+const LANG_NUDGE_KEY = "snk-lang-nudge";
+
+/*
+ * Solo se sugiere cuando el idioma no viene forzado por la URL ni elegido a
+ * mano. Se mira primero el idioma principal del navegador (el mismo que usa
+ * resolveLang) y, solo si no está catalogado, el resto de preferencias; si
+ * ninguna encaja, se propone el inglés como idioma puente del archivo.
+ */
+function langSuggestion() {
+  if (new URLSearchParams(window.location.search).get("lang")) return "";
+
+  try {
+    if (window.localStorage.getItem(LANG_STORAGE_KEY)) return "";
+  } catch {
+    /* Sin localStorage se puede sugerir igual; solo no se recuerda. */
+  }
+
+  const codes = (
+    Array.isArray(navigator.languages) && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language || ""]
+  ).map((value) => String(value).toLowerCase().slice(0, 2));
+
+  const primary = String(navigator.language || "")
+    .toLowerCase()
+    .slice(0, 2);
+  const candidate = LANGS.includes(primary) ? primary : codes.find((code) => LANGS.includes(code));
+
+  if (candidate) return candidate === state.lang ? "" : candidate;
+  return state.lang === "en" ? "" : "en";
+}
+
+function dismissLangNudge() {
+  try {
+    window.localStorage.setItem(LANG_NUDGE_KEY, "1");
+  } catch {
+    /* Da igual: solo se pierde el recordatorio entre visitas. */
+  }
+
+  if (dom.langNudge) dom.langNudge.hidden = true;
+}
+
+function renderLangNudge() {
+  if (!dom.langNudge) return;
+
+  let dismissed = false;
+  try {
+    dismissed = window.localStorage.getItem(LANG_NUDGE_KEY) === "1";
+  } catch {
+    /* Sin localStorage el aviso se puede repetir; no es grave. */
+  }
+
+  const target = dismissed ? "" : langSuggestion();
+  state.langSuggestion = target;
+
+  if (!target) {
+    dom.langNudge.hidden = true;
+    return;
+  }
+
+  /* El nombre del idioma se dice en el idioma que se está viendo. */
+  const name = t(`lang.${target}`);
+  setText(dom.langNudgeText, t("langSuggest.text", { lang: name }));
+  setText(dom.langNudgeAccept, t("langSuggest.accept", { lang: name.toUpperCase() }));
+  setText(dom.langNudgeDismiss, t("langSuggest.dismiss"));
+  dom.langNudge.hidden = false;
 }
 
 function renderStats() {
@@ -1163,9 +1427,10 @@ function syncRailArrows() {
 
 /*
  * «Ver todas» de una fila: limpia el resto de filtros, aplica el de la fila y
- * baja al registro, que es donde está la lista completa.
+ * baja al registro, que es donde está la lista completa. Desde la cronología
+ * no se baja a ningún sitio: la propia línea se atenúa y ya se ve el resultado.
  */
-function applyRailFilter(dataset) {
+function applyRailFilter(dataset, { scrollToRegistry = true } = {}) {
   resetFilters({ apply: false });
 
   if (dataset.railType) state.filters.types.add(dataset.railType);
@@ -1173,12 +1438,15 @@ function applyRailFilter(dataset) {
 
   applyFilters();
 
-  const target = document.getElementById("registry");
-  if (target) {
-    target.scrollIntoView({
-      behavior: state.prefersReduced ? "auto" : "smooth",
-      block: "start"
-    });
+  if (scrollToRegistry) {
+    const target = document.getElementById("registry");
+
+    if (target) {
+      target.scrollIntoView({
+        behavior: state.prefersReduced ? "auto" : "smooth",
+        block: "start"
+      });
+    }
   }
 
   showToast(t("rail.filtered", { count: state.filtered.length }));
@@ -1413,6 +1681,16 @@ function applyFilters() {
   if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", String(filters.coming));
   if (dom.resetFilters) dom.resetFilters.hidden = !filtersActive();
 
+  /* Los desplegables también se sincronizan: el filtro puede venir de una fila
+   * de destacados o de un carril de la cronología, no solo del propio control. */
+  if (dom.countryFilter && dom.countryFilter.value !== filters.country) {
+    dom.countryFilter.value = filters.country;
+  }
+
+  if (dom.eraFilter && dom.eraFilter.value !== filters.era) {
+    dom.eraFilter.value = filters.era;
+  }
+
   setText(dom.mapCount, state.filtered.length);
   setText(
     dom.mapCountLabel,
@@ -1420,6 +1698,7 @@ function applyFilters() {
   );
   syncMarkers();
   renderRegistry();
+  syncTimelineFilter();
 }
 
 function syncMarkers() {
@@ -1530,6 +1809,8 @@ function refreshSelectionStyles() {
       else row.removeAttribute("aria-current");
     });
   }
+
+  syncTimelineSelection();
 }
 
 function resetFilters({ apply = true } = {}) {
@@ -1547,6 +1828,212 @@ function resetFilters({ apply = true } = {}) {
   if (dom.eraFilter) dom.eraFilter.value = "all";
 
   if (apply) applyFilters();
+}
+
+/* ---------- Cronología ---------- */
+
+/*
+ * Una fila por época, con una columna por año dentro del rango real de esa
+ * época. La escala es lineal dentro de la fila y los puntos se apilan hacia
+ * arriba, así que el alto de cada columna es la densidad de botaduras de ese
+ * año. Los años sin unidades quedan como huecos, que es información real.
+ * Las unidades sin año van a la bandeja «sin fecha».
+ */
+
+function timelineUnits(eraKey) {
+  return state.units
+    .filter((unit) => eraOf(unit.launchYear) === eraKey)
+    .sort(
+      (a, b) =>
+        a.launchYear - b.launchYear ||
+        a.name.localeCompare(b.name, state.lang, { sensitivity: "base" })
+    );
+}
+
+function timelineDotMarkup(unit) {
+  const meta = typeMeta(unit.typeKey);
+  const label = t("timeline.dotLabel", {
+    name: unit.name,
+    year: unit.launchYear,
+    type: typeLabelOf(unit.typeKey)
+  });
+
+  return `<button class="tl-dot" type="button" data-unit="${esc(unit.id)}" data-year="${esc(
+    unit.launchYear
+  )}" style="--type-color:${meta.color}" aria-label="${esc(label)}" title="${esc(label)}"></button>`;
+}
+
+/* Celdas de la regla: cada una abarca una década completa, o lo que quede.
+ * Las celdas cortas (los bordes de cada época) van sin rótulo: así el ancho
+ * coincide exactamente con el de la columna de años y nada se descuadra. */
+function decadeRuleMarkup(min, max) {
+  const cells = [];
+  let start = min;
+
+  while (start <= max) {
+    const end = Math.min(max, Math.floor(start / 10) * 10 + 9);
+    const span = end - start + 1;
+
+    cells.push(
+      `<span class="tl-decade" style="--span:${span}">${span >= 3 ? esc(start) : ""}</span>`
+    );
+
+    start = end + 1;
+  }
+
+  return cells.join("");
+}
+
+function timelineLaneMarkup(eraKey) {
+  const units = timelineUnits(eraKey);
+  if (!units.length) return "";
+
+  const meta = ERA_META[eraKey];
+  const byYear = new Map();
+
+  for (const unit of units) {
+    if (!byYear.has(unit.launchYear)) byYear.set(unit.launchYear, []);
+    byYear.get(unit.launchYear).push(unit);
+  }
+
+  const years = [...byYear.keys()];
+  const min = Math.min(...years);
+  const max = Math.max(...years);
+  const columns = [];
+
+  for (let year = min; year <= max; year++) {
+    const list = byYear.get(year) || [];
+
+    columns.push(
+      `<div class="tl-year${year % 10 === 0 ? " is-decade" : ""}" data-year="${year}">${list
+        .map(timelineDotMarkup)
+        .join("")}</div>`
+    );
+  }
+
+  return `<div class="tl-lane" data-era="${esc(eraKey)}" style="--era-color:${meta.color}">
+    <div class="tl-lane__head">
+      <span class="tl-lane__dot" aria-hidden="true"></span>
+      <span class="tl-lane__name">${esc(eraLabelOf(eraKey))}</span>
+      <span class="tl-lane__range">${esc(meta.range)}</span>
+      <span class="tl-lane__count">${units.length}</span>
+      <button class="tl-lane__filter" type="button" data-rail-era="${esc(eraKey)}">${esc(
+    t("timeline.filter")
+  )}</button>
+    </div>
+    <div class="tl-lane__scroll">
+      <div class="tl-lane__track">
+        <div class="tl-years">${columns.join("")}</div>
+        <div class="tl-rule">${decadeRuleMarkup(min, max)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTimelineUndated(undated) {
+  const host = dom.timelineUndated;
+  if (!host) return;
+
+  host.hidden = undated.length === 0;
+  if (!undated.length) return;
+
+  setText(dom.timelineUndatedCount, undated.length);
+
+  dom.timelineUndatedList.innerHTML = undated
+    .slice()
+    .sort((a, b) => String(a.dossier || a.id).localeCompare(String(b.dossier || b.id)))
+    .map((unit) => {
+      const meta = typeMeta(unit.typeKey);
+
+      return `<button class="tl-chip" type="button" data-unit="${esc(unit.id)}" style="--type-color:${
+        meta.color
+      }" title="${esc(t("timeline.select", { name: unit.name }))}">
+        <span class="tl-chip__dot" aria-hidden="true"></span>
+        <span class="tl-chip__name">${esc(unit.name)}</span>
+      </button>`;
+    })
+    .join("");
+}
+
+function renderTimeline() {
+  if (!dom.timelineLanes) return;
+
+  const dated = state.units.filter((unit) => unit.launchYear);
+  const undated = state.units.filter((unit) => !unit.launchYear);
+
+  setText(dom.timelineCount, dated.length);
+  setText(
+    dom.timelineCountLabel,
+    t(dated.length === 1 ? "section.timeline.one" : "section.timeline.many")
+  );
+
+  dom.timelineLanes.innerHTML = ERA_ORDER.map(timelineLaneMarkup).join("");
+
+  if (dom.timelineEmpty) dom.timelineEmpty.hidden = dated.length > 0;
+
+  renderTimelineUndated(undated);
+  resetTimelineReadout();
+  syncTimelineFilter();
+  syncTimelineSelection();
+}
+
+function resetTimelineReadout() {
+  if (!dom.timelineReadout) return;
+
+  dom.timelineReadout.classList.add("is-idle");
+  dom.timelineReadout.innerHTML = `<span class="tl-readout__hint">${esc(t("timeline.hint"))}</span>`;
+}
+
+/* Lectura del punto bajo el cursor o el foco, como un instrumento. */
+function updateTimelineReadout(unit) {
+  const host = dom.timelineReadout;
+  if (!host) return;
+
+  if (!unit) {
+    resetTimelineReadout();
+    return;
+  }
+
+  const meta = typeMeta(unit.typeKey);
+  const place = [unit.museum, unit.city, countryLabel(unit.country)].filter(Boolean).join(" · ");
+  const thumb = unit.image
+    ? `<img class="tl-readout__img" src="${esc(unit.image)}" alt="" referrerpolicy="no-referrer">`
+    : "";
+
+  host.classList.remove("is-idle");
+  host.innerHTML = `${thumb}
+    <span class="tl-readout__code">${esc(unit.dossier || unit.id)}</span>
+    <span class="tl-readout__name">${esc(unit.name)}</span>
+    <span class="tl-readout__year">${esc(unit.launchYear || "—")}</span>
+    <span class="tl-readout__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
+    meta.icon
+  }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
+    <span class="tl-readout__place">${esc(place)}</span>`;
+}
+
+/* Lo que no pasa el filtro activo se atenúa, no desaparece. */
+function syncTimelineFilter() {
+  if (!dom.timelineLanes) return;
+
+  const visible = new Set(state.filtered.map((unit) => unit.id));
+
+  dom.timelineLanes.querySelectorAll("[data-unit]").forEach((dot) => {
+    dot.classList.toggle("is-muted", !visible.has(dot.dataset.unit));
+  });
+
+  if (dom.timelineUndatedList) {
+    dom.timelineUndatedList.querySelectorAll("[data-unit]").forEach((chip) => {
+      chip.classList.toggle("is-muted", !visible.has(chip.dataset.unit));
+    });
+  }
+}
+
+function syncTimelineSelection() {
+  if (!dom.timelineLanes) return;
+
+  dom.timelineLanes.querySelectorAll("[data-unit]").forEach((dot) => {
+    dot.classList.toggle("is-selected", dot.dataset.unit === state.selectedId);
+  });
 }
 
 /* ---------- Dossier ---------- */
@@ -1663,6 +2150,13 @@ function renderDossier(unit) {
     specMarkup(t("dossier.specCoords"), formatCoords(unit))
   ].join("");
 
+  const shareBar = shareBarMarkup({
+    url: shareUrlFor(unit),
+    title: t("share.unitTitle", { name: unit.name }),
+    label: t("share.unitLabel"),
+    withCopy: false
+  });
+
   dom.dossierContent.classList.remove("is-empty");
   dom.dossierContent.innerHTML = `${mediaMarkup(unit)}
     <article class="dossier__body" aria-labelledby="dossier-title">
@@ -1694,6 +2188,7 @@ function renderDossier(unit) {
     t("dossier.copyLink")
   )}</button>
       </div>
+      <div class="share share--dossier">${shareBar}</div>
     </article>`;
 
   if (dom.dossierClose) dom.dossierClose.hidden = false;
@@ -2094,6 +2589,41 @@ function bindEvents() {
     });
   }
 
+  if (dom.timelineLanes) {
+    dom.timelineLanes.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element)) return;
+
+      const filter = event.target.closest("[data-rail-era]");
+      if (filter) {
+        applyRailFilter(filter.dataset, { scrollToRegistry: false });
+        return;
+      }
+
+      const dot = event.target.closest("[data-unit]");
+      if (dot) selectUnit(dot.dataset.unit, { scroll: true, focusMap: true });
+    });
+
+    dom.timelineLanes.addEventListener("pointerover", (event) => {
+      const dot = event.target instanceof Element ? event.target.closest("[data-unit]") : null;
+      if (dot) updateTimelineReadout(state.unitById.get(dot.dataset.unit));
+    });
+
+    dom.timelineLanes.addEventListener("focusin", (event) => {
+      const dot = event.target instanceof Element ? event.target.closest("[data-unit]") : null;
+      if (dot) updateTimelineReadout(state.unitById.get(dot.dataset.unit));
+    });
+
+    dom.timelineLanes.addEventListener("pointerleave", resetTimelineReadout);
+    dom.timelineLanes.addEventListener("focusout", resetTimelineReadout);
+  }
+
+  if (dom.timelineUndatedList) {
+    dom.timelineUndatedList.addEventListener("click", (event) => {
+      const chip = event.target instanceof Element ? event.target.closest("[data-unit]") : null;
+      if (chip) selectUnit(chip.dataset.unit, { scroll: true, focusMap: true });
+    });
+  }
+
   if (dom.resetFilters) dom.resetFilters.addEventListener("click", resetFilters);
   if (dom.registryReset) dom.registryReset.addEventListener("click", resetFilters);
 
@@ -2117,6 +2647,24 @@ function bindEvents() {
       if (button.dataset.lang !== state.lang) setLang(button.dataset.lang);
     });
   });
+
+  document.addEventListener("click", handleShareClick);
+
+  if (dom.channelPlay) {
+    dom.channelPlay.addEventListener("click", playChannel);
+  }
+
+  if (dom.langNudgeAccept) {
+    dom.langNudgeAccept.addEventListener("click", () => {
+      const next = state.langSuggestion;
+      if (next && next !== state.lang) setLang(next);
+      if (dom.langNudge) dom.langNudge.hidden = true;
+    });
+  }
+
+  if (dom.langNudgeDismiss) {
+    dom.langNudgeDismiss.addEventListener("click", dismissLangNudge);
+  }
 
   if (dom.dossierContent) {
     dom.dossierContent.addEventListener("error", handleMediaError, true);
@@ -2408,9 +2956,12 @@ function renderAll() {
   buildSituationFilters();
   buildCountryFilter();
   buildEraFilter();
+  renderTimeline();
   buildLegend();
   buildTypeBars();
   applyFilters();
+  renderShareSite();
+  renderLangNudge();
 
   if (state.selectedId) {
     const unit = state.unitById.get(state.selectedId);

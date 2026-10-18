@@ -11,9 +11,15 @@ Uso:
 
 Los dibujos son propios (basados en los iconos del proyecto); no se usan
 recursos con derechos de terceros.
+
+Rediseño: si un diseñador entrega las monedas ya terminadas, basta con dejar el
+SVG en assets/img/coins/<situacion>.svg (y su versión de marcador en marker/).
+El script reconoce los archivos hechos a mano porque no llevan su sello y no
+los sobrescribe.
 """
 from __future__ import annotations
 
+import argparse
 import math
 from pathlib import Path
 
@@ -168,6 +174,29 @@ MARKER_TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"
 """
 
 
+SELLO = "generado por scripts/make_coins.py"
+
+
+def es_generado(path: Path, forzar: bool = False) -> bool:
+    """El sello distingue lo que produce este script del arte hecho a mano."""
+    if forzar or not path.exists():
+        return True
+
+    try:
+        return SELLO in path.read_text(encoding="utf-8")[:400]
+    except OSError:
+        return False
+
+
+def escribir(path: Path, contenido: str, forzar: bool = False) -> bool:
+    if not es_generado(path, forzar):
+        print(f"OMITIDO {path.name}: no lleva el sello, parece arte hecho a mano.")
+        return False
+
+    path.write_text(f"<!-- {SELLO} -->\n{contenido}", encoding="utf-8")
+    return True
+
+
 def arc_points(radius: float, half_span_deg: float, center: float = 128.0) -> tuple[float, float, float, float]:
     angle = math.radians(half_span_deg)
     x1 = center - radius * math.cos(angle)
@@ -202,13 +231,25 @@ def build_marker(key: str, label: str, color: str) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Genera las monedas de situación.")
+    parser.add_argument(
+        "--force",
+        "--forzar",
+        dest="forzar",
+        action="store_true",
+        help="reescribe también los SVG que no llevan el sello",
+    )
+    args = parser.parse_args()
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     MARKER_DIR.mkdir(parents=True, exist_ok=True)
 
     for key, label, color in SITUATIONS:
-        (OUT_DIR / f"{key}.svg").write_text(build(key, label, color), encoding="utf-8")
-        (MARKER_DIR / f"{key}.svg").write_text(build_marker(key, label, color), encoding="utf-8")
-        print(f"OK {key}  {color}")
+        completa = escribir(OUT_DIR / f"{key}.svg", build(key, label, color), args.forzar)
+        marcador = escribir(MARKER_DIR / f"{key}.svg", build_marker(key, label, color), args.forzar)
+
+        if completa and marcador:
+            print(f"OK {key}  {color}")
 
 
 if __name__ == "__main__":

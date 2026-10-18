@@ -34,6 +34,21 @@ CONFIG_URL = (
     "/pub?gid=796922007&single=true&output=csv"
 )
 
+# Canal de vídeo del proyecto: se usa si la hoja todavía no trae el ajuste.
+YOUTUBE_PLAYLIST = "https://www.youtube.com/playlist?list=PL472EEE6B920640A5"
+
+# Enlaces del proyecto. Sirven de respaldo para que regenerar los datos no
+# borre las redes si la hoja todavía no tiene esas filas; la hoja manda.
+SOCIAL_DEFAULTS = {
+    "website_url": "https://www.elsnorkel.com",
+    "facebook_url": "https://www.facebook.com/elSnorkelcom/",
+    "instagram_url": "",
+    "twitter_url": "https://twitter.com/elSnorkelcom",
+    "linkedin_url": "https://www.linkedin.com/company/2958657",
+    "youtube_url": YOUTUBE_PLAYLIST,
+    "tiktok_url": "",
+}
+
 COUNTRY_FIXES = {
     "USA": "Estados Unidos",
     "Turkiye": "Turquía",
@@ -184,6 +199,25 @@ def read_settings(rows: list[dict[str, str]]) -> dict[str, str]:
     }
 
 
+def setting_value(settings: dict[str, str], *names: str) -> str:
+    """Busca un ajuste por varios nombres, ignorando mayúsculas y separadores.
+
+    Permite escribir el ajuste en la hoja como `youtube_playlist`,
+    `Youtube Playlist` o `youtube-playlist` y que siga funcionando.
+    """
+
+    def normalize(key: str) -> str:
+        return re.sub(r"[\s_\-]+", "", key.lower())
+
+    wanted = {normalize(name) for name in names}
+
+    for key, value in settings.items():
+        if normalize(key) in wanted:
+            return clean(value)
+
+    return ""
+
+
 def pick_video(row: dict[str, str]) -> str:
     """Acepta la columna de video con varios nombres posibles."""
     for key in ("Video", "Video URL", "YouTube", "Youtube", "video_url"):
@@ -298,14 +332,8 @@ def build_config(rows: list[dict[str, str]]) -> dict:
     settings = read_settings(rows)
 
     social = {
-        key: settings.get(key, "")
-        for key in (
-            "linkedin_url",
-            "facebook_url",
-            "instagram_url",
-            "twitter_url",
-            "website_url",
-        )
+        key: settings.get(key, "") or SOCIAL_DEFAULTS.get(key, "")
+        for key in SOCIAL_DEFAULTS
     }
     # Quita los enlaces de plantilla que todavía no son reales.
     social = {
@@ -343,6 +371,11 @@ def build_config(rows: list[dict[str, str]]) -> dict:
         "heroImage": "assets/img/cobia.webp",
         "heroVideo": safe_media(settings.get("hero_video")),
         "heroVideoMobile": safe_media(settings.get("hero_video_mobile")),
+        "youtubePlaylist": safe_media(
+            setting_value(settings, "youtube_playlist", "playlist_video")
+        )
+        or YOUTUBE_PLAYLIST,
+        "youtubeTitle": setting_value(settings, "youtube_title", "playlist_title"),
         "social": social,
         "source": {
             "points": POINTS_URL,

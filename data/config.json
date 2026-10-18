@@ -11,8 +11,16 @@
   "heroImage": "assets/img/cobia.webp",
   "heroVideo": "",
   "heroVideoMobile": "",
+  "youtubePlaylist": "https://www.youtube.com/playlist?list=PL472EEE6B920640A5",
+  "youtubeTitle": "",
   "social": {
-    "website_url": "https://www.elsnorkel.com"
+    "website_url": "https://www.elsnorkel.com",
+    "facebook_url": "https://www.facebook.com/elSnorkelcom/",
+    "instagram_url": "",
+    "twitter_url": "https://twitter.com/elSnorkelcom",
+    "linkedin_url": "https://www.linkedin.com/company/2958657",
+    "youtube_url": "https://www.youtube.com/playlist?list=PL472EEE6B920640A5",
+    "tiktok_url": ""
   },
   "source": {
     "points": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQTuLWdJ1ZNR9dQ9sHcDOWe1-HPnIMsAKtCRzVEG_WZG4Za_3Mp-X3vkWCFlSwuNQSfEZ_mmNmTcIgb/pub?gid=164271551&single=true&output=csv",
