@@ -2,7 +2,9 @@
 """
 Genera las monedas tipo "challenge coin" de las 5 situaciones del museo.
 
-Salida: assets/img/coins/{flote,agua,tierra,cerrado,monumento}.svg
+Salida:
+    assets/img/coins/{flote,agua,tierra,cerrado,monumento}.svg        moneda completa
+    assets/img/coins/marker/{flote,agua,tierra,cerrado,monumento}.svg versión de marcador
 
 Uso:
     python scripts/make_coins.py
@@ -12,10 +14,12 @@ recursos con derechos de terceros.
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "assets" / "img" / "coins"
+MARKER_DIR = OUT_DIR / "marker"
 
 # Glifos en rejilla de 24x24, iguales a los símbolos del sprite de index.html.
 # Los trazos sólidos usan fill="currentColor" para poder teñirlos por capa.
@@ -56,31 +60,32 @@ GLYPHS = {
       <path d="M5.6 15.2h12.8v2.8H5.6z"/>""",
 }
 
+# Colores de situación resaltados (alto contraste sobre el mapa oscuro).
 SITUATIONS = [
-    ("flote", "A FLOTE", "#9fb3c8"),
-    ("agua", "EN EL AGUA", "#38a3ff"),
-    ("tierra", "EN TIERRA", "#d16bff"),
-    ("cerrado", "BAJO TECHO", "#35d64a"),
-    ("monumento", "SOLO MONUMENTO", "#e0532b"),
+    ("flote", "A FLOTE", "#8ee2ff"),
+    ("agua", "EN EL AGUA", "#2f9bff"),
+    ("tierra", "EN TIERRA", "#d777ff"),
+    ("cerrado", "BAJO TECHO", "#3fe85f"),
+    ("monumento", "SOLO MONUMENTO", "#ff6a35"),
 ]
 
-TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512" role="img" aria-label="Moneda commemorativa: {label_title}">
+TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512" role="img" aria-label="Moneda conmemorativa: {label_title}">
   <defs>
     <radialGradient id="face" cx="36%" cy="26%" r="82%">
-      <stop offset="0" stop-color="#eef3f7"/>
-      <stop offset="34%" stop-color="#bcc5cf"/>
-      <stop offset="66%" stop-color="#7c8691"/>
-      <stop offset="100%" stop-color="#3b434d"/>
+      <stop offset="0" stop-color="#f8fbfd"/>
+      <stop offset="34%" stop-color="#ccd6df"/>
+      <stop offset="66%" stop-color="#98a3ae"/>
+      <stop offset="100%" stop-color="#5b646f"/>
     </radialGradient>
     <linearGradient id="rim" x1="0" y1="0" x2="0.2" y2="1">
       <stop offset="0" stop-color="#f6f9fc"/>
-      <stop offset="45%" stop-color="#949ea9"/>
-      <stop offset="100%" stop-color="#424a54"/>
+      <stop offset="45%" stop-color="#9aa4af"/>
+      <stop offset="100%" stop-color="#4a525d"/>
     </linearGradient>
     <radialGradient id="inner" cx="40%" cy="28%" r="80%">
-      <stop offset="0" stop-color="#d3dae1"/>
-      <stop offset="70%" stop-color="#9aa4ae"/>
-      <stop offset="100%" stop-color="#646d78"/>
+      <stop offset="0" stop-color="#dde4ea"/>
+      <stop offset="70%" stop-color="#a8b3bd"/>
+      <stop offset="100%" stop-color="#7b8590"/>
     </radialGradient>
     <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.5"/>
@@ -95,7 +100,7 @@ TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" widt
   <circle cx="128" cy="128" r="120" fill="none" stroke="#f6f9fc" stroke-opacity="0.45" stroke-width="1.4"/>
   <circle cx="128" cy="128" r="104" fill="none" stroke="#2c343d" stroke-opacity="0.5" stroke-width="2"/>
   <circle cx="128" cy="128" r="102" fill="url(#inner)"/>
-  <circle cx="128" cy="128" r="102" fill="none" stroke="{color}" stroke-width="3" stroke-opacity="0.92"/>
+  <circle cx="128" cy="128" r="101" fill="none" stroke="{color}" stroke-width="7"/>
   <circle cx="128" cy="128" r="94" fill="none" stroke="#2c343d" stroke-opacity="0.35" stroke-width="1"/>
 
   <text font-family="'Arial Narrow', Arial, sans-serif" font-size="11.5" font-weight="700" letter-spacing="1.4" fill="#eef3f7" opacity="0.7" transform="translate(0 1.1)">
@@ -121,8 +126,8 @@ TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" widt
     <g>{glyph}</g>
   </g>
 
-  <rect x="46" y="181" width="164" height="28" rx="3" fill="#131b21" opacity="0.86"/>
-  <rect x="46" y="181" width="164" height="28" rx="3" fill="none" stroke="{color}" stroke-width="1.2" opacity="0.85"/>
+  <rect x="46" y="181" width="164" height="28" rx="3" fill="#0d141a" opacity="0.9"/>
+  <rect x="46" y="181" width="164" height="28" rx="3" fill="none" stroke="{color}" stroke-width="1.6"/>
   <text x="128" y="200" text-anchor="middle" font-family="'Arial Narrow', Arial, sans-serif"
         font-size="{label_size}" font-weight="700" letter-spacing="{label_track}" fill="{color}">{label}</text>
   <circle cx="36" cy="195" r="2.4" fill="{color}"/>
@@ -133,10 +138,37 @@ TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" widt
 </svg>
 """
 
+# Versión de marcador: sin textos, con el anillo de color más grueso y el
+# glifo grande, para que se lea bien a 40 px sobre el mapa oscuro.
+MARKER_TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="{label_title}">
+  <defs>
+    <radialGradient id="face" cx="34%" cy="24%" r="84%">
+      <stop offset="0" stop-color="#fafcfe"/>
+      <stop offset="34%" stop-color="#d5dee6"/>
+      <stop offset="68%" stop-color="#a2adb8"/>
+      <stop offset="100%" stop-color="#5f6873"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="32" cy="32" r="30" fill="none" stroke="url(#face)" stroke-width="3.4" stroke-dasharray="1.1 2.4"/>
+  <circle cx="32" cy="32" r="28.6" fill="url(#face)"/>
+  <circle cx="32" cy="32" r="28.6" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="0.9"/>
+  <circle cx="32" cy="32" r="24.4" fill="#0c1216"/>
+  <circle cx="32" cy="32" r="24.4" fill="{color}" opacity="0.26"/>
+  <circle cx="32" cy="32" r="24.4" fill="none" stroke="{color}" stroke-width="3.6"/>
+
+  <g transform="translate(32 32) scale(1.34) translate(-12 -12)"
+     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"
+     color="{color}" stroke="{color}">
+    <g>{glyph}</g>
+  </g>
+
+  <path d="M 12 18 A 22 22 0 0 1 30 8 A 18 18 0 0 0 16 23 Z" fill="#ffffff" opacity="0.22"/>
+</svg>
+"""
+
 
 def arc_points(radius: float, half_span_deg: float, center: float = 128.0) -> tuple[float, float, float, float]:
-    import math
-
     angle = math.radians(half_span_deg)
     x1 = center - radius * math.cos(angle)
     x2 = center + radius * math.cos(angle)
@@ -161,12 +193,22 @@ def build(key: str, label: str, color: str) -> str:
     )
 
 
+def build_marker(key: str, label: str, color: str) -> str:
+    return MARKER_TEMPLATE.format(
+        label_title=label.title(),
+        color=color,
+        glyph=GLYPHS[key],
+    )
+
+
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    MARKER_DIR.mkdir(parents=True, exist_ok=True)
+
     for key, label, color in SITUATIONS:
-        path = OUT_DIR / f"{key}.svg"
-        path.write_text(build(key, label, color), encoding="utf-8")
-        print(f"OK {path.relative_to(ROOT)}")
+        (OUT_DIR / f"{key}.svg").write_text(build(key, label, color), encoding="utf-8")
+        (MARKER_DIR / f"{key}.svg").write_text(build_marker(key, label, color), encoding="utf-8")
+        print(f"OK {key}  {color}")
 
 
 if __name__ == "__main__":

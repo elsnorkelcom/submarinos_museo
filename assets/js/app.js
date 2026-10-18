@@ -20,12 +20,14 @@ const TYPE_META = {
 const TYPE_ORDER = ["diesel", "nuclear", "electric", "hand-crank"];
 
 const SITUATION_META = {
-  flote: { label: "A flote", icon: "sit-flote", color: "#9fb3c8" },
-  agua: { label: "En el agua", icon: "sit-agua", color: "#38a3ff" },
-  tierra: { label: "En tierra", icon: "sit-tierra", color: "#d16bff" },
-  cerrado: { label: "Bajo techo", icon: "sit-cerrado", color: "#35d64a" },
-  monumento: { label: "Solo monumento", icon: "sit-monumento", color: "#e0532b" }
+  flote: { label: "A flote", icon: "sit-flote", color: "#8ee2ff" },
+  agua: { label: "En el agua", icon: "sit-agua", color: "#2f9bff" },
+  tierra: { label: "En tierra", icon: "sit-tierra", color: "#d777ff" },
+  cerrado: { label: "Bajo techo", icon: "sit-cerrado", color: "#3fe85f" },
+  monumento: { label: "Solo monumento", icon: "sit-monumento", color: "#ff6a35" }
 };
+
+const COIN_MARKER_DIR = "assets/img/coins/marker/";
 
 const SITUATION_ORDER = ["flote", "agua", "tierra", "cerrado", "monumento"];
 const BASE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
@@ -862,16 +864,26 @@ function initMap() {
 
     const meta = typeMeta(unit.typeKey);
     const sit = situationMeta(unit.situation);
-    const sitBadge = sit
-      ? `<span class="snk-marker__sit" style="--sit-color:${sit.color}" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>`
-      : "";
+
+    // Las unidades con situación conocida usan su moneda como icono de punto.
+    const markerIcon = sit
+      ? L.divIcon({
+          className: "snk-marker-wrap snk-marker-wrap--coin",
+          html: `<span class="snk-coin" style="--sit-color:${sit.color}"><img src="${COIN_MARKER_DIR}${esc(
+            unit.situation
+          )}.svg" alt="" aria-hidden="true" decoding="async"></span>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        })
+      : L.divIcon({
+          className: "snk-marker-wrap",
+          html: `<span class="snk-marker" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg></span>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+
     const marker = L.marker([unit.lat, unit.lng], {
-      icon: L.divIcon({
-        className: "snk-marker-wrap",
-        html: `<span class="snk-marker" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg>${sitBadge}</span>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
-      }),
+      icon: markerIcon,
       title: unit.name,
       alt: `${unit.name} — ${unit.museum || unit.city}`,
       riseOnHover: true,
@@ -896,7 +908,7 @@ function initMap() {
         }. ${t("map.openDossier")}`
       );
 
-      const markerElement = element.querySelector(".snk-marker");
+      const markerElement = element.querySelector(".snk-marker, .snk-coin");
       if (markerElement) {
         markerElement.classList.toggle("is-active", unit.id === state.selectedId);
       }
@@ -1107,7 +1119,7 @@ function refreshSelectionStyles() {
   state.markers.forEach((marker, id) => {
     const active = id === state.selectedId;
     const element = marker.getElement();
-    const markerElement = element ? element.querySelector(".snk-marker") : null;
+    const markerElement = element ? element.querySelector(".snk-marker, .snk-coin") : null;
 
     if (markerElement) markerElement.classList.toggle("is-active", active);
     marker.setZIndexOffset(active ? 1000 : 0);

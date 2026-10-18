@@ -1182,29 +1182,56 @@ a {
   transform: rotate(45deg) scale(1.18);
 }
 
-.snk-marker .snk-marker__sit {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
+/* Marcador-moneda: unidades con situación conocida */
+
+.snk-marker-wrap--coin {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.snk-coin {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 15px;
-  height: 15px;
-  border: 1.5px solid var(--sit-color, var(--muted));
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 0 10px var(--sit-color, var(--accent)));
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.snk-coin img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.snk-coin::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1.5px solid var(--sit-color, var(--accent));
   border-radius: 50%;
-  background: var(--bg);
-  color: var(--sit-color, var(--muted));
-  transform: rotate(-45deg);
+  opacity: 0;
+  transition: opacity 0.18s ease;
 }
 
-.snk-marker .snk-marker__sit .icon {
-  width: 9px;
-  height: 9px;
-  stroke-width: 2;
+.snk-coin:hover,
+.snk-coin.is-hover {
+  transform: scale(1.16);
 }
 
-.snk-marker.is-active .snk-marker__sit {
-  background: var(--bg);
+.snk-coin.is-active {
+  transform: scale(1.22);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 18px var(--sit-color, var(--accent)));
+}
+
+.snk-coin.is-active::before {
+  opacity: 0.85;
+  animation: ping 1.8s ease-out infinite;
 }
 
 .snk-halo-wrap {

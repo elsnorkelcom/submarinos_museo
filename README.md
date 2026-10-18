@@ -39,20 +39,25 @@ abre el dossier correspondiente y centra el mapa en la unidad.
 Cada unidad puede marcarse con una **situación**, identificada por uno de los 5 iconos del
 proyecto. En la hoja escribe la variable (o pega la URL del icono: el importador la reconoce):
 
-| Variable | Significado | Moneda |
-| --- | --- | --- |
-| `flote` | A flote, en el agua | `assets/img/coins/flote.svg` |
-| `agua` | En el agua (varado/sumergido) | `assets/img/coins/agua.svg` |
-| `tierra` | En tierra, en seco y visitable | `assets/img/coins/tierra.svg` |
-| `cerrado` | Bajo techo / cerrado, no visitable | `assets/img/coins/cerrado.svg` |
-| `monumento` | Solo queda el monumento | `assets/img/coins/monumento.svg` |
+| Variable | Significado | Color | Moneda |
+| --- | --- | --- | --- |
+| `flote` | A flote, en el agua | `#8ee2ff` | `assets/img/coins/flote.svg` |
+| `agua` | En el agua (varado/sumergido) | `#2f9bff` | `assets/img/coins/agua.svg` |
+| `tierra` | En tierra, en seco y visitable | `#d777ff` | `assets/img/coins/tierra.svg` |
+| `cerrado` | Bajo techo / cerrado, no visitable | `#3fe85f` | `assets/img/coins/cerrado.svg` |
+| `monumento` | Solo queda el monumento | `#ff6a35` | `assets/img/coins/monumento.svg` |
 
 El importador también acepta sinónimos (`afloat`, `water`, `on land`, `under cover`, `monument`)
 y busca la variable en una columna `Situacion`/`Situation`, en `Icon URL` o en `Marker Icon`.
 
-Con esa variable se filtra el mapa (chips con el icono) y se marca el dossier, el registro y el
-propio marcador. Las monedas tipo *challenge coin* se generan con `python scripts/make_coins.py`
-a partir de los mismos dibujos, en SVG sin recursos de terceros.
+Con esa variable se filtra el mapa (chips con el icono), se tiñe el dossier y el registro, y
+**la unidad usa su moneda como icono de punto en el mapa** (`assets/img/coins/marker/*.svg`,
+la versión sin textos para que se lea a 40 px). Las unidades sin situación documentada siguen
+usando el marcador romboidal por tipo de propulsión.
+
+Las monedas tipo *challenge coin* se generan con `python scripts/make_coins.py` a partir de los
+mismos dibujos, en SVG sin recursos de terceros. El script produce la moneda completa (con
+leyenda) y la versión de marcador.
 
 ### Filtros
 
@@ -147,7 +152,8 @@ assets/
   js/app.js
   img/logo.jpg
   img/cobia.webp
-  img/coins/          # monedas SVG por situación
+  img/coins/          # monedas SVG por situación (moneda completa)
+  img/coins/marker/   # versión de marcador para el mapa
   img/situation/      # iconos originales de referencia (legacy/)
 scripts/
   import_sheets.py
