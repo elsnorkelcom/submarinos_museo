@@ -32,11 +32,11 @@ const ERA_META = {
 const ERA_ORDER = ["precursores", "gran-guerra", "entreguerras", "segunda-guerra", "guerra-fria", "modernos"];
 
 const SITUATION_META = {
-  flote: { color: "var(--flote)", icon: "sit-flote" },
-  agua: { color: "var(--agua)", icon: "sit-agua" },
-  tierra: { color: "var(--tierra)", icon: "sit-tierra" },
-  cerrado: { color: "var(--cerrado)", icon: "sit-cerrado" },
-  monumento: { color: "var(--monumento)", icon: "sit-monumento" }
+  flote: { color: "var(--flote)", img: "assets/img/situation/flote.svg" },
+  agua: { color: "var(--agua)", img: "assets/img/situation/agua.svg" },
+  tierra: { color: "var(--tierra)", img: "assets/img/situation/tierra.svg" },
+  cerrado: { color: "var(--cerrado)", img: "assets/img/situation/cerrado.svg" },
+  monumento: { color: "var(--monumento)", img: "assets/img/situation/monumento.svg" }
 };
 const SITUATION_ORDER = ["flote", "agua", "tierra", "cerrado", "monumento"];
 
@@ -798,7 +798,7 @@ function renderFilterChips() {
       const meta = SITUATION_META[key];
       const active = state.filters.situation === key;
       return `<button class="chip" type="button" data-situation="${key}" aria-pressed="${active}">
-        <i style="--chip:${meta.color}"></i><span>${esc(situationLabelOf(key))}</span><b>${sitCounts.get(key) || 0}</b>
+        <img class="chip__icon" src="${meta.img}" alt="" width="16" height="16"><span>${esc(situationLabelOf(key))}</span><b>${sitCounts.get(key) || 0}</b>
       </button>`;
     });
     dom.situationFilters.innerHTML = rows.join("");
@@ -875,7 +875,7 @@ function dossierMarkup(unit) {
     <${state.page === "register" ? "h2" : "h3"} class="dossier__name">${esc(unit.name)}</${state.page === "register" ? "h2" : "h3"}>
     <div class="dossier__status">
       <span class="tag tag--type" style="--c:${typeColor}"><i></i>${esc(typeLabelOf(unit.typeKey))}</span>
-      ${sitMeta ? `<span class="tag" style="--c:${sitMeta.color}"><i></i>${esc(situationLabelOf(unit.situation))}</span>` : ""}
+      ${sitMeta ? `<span class="tag" style="--c:${sitMeta.color}"><img class="tag__icon" src="${sitMeta.img}" alt="" width="14" height="14">${esc(situationLabelOf(unit.situation))}</span>` : ""}
       ${missionTag(unit)}
     </div>
     ${media}
@@ -1341,6 +1341,7 @@ function registerRowMarkup(unit) {
     <span class="reg-row__country">${esc(countryLabel(unit.country))}</span>
     <span class="reg-row__year">${unit.launchYear || "—"}</span>
     <span class="reg-row__flags">
+      ${unit.situation ? `<img class="reg-row__sit" src="${SITUATION_META[unit.situation].img}" alt="${esc(situationLabelOf(unit.situation))}" width="13" height="13">` : ""}
       ${hasVideo(unit) ? `<svg class="icon icon--film is-on" aria-hidden="true"><use href="#i-film"></use></svg>` : ""}
       ${unit.image ? `<svg class="icon is-on" aria-hidden="true"><use href="#i-pin"></use></svg>` : ""}
     </span>

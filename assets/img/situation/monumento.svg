@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Monument">
+  <circle cx="32" cy="32" r="29" fill="#f7fafc" stroke="#b52000" stroke-width="6"/>
+  <path d="M27 42V19c0-3.2 2.2-5.4 5-5.4s5 2.2 5 5.4v23z" fill="#0d141b"/>
+  <path d="M32 17v21" stroke="#f7fafc" stroke-width="1.9"/>
+  <path d="M22 42h20v4H22zM17 46h30v4H17z" fill="#0d141b"/>
+</svg>

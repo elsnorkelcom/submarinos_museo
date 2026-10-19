@@ -23,11 +23,12 @@
   --electric: #5bc8ff;
   --crank: #d8c9a3;
 
-  --flote: #8ee2ff;
-  --agua: #2f9bff;
-  --tierra: #d777ff;
-  --cerrado: #3fe85f;
-  --monumento: #ff6a35;
+  --flote: #8b90a3;
+  --agua: #1a8cff;
+  --tierra: #da00da;
+  --cerrado: #00d933;
+  --monumento: #b52000;
+  /* situation hues are locked to the ring colours of assets/img/situation/*.svg */
 
   --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --mono: "Azeret Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -148,6 +149,7 @@ svg { display: block; }
   width: 7px; height: 7px; flex: none; border-radius: 50%;
   background: var(--chip, var(--dim));
 }
+.chip__icon { width: 16px; height: 16px; flex: none; display: block; }
 .chip b { font-weight: 400; color: var(--mut); font-size: 9px; }
 .chip[aria-pressed="true"] b { color: var(--amber); }
 .chip--reset { color: var(--alarm); border-color: rgba(255, 77, 61, 0.35); letter-spacing: 0.16em; }
@@ -734,6 +736,7 @@ svg { display: block; }
   text-transform: uppercase; color: var(--dim);
 }
 .tag i { width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--dim)); }
+.tag__icon { width: 14px; height: 14px; flex: none; display: block; }
 .tag--type { color: var(--c, var(--dim)); border-color: color-mix(in srgb, var(--c, var(--dim)) 40%, transparent); }
 .tag--alarm { color: var(--alarm); border-color: rgba(255, 77, 61, 0.4); }
 .dossier__media {
@@ -1107,7 +1110,7 @@ svg { display: block; }
 }
 .register__list-wrap { min-width: 0; }
 .register__cols {
-  display: grid; grid-template-columns: 76px minmax(0, 1.6fr) 130px 130px 62px 34px;
+  display: grid; grid-template-columns: 76px minmax(0, 1.6fr) 130px 130px 62px 58px;
   gap: 12px; padding: 0 10px 10px;
   font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em;
   color: var(--mut); text-transform: uppercase;
@@ -1115,7 +1118,7 @@ svg { display: block; }
 }
 .register__list { display: flex; flex-direction: column; }
 .reg-row {
-  display: grid; grid-template-columns: 76px minmax(0, 1.6fr) 130px 130px 62px 34px;
+  display: grid; grid-template-columns: 76px minmax(0, 1.6fr) 130px 130px 62px 58px;
   gap: 12px; align-items: center;
   padding: 12px 10px; border-bottom: 1px solid var(--line-2);
   text-align: left; width: 100%;
@@ -1137,7 +1140,8 @@ svg { display: block; }
 .reg-row__type { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; color: var(--c, var(--dim)); text-transform: uppercase; }
 .reg-row__type i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .reg-row__country, .reg-row__year { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; }
-.reg-row__flags { display: flex; gap: 6px; justify-content: flex-end; color: var(--mut); }
+.reg-row__flags { display: flex; gap: 6px; align-items: center; justify-content: flex-end; color: var(--mut); }
+.reg-row__sit { width: 13px; height: 13px; flex: none; display: block; }
 .reg-row__flags .icon { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .reg-row__flags .is-on { color: var(--amber); }
 .reg-row__flags .icon--film { fill: currentColor; stroke: none; }
@@ -1224,7 +1228,7 @@ svg { display: block; }
     max-height: 86svh; border-bottom: 0; border-left: 0; border-right: 0;
     padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
-  .register__cols, .reg-row { grid-template-columns: 62px minmax(0, 1fr) 110px 56px 30px; }
+  .register__cols, .reg-row { grid-template-columns: 62px minmax(0, 1fr) 110px 56px 52px; }
   .register__cols span:nth-child(4), .reg-row__country { display: none; }
 }
 
@@ -1292,7 +1296,7 @@ svg { display: block; }
   .register__controls .select { flex: 1 1 40%; min-width: 0; }
   .register__controls .select--sort { margin-left: 0; }
   .register__cols { display: none; }
-  .reg-row { grid-template-columns: 54px minmax(0, 1fr) 26px; gap: 8px; padding: 12px 6px; }
+  .reg-row { grid-template-columns: 54px minmax(0, 1fr) 40px; gap: 8px; padding: 12px 6px; }
   .reg-row__type, .reg-row__year, .reg-row__country, .reg-row__flags .icon:not(.icon--film) { display: none; }
   .reg-row__flags { justify-content: flex-end; }
 

@@ -131,7 +131,7 @@ A night-water palette: near-black blue-green ink, cool off-white text, and a sin
 - **Lock Alarm** (#ff4d3d): one job only — the currently locked contact (marker ring, log row, register row) and the destructive "clear filters" affordance. Never used for emphasis or decoration.
 
 ### Tertiary
-- **Propulsion hues** — Diesel (#ffb648), Nuclear (#7dffb2), Electric (#5bc8ff), Hand-crank (#d8c9a3) — and **situation hues** — Afloat (#8ee2ff), In water (#2f9bff), On land (#d777ff), Enclosed (#3fe85f), Monument (#ff6a35). These appear as 6–7px dots, tag text and telemetry bars; they are data encoding, not palette decoration.
+- **Propulsion hues** — Diesel (#ffb648), Nuclear (#7dffb2), Electric (#5bc8ff), Hand-crank (#d8c9a3) — and **situation hues** — Afloat (#8b90a3), In water (#1a8cff), On land (#da00da), Enclosed (#00d933), Monument (#b52000). Propulsion appears as 6–7px dots, tag text and telemetry bars; situation carries a badge glyph (a white disc with a coloured ring and a pictogram) at 13–16px in filter chips, dossier tags and register rows. These are data encoding, not palette decoration, and the badge ring colour is the situation's colour token.
 
 ### Neutral
 - **Deep Plot Ink** (#04070a): page ground, gate, footer.
@@ -144,7 +144,7 @@ A night-water palette: near-black blue-green ink, cool off-white text, and a sin
 ### Named Rules
 **The One Voice Rule.** Amber appears on ≤10% of any screen and always marks something alive or selected. If a surface needs emphasis and amber is already spent, use type weight or a hairline, not another colour.
 
-**The Encoding Rule.** A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a border tint, a bar or text — never as a panel background.
+**The Encoding Rule.** A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a badge, a border tint, a bar or text — never as a panel background.
 
 ## Typography
 
@@ -191,7 +191,7 @@ Glow is reserved for live instrumentation: contact dots (`0 0 12px` of their own
 
 Square by default: every panel, button, chip, tag, field, row and media well is `border-radius: 0`. The form language is the instrument face — rectangles divided by hairlines, with corner brackets on the plot frame (16px from each corner) and a 72px grid on the gate.
 
-The only circles in the system are data: 6–7px contact and legend dots, 34px cluster discs, the sonar rings and the sweep, and the 1px focus outline (offset 3px). The occupied-contact ping is a 1px expanding ring, never a filled badge.
+The only circles in the system are data: 6–7px contact and legend dots, 13–16px situation badges, 34px cluster discs, the sonar rings and the sweep, and the 1px focus outline (offset 3px). The occupied-contact ping is a 1px expanding ring, never a filled badge.
 
 ## Components
 
@@ -202,7 +202,7 @@ The only circles in the system are data: 6–7px contact and legend dots, 34px c
 - **Focus:** 2px amber outline, 3px offset, everywhere.
 
 ### Chips (filters)
-- **Style:** 1px hairline, transparent ground, Instrument Grey uppercase mono at 10px; a 7px dot in the data colour and a 9px count.
+- **Style:** 1px hairline, transparent ground, Instrument Grey uppercase mono at 10px; a 7px dot in the propulsion colour, a 16px situation badge, and a 9px count.
 - **State:** pressed turns text and border amber on `rgba(255,182,72,0.14)`; the reset chip is the only red chip.
 
 ### Cards / Containers

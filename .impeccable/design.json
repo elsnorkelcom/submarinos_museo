@@ -63,6 +63,36 @@
         "displayName": "Hand-crank Sand",
         "canonical": "#d8c9a3",
         "tonalRamp": ["#241f16", "#3d3527", "#574c39", "#71634c", "#8b7a5f", "#a89475", "#d8c9a3", "#f0e8d4"]
+      },
+      "situation-afloat": {
+        "role": "tertiary",
+        "displayName": "Afloat Slate",
+        "canonical": "#8b90a3",
+        "tonalRamp": ["#14181c", "#262930", "#3a3e47", "#4e525e", "#636775", "#777b8c", "#8b90a3", "#b4b7c3"]
+      },
+      "situation-water": {
+        "role": "tertiary",
+        "displayName": "In Water Blue",
+        "canonical": "#1a8cff",
+        "tonalRamp": ["#071727", "#0b2f54", "#0e4374", "#115795", "#146bb5", "#177fe2", "#1a8cff", "#76baff"]
+      },
+      "situation-land": {
+        "role": "tertiary",
+        "displayName": "On Land Magenta",
+        "canonical": "#da00da",
+        "tonalRamp": ["#1a071a", "#440544", "#620462", "#840384", "#a302a3", "#c001c0", "#da00da", "#e966e9"]
+      },
+      "situation-enclosed": {
+        "role": "tertiary",
+        "displayName": "Enclosed Green",
+        "canonical": "#00d933",
+        "tonalRamp": ["#041d0c", "#034213", "#025f19", "#028020", "#039e28", "#01be2d", "#00d933", "#66e785"]
+      },
+      "situation-monument": {
+        "role": "tertiary",
+        "displayName": "Monument Red",
+        "canonical": "#b52000",
+        "tonalRamp": ["#180a05", "#390d04", "#540f04", "#6f1104", "#891203", "#a01b03", "#b52000", "#d2674d"]
       }
     },
     "typographyMeta": {
@@ -113,9 +143,9 @@
       "name": "Filter Chip",
       "kind": "chip",
       "refersTo": "chip",
-      "description": "Propulsion and situation filters, with a data dot and a live count.",
-      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip\" aria-pressed=\"true\" style=\"--chip:#ffb648\"><i></i>Diesel <b>119</b></button><button class=\"ds-chip\" aria-pressed=\"false\" style=\"--chip:#7dffb2\"><i></i>Nuclear <b>24</b></button></div>",
-      "css": ".ds-chip { display:inline-flex; align-items:center; gap:8px; padding:8px 11px; border:1px solid rgba(232,241,245,.13); background:transparent; color:var(--dim,#93a9b2); font-family:var(--mono,monospace); font-size:10px; letter-spacing:.12em; text-transform:uppercase; border-radius:0; cursor:pointer; transition:color 150ms cubic-bezier(.2,.7,.2,1), border-color 150ms cubic-bezier(.2,.7,.2,1), background 150ms cubic-bezier(.2,.7,.2,1); } .ds-chip i { width:7px; height:7px; flex:none; border-radius:50%; background:var(--chip,#93a9b2); } .ds-chip b { font-weight:400; color:var(--mut,#7d949e); font-size:9px; } .ds-chip:hover { color:var(--txt,#e8f1f5); border-color:rgba(232,241,245,.3); } .ds-chip[aria-pressed=\"true\"] { color:var(--amber,#ffb648); border-color:rgba(255,182,72,.55); background:rgba(255,182,72,.14); } .ds-chip[aria-pressed=\"true\"] b { color:var(--amber,#ffb648); } .ds-chip:focus-visible { outline:2px solid var(--amber,#ffb648); outline-offset:3px; }"
+      "description": "Propulsion filters carry a data dot; situation filters carry the archive's badge glyph. Both show a live count.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip\" aria-pressed=\"true\" style=\"--chip:#ffb648\"><i></i>Diesel <b>119</b></button><button class=\"ds-chip\" aria-pressed=\"false\"><img src=\"assets/img/situation/agua.svg\" alt=\"\" width=\"16\" height=\"16\">In water <b>9</b></button></div>",
+      "css": ".ds-chip { display:inline-flex; align-items:center; gap:8px; padding:8px 11px; border:1px solid rgba(232,241,245,.13); background:transparent; color:var(--dim,#93a9b2); font-family:var(--mono,monospace); font-size:10px; letter-spacing:.12em; text-transform:uppercase; border-radius:0; cursor:pointer; transition:color 150ms cubic-bezier(.2,.7,.2,1), border-color 150ms cubic-bezier(.2,.7,.2,1), background 150ms cubic-bezier(.2,.7,.2,1); } .ds-chip i { width:7px; height:7px; flex:none; border-radius:50%; background:var(--chip,#93a9b2); } .ds-chip img { width:16px; height:16px; flex:none; display:block; } .ds-chip b { font-weight:400; color:var(--mut,#7d949e); font-size:9px; } .ds-chip:hover { color:var(--txt,#e8f1f5); border-color:rgba(232,241,245,.3); } .ds-chip[aria-pressed=\"true\"] { color:var(--amber,#ffb648); border-color:rgba(255,182,72,.55); background:rgba(255,182,72,.14); } .ds-chip[aria-pressed=\"true\"] b { color:var(--amber,#ffb648); } .ds-chip:focus-visible { outline:2px solid var(--amber,#ffb648); outline-offset:3px; }"
     },
     {
       "name": "Instrument Panel",
@@ -129,9 +159,9 @@
       "name": "Dossier Tag",
       "kind": "chip",
       "refersTo": "tag",
-      "description": "Status tokens on a file: propulsion, situation, and the locked state.",
-      "html": "<div style=\"display:flex;gap:6px;flex-wrap:wrap\"><span class=\"ds-tag\" style=\"--c:#ffb648\"><i></i>Diesel</span><span class=\"ds-tag\" style=\"--c:#8ee2ff\"><i></i>In water</span><span class=\"ds-tag ds-tag--alarm\">Locked</span></div>",
-      "css": ".ds-tag { display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border:1px solid rgba(232,241,245,.13); background:transparent; color:var(--dim,#93a9b2); font-family:var(--mono,monospace); font-size:8px; letter-spacing:.16em; text-transform:uppercase; border-radius:0; } .ds-tag i { width:6px; height:6px; border-radius:50%; background:var(--c,#93a9b2); } .ds-tag--alarm { color:var(--alarm,#ff4d3d); border-color:rgba(255,77,61,.4); }"
+      "description": "Status tokens on a file: propulsion dot, situation badge, and the locked state.",
+      "html": "<div style=\"display:flex;gap:6px;flex-wrap:wrap\"><span class=\"ds-tag\" style=\"--c:#ffb648\"><i></i>Diesel</span><span class=\"ds-tag\" style=\"--c:#1a8cff\"><img src=\"assets/img/situation/agua.svg\" alt=\"\" width=\"14\" height=\"14\">In water</span><span class=\"ds-tag ds-tag--alarm\">Locked</span></div>",
+      "css": ".ds-tag { display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border:1px solid rgba(232,241,245,.13); background:transparent; color:var(--dim,#93a9b2); font-family:var(--mono,monospace); font-size:8px; letter-spacing:.16em; text-transform:uppercase; border-radius:0; } .ds-tag i { width:6px; height:6px; border-radius:50%; background:var(--c,#93a9b2); } .ds-tag img { width:14px; height:14px; flex:none; display:block; } .ds-tag--alarm { color:var(--alarm,#ff4d3d); border-color:rgba(255,77,61,.4); }"
     },
     {
       "name": "Search Field",
@@ -171,7 +201,7 @@
     ],
     "rules": [
       { "name": "The One Voice Rule", "body": "Amber appears on ≤10% of any screen and always marks something alive or selected. If a surface needs emphasis and amber is already spent, use type weight or a hairline, not another colour.", "section": "colors" },
-      { "name": "The Encoding Rule", "body": "A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a border tint, a bar or text — never as a panel background.", "section": "colors" },
+      { "name": "The Encoding Rule", "body": "A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a badge, a border tint, a bar or text — never as a panel background.", "section": "colors" },
       { "name": "The Measurement Rule", "body": "Mono is for anything the instrument would measure or name: codes, years, counts, ranges, coordinates, labels, table cells. Running prose and headings are always Archivo.", "section": "typography" },
       { "name": "The Flat-By-Default Rule", "body": "A surface never gains a shadow to look important. If it must separate from the plot, it gains a hairline, a tonal step, or blur — never a cast shadow.", "section": "elevation" },
       { "name": "The Glow-Is-Data Rule", "body": "Halos exist only where something is transmitting: contacts, locks, the live indicator. A halo on a button or a card is a bug.", "section": "elevation" }
