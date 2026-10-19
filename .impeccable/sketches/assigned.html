@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Acoustic Plot — first viewport</title>
+<style>
+  :root{
+    --ink:#04070a; --ink-2:#071016; --txt:#e8f1f5; --amber:#ffb648;
+    --alarm:#ff4d3d; --dim:#6f8a94; --line:rgba(232,241,245,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1440px;height:900px;overflow:hidden;background:var(--ink);color:var(--txt);
+    font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .stage{position:relative;width:1440px;height:900px;isolation:isolate}
+
+  /* fondo: plot */
+  .plot{position:absolute;inset:0;z-index:0;
+    background:
+      radial-gradient(1100px 720px at 62% 46%, rgba(255,182,72,.10), transparent 62%),
+      radial-gradient(900px 620px at 22% 78%, rgba(111,138,148,.10), transparent 60%),
+      linear-gradient(180deg, #050a0e 0%, #04070a 55%, #030608 100%);}
+  .rings{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+
+  /* traza de agua */
+  .fall{position:absolute;left:0;right:0;bottom:0;height:210px;z-index:1;
+    background:repeating-linear-gradient(90deg, rgba(255,182,72,.16) 0 2px, transparent 2px 9px);
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 45%,#000 100%);
+    mask-image:linear-gradient(180deg,transparent,#000 45%,#000 100%);
+    opacity:.5}
+
+  /* barrido */
+  .sweep{position:absolute;left:0;right:0;top:0;height:900px;z-index:2;pointer-events:none;
+    background:linear-gradient(180deg,transparent 0%,rgba(232,241,245,.05) 49%,transparent 52%);}
+
+  /* barra superior */
+  .rail{position:absolute;top:0;left:0;right:0;height:58px;z-index:6;display:flex;align-items:center;
+    justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(4,7,10,.92), rgba(4,7,10,.35));letter-spacing:.18em;font-size:13px}
+  .rail b{font-weight:700;letter-spacing:.26em}
+  .rail .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;margin-right:9px;
+    box-shadow:0 0 12px var(--amber)}
+  .rail .r{display:flex;gap:26px;align-items:center;color:var(--dim)}
+  .rail .tag{border:1px solid rgba(255,77,61,.5);color:var(--alarm);padding:5px 10px;letter-spacing:.28em;font-size:11px}
+
+  /* título */
+  .headline{position:absolute;left:64px;top:210px;z-index:5;max-width:820px}
+  .kick{font-size:14px;letter-spacing:.42em;color:var(--amber);margin-bottom:22px;display:flex;align-items:center;gap:14px}
+  .kick i{display:block;width:64px;height:1px;background:var(--amber);opacity:.8}
+  h1{font-size:172px;line-height:.82;letter-spacing:-.02em;font-weight:700;text-transform:uppercase;
+     text-shadow:0 0 60px rgba(232,241,245,.10)}
+  h1 .out{display:block;color:transparent;-webkit-text-stroke:2px rgba(232,241,245,.55)}
+  .sub{margin-top:26px;max-width:430px;font-size:17px;line-height:1.5;color:#b9c9d1;letter-spacing:.02em}
+
+  /* acción */
+  .cta{position:absolute;left:64px;top:706px;z-index:6;display:flex;align-items:center;gap:20px}
+  .btn{display:inline-flex;align-items:center;gap:16px;padding:19px 30px;background:var(--amber);color:#08110b;
+    font-weight:700;letter-spacing:.22em;font-size:14px;border:0}
+  .btn svg{width:16px;height:16px}
+  .ghost{color:var(--dim);letter-spacing:.24em;font-size:12px;border-bottom:1px solid rgba(111,138,148,.5);padding-bottom:6px}
+
+  /* columna de telemetría */
+  .tele{position:absolute;right:0;top:58px;bottom:150px;width:250px;z-index:6;padding:30px 34px 0;
+    border-left:1px solid var(--line);display:flex;flex-direction:column;gap:26px;
+    background:linear-gradient(180deg, rgba(4,7,10,.72), rgba(4,7,10,.18))}
+  .tele .k{font-size:10px;letter-spacing:.3em;color:var(--dim);margin-bottom:7px}
+  .tele .v{font-size:40px;letter-spacing:-.01em;font-weight:700;line-height:1}
+  .tele .v small{font-size:13px;letter-spacing:.22em;color:var(--dim);margin-left:8px;font-weight:400}
+  .tele .row{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(232,241,245,.08);padding-bottom:9px}
+  .tele .row span{font-size:12px;letter-spacing:.16em;color:#9fb2bb}
+
+  /* contactos */
+  .contacts{position:absolute;inset:0;z-index:4;pointer-events:none}
+  .c{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--txt);
+     box-shadow:0 0 0 3px rgba(232,241,245,.10), 0 0 18px rgba(232,241,245,.35)}
+  .c.a{background:var(--amber);box-shadow:0 0 0 3px rgba(255,182,72,.16), 0 0 22px rgba(255,182,72,.55)}
+  .c.live{width:13px;height:13px;background:var(--alarm);box-shadow:0 0 0 6px rgba(255,77,61,.14), 0 0 34px rgba(255,77,61,.75)}
+  .c.live::after{content:"";position:absolute;inset:-26px;border:1px solid rgba(255,77,61,.45);border-radius:50%}
+  .leader{position:absolute;height:1px;background:linear-gradient(90deg,rgba(255,77,61,.65),transparent);transform-origin:0 0}
+  .desig{position:absolute;font-size:10px;letter-spacing:.22em;color:#c8d7de;white-space:nowrap}
+
+  /* estantería de épocas */
+  .eras{position:absolute;left:0;right:0;bottom:0;height:150px;z-index:7;display:grid;
+    grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(4,7,10,.55), rgba(4,7,10,.96))}
+  .era{padding:22px 26px 0;border-right:1px solid rgba(232,241,245,.07);position:relative}
+  .era:last-child{border-right:0}
+  .era .n{font-size:10px;letter-spacing:.3em;color:var(--dim)}
+  .era .t{margin-top:14px;font-size:19px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+  .era .bar{margin-top:14px;height:2px;background:rgba(232,241,245,.14);position:relative}
+  .era .bar::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w,30%);background:var(--amber)}
+  .era.hot .t{color:var(--amber)}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="plot"></div>
+
+  <svg class="rings" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="none" stroke="rgba(232,241,245,.10)" stroke-width="1">
+      <circle cx="915" cy="430" r="130"/><circle cx="915" cy="430" r="260"/>
+      <circle cx="915" cy="430" r="390"/><circle cx="915" cy="430" r="520"/>
+      <circle cx="915" cy="430" r="660"/>
+    </g>
+    <g stroke="rgba(232,241,245,.07)" stroke-width="1">
+      <line x1="255" y1="430" x2="1440" y2="430"/>
+      <line x1="915" y1="0" x2="915" y2="900"/>
+      <line x1="448" y1="0" x2="1382" y2="900"/>
+      <line x1="1382" y1="0" x2="448" y2="900"/>
+    </g>
+    <g stroke="rgba(255,182,72,.55)" stroke-width="1">
+      <line x1="915" y1="430" x2="1305" y2="146"/>
+    </g>
+    <g fill="rgba(232,241,245,.30)" font-family="monospace" font-size="10">
+      <text x="1030" y="424">045</text><text x="915" y="284">090</text>
+      <text x="800" y="424">135</text><text x="915" y="580">180</text>
+    </g>
+  </svg>
+
+  <div class="fall"></div>
+  <div class="sweep"></div>
+
+  <header class="rail">
+    <div><span class="dot"></span><b>NMMA / ARCHIVE</b> <span style="color:var(--dim);margin-left:16px">ACOUSTIC PLOT · SECTOR 07</span></div>
+    <div class="r">
+      <span>160 CONTACTS</span><span>35 WATERS</span><span>27 FILMS</span>
+      <span class="tag">RESTRICTED</span>
+    </div>
+  </header>
+
+  <div class="contacts" aria-hidden="true">
+    <span class="c" style="left:1180px;top:250px"></span>
+    <span class="c a" style="left:1054px;top:520px"></span>
+    <span class="c" style="left:1268px;top:600px"></span>
+    <span class="c" style="left:990px;top:340px"></span>
+    <span class="c a" style="left:1140px;top:700px"></span>
+    <span class="c" style="left:1310px;top:390px"></span>
+    <span class="c" style="left:1080px;top:180px"></span>
+    <span class="c live" style="left:1210px;top:455px"></span>
+    <span class="leader" style="left:1210px;top:461px;width:150px;transform:rotate(-16deg)"></span>
+    <span class="desig" style="left:1340px;top:405px">U-995 · LIVE FEED</span>
+    <span class="desig" style="left:1240px;top:238px">HMAS ONSLOW</span>
+  </div>
+
+  <div class="headline">
+    <div class="kick"><i></i>CLASSIFIED NAVAL ARCHIVE · CLEARANCE 2</div>
+    <h1>SUBMARINE<span class="out">MUSEUMS</span></h1>
+    <p class="sub">Every preserved submarine on earth, tracked as a contact: position, condition, film and file.</p>
+  </div>
+
+  <div class="cta">
+    <button class="btn">ENTER THE ARCHIVE
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h11M9 3l5 5-5 5"/></svg>
+    </button>
+    <span class="ghost">BRIEFING · 90 SEC</span>
+  </div>
+
+  <aside class="tele">
+    <div class="row"><span>CONTACTS</span><b class="v">160</b></div>
+    <div class="row"><span>WATERS</span><b class="v">35</b></div>
+    <div class="row"><span>ON FILM</span><b class="v">27</b></div>
+    <div>
+      <div class="k">PLOT STATUS</div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <i style="height:26px;flex:1;background:var(--amber)"></i>
+        <i style="height:26px;flex:1;background:rgba(255,182,72,.45)"></i>
+        <i style="height:26px;flex:1;background:rgba(232,241,245,.16)"></i>
+        <i style="height:26px;flex:1;background:rgba(232,241,245,.10)"></i>
+        <i style="height:26px;flex:1;background:rgba(232,241,245,.06)"></i>
+      </div>
+      <div class="k" style="margin-top:12px;color:#8fa3ab">AFL0AT · AGUA · TIERRA · CLOSED · MONUMENT</div>
+    </div>
+  </aside>
+
+  <footer class="eras">
+    <div class="era"><div class="n">01</div><div class="t">Precursors</div><div class="bar" style="--w:18%"></div></div>
+    <div class="era"><div class="n">02</div><div class="t">Great War</div><div class="bar" style="--w:34%"></div></div>
+    <div class="era"><div class="n">03</div><div class="t">Interwar</div><div class="bar" style="--w:26%"></div></div>
+    <div class="era hot"><div class="n">04</div><div class="t">World War II</div><div class="bar" style="--w:62%"></div></div>
+    <div class="era"><div class="n">05</div><div class="t">Cold War</div><div class="bar" style="--w:48%"></div></div>
+    <div class="era"><div class="n">06</div><div class="t">Modern</div><div class="bar" style="--w:22%"></div></div>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,474 +1,425 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#070b09">
-  <title data-i18n="meta.title">Submarinos Museo del Mundo // Archivo Naval</title>
-  <meta name="description" content="Archivo interactivo de 160 submarinos preservados como museo en 35 países. Mapa táctico, expedientes técnicos y multimedia." data-i18n-attr="content:meta.description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#04070a">
+  <title data-i18n="meta.title">Submarine Museums of the World // Naval Archive</title>
+  <meta name="description" content="A working register of 160 preserved submarines in 35 countries: tactical plot, numbered files and film." data-i18n-attr="content:meta.description">
   <link rel="canonical" href="https://submarinos-museo-del-mundo.elsnorkel.com/">
-  <meta property="og:title" content="Submarinos Museo del Mundo // Archivo Naval" data-i18n-attr="content:meta.ogTitle">
-  <meta property="og:description" content="160 submarinos museo. 35 países. Un mapa táctico para explorar el archivo." data-i18n-attr="content:meta.ogDescription">
+  <meta property="og:title" content="Submarine Museums of the World // Naval Archive" data-i18n-attr="content:meta.ogTitle">
+  <meta property="og:description" content="160 preserved submarines. 35 countries. One plot. Lock a contact, read the file." data-i18n-attr="content:meta.ogDescription">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://submarinos-museo-del-mundo.elsnorkel.com/">
-  <meta property="og:site_name" content="Submarinos Museo del Mundo">
+  <meta property="og:site_name" content="Submarine Museums of the World">
   <meta property="og:image" content="https://submarinos-museo-del-mundo.elsnorkel.com/assets/img/cobia.webp">
-  <meta property="og:image:alt" content="Mapa de submarinos museo">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body>
-  <a class="skip-link" href="#map-section" data-i18n="skip">Saltar al mapa táctico</a>
+<body data-page="home">
+  <a class="skip" href="#console" data-i18n="skip">Skip to the console</a>
 
-  <svg class="svg-sprite" aria-hidden="true" width="0" height="0">
-    <symbol id="i-sub" viewBox="0 0 24 24">
-      <path d="M2 13.4c1.8-2.8 5.5-4.5 10-4.5h4.4c2 0 3.4 1 4.3 2.7l1.3 2.3v2.6h-3.2c-1.1 0-1.4 1.2-2.6 1.2s-1.5-1.2-2.6-1.2H8.4c-1.1 0-1.4 1.2-2.6 1.2S4.3 16.5 3.2 16.5H1.5v-2.4z"/>
-      <path d="M9 8.9V6.6h5.2v2.3M7 13.4h10"/>
-    </symbol>
-    <symbol id="i-sub-side" viewBox="0 0 128 44">
-      <path d="M4 25C4 18.6 9.6 14 17.4 14H96C105 14 112 18.8 115.6 25C112 31.2 105 36 96 36H17.4C9.6 36 4 31.4 4 25Z"/>
-      <path d="M44 14V7.2c0-1.2.9-2 2-2h16c1.1 0 2 .8 2 2V14"/>
-      <path d="M50 5.2V1.8h1.6M58 5.2V2.6h6.5"/>
-      <path d="M18 14 13 9.2M18 36l-5 4.8"/>
-      <path d="M100 14l7.5-4.6M100 36l7.5 4.6"/>
-      <ellipse cx="119" cy="25" rx="2.4" ry="6"/>
-      <circle cx="32" cy="25" r="1.05"/>
-      <circle cx="42" cy="25" r="1.05"/>
-      <circle cx="52" cy="25" r="1.05"/>
-      <circle cx="72" cy="25" r="1.05"/>
-      <circle cx="82" cy="25" r="1.05"/>
-      <circle cx="92" cy="25" r="1.05"/>
-    </symbol>
-    <symbol id="i-crosshair" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.6"/>
-      <path d="M12 2v4.2M12 17.8V22M2 12h4.2M17.8 12H22"/>
-    </symbol>
-    <symbol id="i-search" viewBox="0 0 24 24">
-      <circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.2 4.2"/>
-    </symbol>
-    <symbol id="i-play" viewBox="0 0 24 24">
-      <path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/>
-    </symbol>
-    <symbol id="i-arrow" viewBox="0 0 24 24">
-      <path d="M4 12h15M13 6l6 6-6 6"/>
-    </symbol>
-    <symbol id="i-close" viewBox="0 0 24 24">
-      <path d="M6 6l12 12M18 6 6 18"/>
-    </symbol>
-    <symbol id="i-sonar" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/>
-    </symbol>
-    <symbol id="i-atom" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="2"/>
-      <ellipse cx="12" cy="12" rx="9.2" ry="4"/>
-      <ellipse cx="12" cy="12" rx="9.2" ry="4" transform="rotate(60 12 12)"/>
-      <ellipse cx="12" cy="12" rx="9.2" ry="4" transform="rotate(120 12 12)"/>
-    </symbol>
-    <symbol id="i-bolt" viewBox="0 0 24 24">
-      <path d="M13.5 2 5 13.2h4.8L9.5 22 19 10.4h-5z"/>
-    </symbol>
-    <symbol id="i-gear" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="3.2"/>
-      <path d="M12 2.4v3M12 18.6v3M2.4 12h3M18.6 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>
-    </symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24">
-      <path d="M12 21.5s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z"/>
-      <circle cx="12" cy="10.2" r="2.4"/>
-    </symbol>
-    <symbol id="i-external" viewBox="0 0 24 24">
-      <path d="M14 4h6v6M20 4l-8.4 8.4M18.5 14v5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>
-    </symbol>
-    <symbol id="i-copy" viewBox="0 0 24 24">
-      <rect x="9" y="9" width="12" height="12" rx="1.2"/>
-      <path d="M15 9V4.2A1.2 1.2 0 0 0 13.8 3H4.2A1.2 1.2 0 0 0 3 4.2v9.6A1.2 1.2 0 0 0 4.2 15H9"/>
-    </symbol>
+  <svg class="sprite" aria-hidden="true" width="0" height="0">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.2 4.2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="1.2"/><path d="M15 9V4.2A1.2 1.2 0 0 0 13.8 3H4.2A1.2 1.2 0 0 0 3 4.2v9.6A1.2 1.2 0 0 0 4.2 15H9"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.4 8.4M18.5 14v5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.5s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z"/><circle cx="12" cy="10.2" r="2.4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="1"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></symbol>
+    <symbol id="i-sonar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="12" r="5.4"/><circle cx="12" cy="12" r="9.4"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 5v14M17 5v14M3 9h4M17 9h4M3 15h4M17 15h4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
 
-    <!-- Situación del museo: a flote, en el agua, en tierra, bajo techo, monumento -->
     <symbol id="sit-flote" viewBox="0 0 24 24">
       <path d="M4.4 11.6c2.6-1.6 12.6-1.6 15.2 0 .9.5.6 1.9-.4 2.2-3 1-11.4 1-14.4 0-1-.3-1.3-1.7-.4-2.2z" fill="currentColor" stroke="none"/>
-      <path d="M9.4 11.8V8.8h5.2v3"/>
-      <path d="M12 8.8V6h1.3M10.4 6h5.2"/>
-      <path d="M2.8 16.6h18.4"/>
+      <path d="M9.4 11.8V8.8h5.2v3"/><path d="M12 8.8V6h1.3M10.4 6h5.2"/><path d="M2.8 16.6h18.4"/>
       <path d="M4.6 19.4h2.4M9.4 19.4h2.4M14.2 19.4h2.4M19 19.4h1.4"/>
     </symbol>
     <symbol id="sit-agua" viewBox="0 0 24 24">
-      <path d="M7 13.4c0-3 2.2-4.8 5-4.8s5 1.8 5 4.8"/>
-      <path d="M9.6 9.4V6.8h4.8v2.6"/>
-      <path d="M12 6.8V4h1.3M10.4 4h5.2"/>
+      <path d="M7 13.4c0-3 2.2-4.8 5-4.8s5 1.8 5 4.8"/><path d="M9.6 9.4V6.8h4.8v2.6"/><path d="M12 6.8V4h1.3M10.4 4h5.2"/>
       <path d="M2.6 14.4c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
       <path d="M2.6 17.8c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
       <path d="M2.6 21.2c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
     </symbol>
     <symbol id="sit-tierra" viewBox="0 0 24 24">
       <path d="M4.6 11.4c2.7-1.5 12.1-1.5 14.8 0 .9.5.6 1.8-.4 2.1-2.9.9-11.1.9-14 0-1-.3-1.3-1.6-.4-2.1z"/>
-      <circle cx="8.2" cy="12.2" r="1"/>
-      <circle cx="12" cy="12.2" r="1"/>
-      <circle cx="15.8" cy="12.2" r="1"/>
-      <path d="M9.6 9.6V7.2h4.8v2.4"/>
-      <path d="M12 7.2V4.6h1.3M10.4 4.6h5.2"/>
-      <path d="M7.2 15.4l1.8 3M16.8 15.4l-1.8 3M5.2 18.4h13.6"/>
+      <circle cx="8.2" cy="12.2" r="1"/><circle cx="12" cy="12.2" r="1"/><circle cx="15.8" cy="12.2" r="1"/>
+      <path d="M9.6 9.6V7.2h4.8v2.4"/><path d="M12 7.2V4.6h1.3M10.4 4.6h5.2"/><path d="M7.2 15.4l1.8 3M16.8 15.4l-1.8 3M5.2 18.4h13.6"/>
     </symbol>
-    <symbol id="sit-cerrado" viewBox="0 0 24 24">
-      <use href="#sit-tierra"/>
-      <path d="M3.8 20.4 20.2 3.6"/>
-    </symbol>
+    <symbol id="sit-cerrado" viewBox="0 0 24 24"><use href="#sit-tierra"/><path d="M3.8 20.4 20.2 3.6"/></symbol>
     <symbol id="sit-monumento" viewBox="0 0 24 24">
       <path d="M10.2 3 12 1.6 13.8 3l1.2 9.6H9z" fill="currentColor" stroke="none"/>
-      <path d="M8.2 12.6h7.6v2.6H8.2z"/>
-      <path d="M5.6 15.2h12.8v2.8H5.6z"/>
+      <path d="M8.2 12.6h7.6v2.6H8.2z"/><path d="M5.6 15.2h12.8v2.8H5.6z"/>
     </symbol>
   </svg>
 
-  <div id="boot" class="boot" role="status" aria-live="polite">
-    <div class="boot__radar" aria-hidden="true"><span></span></div>
-    <p class="boot__label" data-i18n="boot.loading">CARGANDO ARCHIVO NAVAL</p>
-    <p class="boot__sub" data-i18n="boot.sync">SINCRONIZANDO UNIDADES...</p>
+  <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate__grid" aria-hidden="true"></div>
+    <div class="gate__panel">
+      <h1 class="gate__title" id="gate-title">
+        <span data-i18n="gate.title1">SUBMARINE</span>
+        <em data-i18n="gate.title2">MUSEUMS</em>
+      </h1>
+      <p class="gate__sub" data-i18n="gate.sub">160 preserved submarines. 35 countries. One working register of hulls, files and film.</p>
+      <dl class="gate__stats">
+        <div><dt data-i18n="gate.stat1">CONTACTS</dt><dd id="gate-total">160</dd></div>
+        <div><dt data-i18n="gate.stat2">WATERS</dt><dd id="gate-countries">35</dd></div>
+        <div><dt data-i18n="gate.stat3">FILMS</dt><dd id="gate-films">27</dd></div>
+      </dl>
+      <button class="btn btn--amber btn--lg" id="gate-enter" type="button">
+        <span data-i18n="gate.enter">ENTER THE ARCHIVE</span>
+        <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+      </button>
+      <p class="gate__fine" data-i18n="gate.fine">Public record · No account · Sound on</p>
+      <button class="gate__skip" id="gate-skip" type="button" data-i18n="gate.skip">Skip intro</button>
+      <noscript><p class="gate__noscript">This archive needs JavaScript to plot its contacts.</p></noscript>
+    </div>
+    <div class="gate__foot" aria-hidden="true">
+      <span>NMMA-26</span>
+      <span class="gate__foot-mid">160 CONTACTS / 35 WATERS / 27 FILMS</span>
+      <span data-i18n="gate.foot">OPEN RECORD</span>
+    </div>
   </div>
 
-  <div id="app" hidden>
-    <header class="hud-header">
-      <a class="brand" href="#top" aria-label="elSnorkel, inicio" data-i18n-attr="aria-label:brand.home">
-        <img src="assets/img/logo.jpg" alt="" class="brand__mark" width="40" height="40">
+  <div class="boot" id="boot" hidden aria-live="polite">
+    <div class="boot__log" id="boot-log"></div>
+    <div class="boot__bar"><i id="boot-bar"></i></div>
+  </div>
+
+  <div class="app" id="app" hidden>
+    <header class="hud" id="hud">
+      <a class="hud__brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+        <img src="assets/img/logo.jpg" alt="" width="38" height="38">
       </a>
-      <div class="hud-status">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span data-i18n="header.online">SISTEMA ONLINE</span>
-        <span class="hud-status__sep" aria-hidden="true">/</span>
-        <span><b id="header-count">--</b> <span data-i18n="header.units">UNIDADES</span></span>
+      <div class="hud__id">
+        <b data-i18n="hud.id">NMMA // NAVAL ARCHIVE</b>
+        <span class="hud__live"><i aria-hidden="true"></i><span data-i18n="hud.live">PLOT LIVE</span></span>
       </div>
-      <nav class="hud-nav" aria-label="Secciones" data-i18n-attr="aria-label:nav.aria">
-        <a href="#map-section" data-i18n="nav.map">MAPA</a>
-        <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
-        <a href="#registry" data-i18n="nav.registry">REGISTRO</a>
-        <a href="#timeline" data-i18n="nav.timeline">CRONOLOGÍA</a>
-        <a href="#intel" data-i18n="nav.intel">INTEL</a>
+      <nav class="hud__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+        <a href="#plot" data-i18n="nav.plot">PLOT</a>
+        <a href="#console" data-i18n="nav.console">CONSOLE</a>
+        <a href="#eras" data-i18n="nav.eras">ERAS</a>
+        <a href="#featured" data-i18n="nav.featured">FEATURED</a>
       </nav>
-      <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-attr="aria-label:lang.switch">
-        <button class="lang-switch__btn" type="button" data-lang="es" aria-pressed="true" title="Español">ES</button>
-        <button class="lang-switch__btn" type="button" data-lang="en" aria-pressed="false" title="English">EN</button>
+      <div class="hud__tools">
+        <button class="icon-btn" id="sound-toggle" type="button" aria-pressed="true" aria-label="Sound" data-i18n-attr="aria-label:hud.sound">
+          <svg class="icon icon--on" aria-hidden="true"><use href="#i-sound"></use></svg>
+          <svg class="icon icon--off" aria-hidden="true"><use href="#i-mute"></use></svg>
+        </button>
+        <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+          <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+        </div>
+        <a class="btn btn--amber btn--sm hud__register" href="registro.html" data-i18n="nav.register">REGISTER</a>
+        <button class="icon-btn hud__menu" id="menu-open" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu" data-i18n-attr="aria-label:hud.menu">
+          <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+        </button>
       </div>
     </header>
 
+    <div class="menu" id="menu" hidden>
+      <div class="menu__head">
+        <span class="kicker" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
+        <button class="icon-btn" id="menu-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+      <nav class="menu__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+        <a href="#plot"><span>01</span><b data-i18n="nav.plot">PLOT</b></a>
+        <a href="#console"><span>02</span><b data-i18n="nav.console">CONSOLE</b></a>
+        <a href="#eras"><span>03</span><b data-i18n="nav.eras">ERAS</b></a>
+        <a href="#featured"><span>04</span><b data-i18n="nav.featured">FEATURED</b></a>
+        <a href="#origin"><span>05</span><b data-i18n="nav.origin">ORIGIN</b></a>
+        <a href="registro.html"><span>06</span><b data-i18n="nav.register">REGISTER</b></a>
+      </nav>
+      <div class="menu__foot">
+        <div class="lang lang--lg" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+          <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+        </div>
+        <div class="social" id="social-menu"></div>
+      </div>
+    </div>
+
     <main>
-      <section class="hero" id="top">
-        <div class="hero__bg" id="hero-bg" aria-hidden="true">
-          <video class="hero__video" id="hero-video" muted loop playsinline preload="none" hidden></video>
-        </div>
-        <canvas class="hero__canvas" id="hero-canvas" aria-hidden="true"></canvas>
-        <div class="hero__grid" aria-hidden="true"></div>
-        <div class="hero__scan" aria-hidden="true"></div>
-
-        <div class="periscope" id="periscope" aria-hidden="true">
-          <span class="periscope__glass"></span>
-          <span class="periscope__caustics"></span>
-          <span class="periscope__beam"></span>
-
-          <svg class="periscope__sub" viewBox="0 0 128 44"><use href="#i-sub-side"></use></svg>
-          <span class="periscope__bubbles"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-
-          <span class="periscope__ticks"></span>
-          <span class="periscope__ticks periscope__ticks--fine"></span>
-          <span class="periscope__sweep"></span>
-          <span class="periscope__reticle"></span>
-          <span class="periscope__brackets"></span>
-
-          <span class="periscope__rd periscope__rd--brg"><b id="peri-brg">000</b><small>BRG</small></span>
-          <span class="periscope__rd periscope__rd--dep"><small>DEP</small><b id="peri-dep">020</b></span>
-          <span class="periscope__caption" data-i18n="hero.periscope">VISTA PERISCÓPICA // EN SUPERFICIE</span>
-        </div>
-        <div class="hero__content">
-          <p class="kicker"><span class="kicker__line"></span><span data-i18n="hero.kicker">ARCHIVO NAVAL // ACCESO PÚBLICO</span></p>
-          <h1 class="hero__title">
-            <span class="hero__title-solid" data-i18n="hero.title1">SUBMARINOS</span>
-            <span class="hero__title-outline" data-i18n="hero.title2">MUSEO DEL MUNDO</span>
-          </h1>
-          <p class="hero__subtitle" id="hero-subtitle">Un archivo interactivo de gigantes de acero y sus historias.</p>
-          <div class="hero__actions">
-            <a href="#featured" class="btn btn--primary btn--lg">
-              <span data-i18n="hero.cta">EXPLORAR EL ARCHIVO</span> <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
-            </a>
-            <a href="#registry" class="btn btn--ghost" data-i18n="hero.cta2">VER REGISTRO</a>
-          </div>
-          <dl class="hero__stats">
-            <div><dt data-i18n="hero.stat1">UNIDADES</dt><dd id="hero-total">--</dd></div>
-            <div><dt data-i18n="hero.stat2">PAÍSES</dt><dd id="hero-countries">--</dd></div>
-            <div><dt data-i18n="hero.stat3">PROPULSIONES</dt><dd id="hero-types">04</dd></div>
-            <div><dt data-i18n="hero.stat4">CON MEDIA</dt><dd id="hero-media">--</dd></div>
-          </dl>
-        </div>
-        <span class="corner corner--tl" aria-hidden="true"></span>
-        <span class="corner corner--tr" aria-hidden="true"></span>
-        <span class="corner corner--bl" aria-hidden="true"></span>
-        <span class="corner corner--br" aria-hidden="true"></span>
-      </section>
-
-      <section class="section" id="map-section">
-        <div class="section__head">
-          <div>
-            <p class="kicker" data-i18n="section.map.kicker">// 01 — TEATRO DE OPERACIONES</p>
-            <h2 class="section__title" data-i18n="section.map.title">MAPA TÁCTICO</h2>
-          </div>
-          <p class="section__note"><b id="map-count">--</b> <span id="map-count-label" data-i18n="section.map.many">UNIDADES LOCALIZADAS</span></p>
-        </div>
-
-        <div class="map-shell panel">
-          <div class="map-controls">
-            <label class="search" for="search">
-              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
-              <input id="search" type="search" placeholder="BUSCAR UNIDAD, MUSEO O CIUDAD..." autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:filter.search">
-            </label>
-            <div class="filters" id="type-filters" role="group" aria-label="Filtrar por propulsión" data-i18n-attr="aria-label:filter.propulsion"></div>
-            <label class="select-wrap" for="country-filter">
-              <span class="sr-only" data-i18n="filter.country">Filtrar por país</span>
-              <select id="country-filter">
-                <option value="all" data-i18n="filter.allCountries">TODOS LOS PAÍSES</option>
-              </select>
-            </label>
-            <label class="select-wrap select-wrap--sm" for="era-filter">
-              <span class="sr-only" data-i18n="filter.era">Filtrar por época</span>
-              <select id="era-filter">
-                <option value="all" data-i18n="filter.allEras">TODAS LAS ÉPOCAS</option>
-              </select>
-            </label>
-            <div class="filters filters--situation" id="situation-filters" role="group" aria-label="Filtrar por situación" data-i18n-attr="aria-label:filter.situation"></div>
-            <button class="chip chip--toggle" id="media-filter" type="button" aria-pressed="false" data-i18n="filter.media">CON MEDIA</button>
-            <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false" data-i18n="filter.video">CON VIDEO</button>
-            <button class="chip chip--toggle" id="coming-filter" type="button" aria-pressed="false" data-i18n="filter.coming">PRÓXIMAMENTE</button>
-            <button class="chip chip--reset" id="reset-filters" type="button" hidden data-i18n="filter.clear">LIMPIAR</button>
-          </div>
-
-          <div class="map-wrap">
-            <div id="map" role="application" aria-label="Mapa de submarinos museo" data-i18n-attr="aria-label:map.aria"></div>
-            <div class="map-legend" id="map-legend" aria-label="Leyenda de propulsiones" data-i18n-attr="aria-label:map.legend"></div>
-            <div class="map-hud" aria-hidden="true">
+      <section class="stage" id="plot">
+        <div class="stage__pin">
+          <div class="plot" id="map" role="region" aria-label="Plot of preserved submarines" data-i18n-attr="aria-label:map.aria"></div>
+          <div class="plot__chrome" aria-hidden="true">
+            <span class="plot__grid"></span>
+            <svg class="plot__rings" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+              <g fill="none" stroke="rgba(232,241,245,.09)" stroke-width="1">
+                <circle cx="925" cy="430" r="140"/><circle cx="925" cy="430" r="280"/>
+                <circle cx="925" cy="430" r="420"/><circle cx="925" cy="430" r="560"/>
+                <circle cx="925" cy="430" r="700"/>
+              </g>
+              <g stroke="rgba(232,241,245,.06)" stroke-width="1">
+                <line x1="225" y1="430" x2="1440" y2="430"/><line x1="925" y1="0" x2="925" y2="900"/>
+                <line x1="430" y1="0" x2="1420" y2="900"/><line x1="1420" y1="0" x2="430" y2="900"/>
+              </g>
+            </svg>
+            <span class="plot__sweep"></span>
+            <span class="plot__corner tl"></span><span class="plot__corner tr"></span>
+            <span class="plot__corner bl"></span><span class="plot__corner br"></span>
+            <div class="plot__readout">
               <span id="map-zoom">Z 02</span>
               <span id="map-coords">20.0N / 0.0E</span>
             </div>
+            <div class="plot__feed" id="plot-feed"></div>
+          </div>
+        </div>
+
+        <div class="stage__scroll">
+          <div class="cover" id="cover">
+            <div class="cover__inner">
+              <div class="cover__lead">
+                <h1 class="cover__title">
+                  <span data-i18n="cover.title1">SUBMARINE</span>
+                  <em data-i18n="cover.title2">MUSEUMS</em>
+                </h1>
+                <p class="cover__sub" data-i18n="cover.sub">Every preserved submarine on earth, plotted hull by hull: position, condition, file and film.</p>
+                <div class="cover__actions">
+                  <a class="btn btn--amber btn--lg" href="registro.html">
+                    <span data-i18n="cover.cta">OPEN THE REGISTER</span>
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+                  </a>
+                  <button class="btn btn--line" id="briefing-open" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg>
+                    <span data-i18n="cover.cta2">WATCH THE BRIEFING</span>
+                  </button>
+                </div>
+              </div>
+
+              <aside class="cover__tele">
+                <dl class="cover__stats">
+                  <div><dt data-i18n="cover.stat1">CONTACTS</dt><dd id="cover-total">--</dd></div>
+                  <div><dt data-i18n="cover.stat2">WATERS</dt><dd id="cover-countries">--</dd></div>
+                  <div><dt data-i18n="cover.stat3">ON FILM</dt><dd id="cover-films">--</dd></div>
+                  <div><dt data-i18n="cover.stat4">PROPULSION</dt><dd id="cover-types">--</dd></div>
+                </dl>
+                <div class="acquire" id="acquire">
+                  <div class="acquire__top">
+                    <span data-i18n="cover.acquiring">ACQUIRING CONTACTS</span>
+                    <b><span id="acquire-count">000</span><i>/</i><span id="acquire-total">160</span></b>
+                  </div>
+                  <div class="acquire__bar"><i id="acquire-bar"></i></div>
+                </div>
+              </aside>
+            </div>
+
+            <div class="cover__rail">
+              <div class="cover__rail-head">
+                <span data-i18n="cover.watches">WATCHES // 06</span>
+                <span class="cover__scroll"><span data-i18n="cover.scroll">SCROLL TO CONSOLE</span><i aria-hidden="true"></i></span>
+              </div>
+              <div class="cover__eras" id="cover-eras"></div>
+            </div>
+          </div>
+
+          <div class="console" id="console">
+            <header class="console__head">
+              <h2 class="console__title" data-i18n="console.title">LOCK A CONTACT. READ THE FILE.</h2>
+              <p class="console__note"><b id="console-count">--</b> <span data-i18n="console.note">CONTACTS IN PLOT</span></p>
+            </header>
+
+            <div class="console__grid">
+              <aside class="panel panel--filters">
+                <div class="panel__head">
+                  <span class="kicker" data-i18n="console.filters">FILTERS</span>
+                  <button class="chip chip--reset" id="reset-filters" type="button" hidden data-i18n="filter.clear">CLEAR</button>
+                </div>
+                <label class="search" for="search">
+                  <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+                  <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="SEARCH UNIT, MUSEUM OR CITY" data-i18n-attr="placeholder:filter.search">
+                </label>
+                <div class="filter-block">
+                  <span class="filter-block__label" data-i18n="filter.lblPropulsion">PROPULSION</span>
+                  <div class="chips" id="type-filters" role="group" aria-label="Filter by propulsion" data-i18n-attr="aria-label:filter.propulsion"></div>
+                </div>
+                <div class="filter-block">
+                  <span class="filter-block__label" data-i18n="filter.lblSituation">SITUATION</span>
+                  <div class="chips" id="situation-filters" role="group" aria-label="Filter by situation" data-i18n-attr="aria-label:filter.situation"></div>
+                </div>
+                <div class="filter-block">
+                  <span class="filter-block__label" data-i18n="filter.lblCountry">COUNTRY</span>
+                  <label class="select" for="country-filter">
+                    <select id="country-filter" aria-label="Country" data-i18n-attr="aria-label:filter.lblCountry">
+                      <option value="all" data-i18n="filter.allCountries">ALL COUNTRIES</option>
+                    </select>
+                    <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+                  </label>
+                </div>
+                <div class="filter-block">
+                  <span class="filter-block__label" data-i18n="filter.lblEra">ERA</span>
+                  <label class="select" for="era-filter">
+                    <select id="era-filter" aria-label="Era" data-i18n-attr="aria-label:filter.lblEra">
+                      <option value="all" data-i18n="filter.allEras">ALL ERAS</option>
+                    </select>
+                    <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+                  </label>
+                </div>
+                <div class="filter-block">
+                  <span class="filter-block__label" data-i18n="console.flags">FLAGS</span>
+                  <div class="chips">
+                    <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false" data-i18n="filter.video">WITH FILM</button>
+                    <button class="chip chip--toggle" id="media-filter" type="button" aria-pressed="false" data-i18n="filter.media">WITH PHOTO</button>
+                    <button class="chip chip--toggle" id="coming-filter" type="button" aria-pressed="false" data-i18n="filter.coming">COMING SOON</button>
+                  </div>
+                </div>
+              </aside>
+
+              <div class="console__void" aria-hidden="true">
+                <span class="console__hint" data-i18n="console.plotHint">THE PLOT IS LIVE BEHIND THE PANELS</span>
+              </div>
+
+              <aside class="panel panel--dossier">
+                <div class="dossier" id="console-dossier">
+                  <div class="empty">
+                    <span class="empty__rings" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <p class="kicker" data-i18n="dossier.emptyKicker">NO CONTACT LOCKED</p>
+                    <p data-i18n="dossier.emptyText">Select a contact on the plot or in the log to open its file.</p>
+                  </div>
+                </div>
+              </aside>
+
+              <div class="panel panel--log">
+                <div class="panel__head">
+                  <span class="kicker" data-i18n="console.log">CONTACT LOG</span>
+                  <b class="mono" id="log-count">--</b>
+                </div>
+                <ol class="log" id="log"></ol>
+                <a class="log__more" href="registro.html">
+                  <span data-i18n="console.logMore">OPEN FULL REGISTER</span>
+                  <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+                </a>
+              </div>
+
+              <div class="panel panel--telemetry">
+                <div class="panel__head">
+                  <span class="kicker" data-i18n="console.telemetry">TELEMETRY</span>
+                  <span class="mono" id="telemetry-date">--</span>
+                </div>
+                <div class="telemetry" id="telemetry"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="section dossier-section" id="dossier">
-        <div class="section__head">
+      <section class="section section--eras" id="eras">
+        <header class="section__head">
           <div>
-            <p class="kicker" data-i18n="section.dossier.kicker">// 02 — EXPEDIENTE</p>
-            <h2 class="section__title" data-i18n="section.dossier.title">DOSSIER DE UNIDAD</h2>
+            <h2 class="section__title" data-i18n="eras.title">THE ARCHIVE BY ERA</h2>
           </div>
-          <button class="btn btn--ghost btn--sm" id="dossier-close" type="button" hidden>
-            <span data-i18n="dossier.close">CERRAR</span> <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
-          </button>
-        </div>
-        <div id="dossier-content" class="dossier panel is-empty" aria-live="polite">
-          <div class="dossier__empty">
-            <div class="empty-sonar" aria-hidden="true">
-              <span></span><span></span><span></span>
-              <svg class="icon"><use href="#i-sub"></use></svg>
-            </div>
-            <p class="kicker" data-i18n="dossier.emptyKicker">SIN SELECCIÓN</p>
-            <p data-i18n="dossier.emptyText">Selecciona una unidad en el mapa o en el registro para abrir su expediente.</p>
-          </div>
-        </div>
+          <p class="section__note" data-i18n="eras.note">Six watches, from 1850 to the present. Open one to narrow the register.</p>
+        </header>
+        <div class="eras" id="eras-grid"></div>
       </section>
 
       <section class="section" id="featured">
-        <div class="section__head">
+        <header class="section__head">
           <div>
-            <p class="kicker" data-i18n="section.featured.kicker">// 03 — DESTACADOS</p>
-            <h2 class="section__title" id="featured-title">GIGANTES DE LA HISTORIA</h2>
+            <h2 class="section__title" data-i18n="featured.title">FEATURED CONTACTS</h2>
           </div>
-          <p class="section__note"><b id="featured-count">--</b> <span id="featured-count-label" data-i18n="section.featured.many">UNIDADES CLAVE</span></p>
-        </div>
+          <p class="section__note"><b id="featured-count">--</b> <span data-i18n="section.featured.many">UNITS</span></p>
+        </header>
         <div class="billboard" id="featured-billboard" hidden></div>
         <div class="rails" id="featured-rails"></div>
       </section>
 
-      <section class="section" id="registry">
-        <div class="section__head">
-          <div>
-            <p class="kicker" data-i18n="section.registry.kicker">// 04 — REGISTRO</p>
-            <h2 class="section__title" data-i18n="section.registry.title">UNIDADES DOCUMENTADAS</h2>
+      <section class="section section--briefing" id="briefing">
+        <div class="briefing">
+          <div class="briefing__copy">
+            <h2 class="section__title" data-i18n="briefing.title">THE FLEET IN MOTION</h2>
+            <p class="briefing__note" data-i18n="briefing.note">The elSnorkel film list, loaded only when you press play. Nothing is requested from YouTube before that.</p>
+            <a class="briefing__link" id="briefing-list" href="https://www.youtube.com/playlist?list=PL472EEE6B920640A5" target="_blank" rel="noopener noreferrer">
+              <span data-i18n="briefing.openList">OPEN THE PLAYLIST</span>
+              <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg>
+            </a>
           </div>
-          <div class="registry-tools">
-            <span class="section__note"><b id="registry-count">--</b> <span id="registry-count-label" data-i18n="section.registry.many">REGISTROS</span></span>
-            <label class="select-wrap select-wrap--sm" for="sort-select">
-              <span class="sr-only" data-i18n="filter.sort">Ordenar registro</span>
-              <select id="sort-select">
-                <option value="default" data-i18n="sort.default">ORDEN DE ARCHIVO</option>
-                <option value="name" data-i18n="sort.name">NOMBRE A–Z</option>
-                <option value="year-desc" data-i18n="sort.yearDesc">BOTADURA ↓</option>
-                <option value="year-asc" data-i18n="sort.yearAsc">BOTADURA ↑</option>
-                <option value="country" data-i18n="sort.country">PAÍS A–Z</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <div class="registry panel">
-          <div class="registry__head" aria-hidden="true">
-            <span data-i18n="registry.code">COD</span>
-            <span data-i18n="registry.unit">UNIDAD / MUSEO</span>
-            <span data-i18n="registry.type">TIPO</span>
-            <span data-i18n="registry.country">PAÍS</span>
-            <span data-i18n="registry.year">AÑO</span>
-            <span></span>
-          </div>
-          <div class="registry__list" id="registry-list"></div>
-          <div class="registry__empty" id="registry-empty" hidden>
-            <p class="kicker" data-i18n="registry.emptyKicker">SIN COINCIDENCIAS</p>
-            <p data-i18n="registry.emptyText">No hay unidades que coincidan con los filtros activos.</p>
-            <button class="btn btn--ghost btn--sm" id="registry-reset" type="button" data-i18n="filter.clearAll">LIMPIAR FILTROS</button>
-          </div>
+          <button class="briefing__facade" id="briefing-play" type="button">
+            <span class="briefing__grid" aria-hidden="true"></span>
+            <span class="briefing__play" aria-hidden="true"><svg class="icon"><use href="#i-play"></use></svg></span>
+            <span class="briefing__title" id="briefing-title" data-i18n="briefing.title">THE FLEET IN MOTION</span>
+            <span class="briefing__cta" data-i18n="briefing.play">PLAY THE PLAYLIST</span>
+          </button>
         </div>
       </section>
 
-      <section class="section" id="timeline">
-        <div class="section__head">
-          <div>
-            <p class="kicker" data-i18n="section.timeline.kicker">// 05 — CRONOLOGÍA</p>
-            <h2 class="section__title" data-i18n="section.timeline.title">LÍNEA DE TIEMPO</h2>
+      <section class="section section--origin" id="origin">
+        <div class="origin">
+          <div class="origin__mark">
+            <img src="assets/img/logo.jpg" alt="elSnorkel" width="140" height="140">
+            <span class="origin__stamp" data-i18n="origin.stamp">OPEN RECORD</span>
           </div>
-          <p class="section__note"><b id="timeline-count">--</b> <span id="timeline-count-label" data-i18n="section.timeline.many">UNIDADES FECHADAS</span></p>
-        </div>
-
-        <div class="timeline panel">
-          <p class="timeline__note" data-i18n="timeline.note">Cada fila es una época con sus años a escala; el alto muestra cuántas unidades se botaron ese año. Los huecos son años sin unidades en el archivo.</p>
-
-          <div class="tl-readout is-idle" id="timeline-readout"></div>
-
-          <div class="timeline__lanes" id="timeline-lanes" role="group" aria-label="Línea de tiempo por época" data-i18n-attr="aria-label:timeline.aria"></div>
-
-          <p class="timeline__empty" id="timeline-empty" hidden data-i18n="timeline.empty">Todavía no hay unidades con año de botadura.</p>
-
-          <details class="tl-undated" id="timeline-undated" hidden>
-            <summary class="tl-undated__summary">
-              <span data-i18n="timeline.undated">SIN FECHA</span>
-              <b id="timeline-undated-count">--</b>
-            </summary>
-            <p class="tl-undated__note" data-i18n="timeline.undatedNote">Unidades que todavía no tienen año de botadura en la hoja.</p>
-            <div class="tl-undated__list" id="timeline-undated-list"></div>
-          </details>
-        </div>
-      </section>
-
-      <section class="section" id="intel">
-        <div class="section__head">
-          <div>
-            <p class="kicker" data-i18n="section.intel.kicker">// 06 — INTEL</p>
-            <h2 class="section__title" data-i18n="intel.title">EL ARCHIVO EN NÚMEROS</h2>
-          </div>
-          <p class="section__note">SNAPSHOT <span id="generated-at">--</span></p>
-        </div>
-
-        <div class="intel-grid">
-          <article class="intel-card panel"><span class="kicker" data-i18n="intel.total">TOTAL</span><strong id="stat-total">--</strong><small data-i18n="intel.totalSmall">UNIDADES</small></article>
-          <article class="intel-card panel"><span class="kicker" data-i18n="intel.countries">PAÍSES</span><strong id="stat-countries">--</strong><small data-i18n="intel.countriesSmall">CON PRESENCIA</small></article>
-          <article class="intel-card panel"><span class="kicker" data-i18n="intel.museums">MUSEOS</span><strong id="stat-museums">--</strong><small data-i18n="intel.museumsSmall">SEDES ÚNICAS</small></article>
-          <article class="intel-card panel"><span class="kicker" data-i18n="intel.media">MEDIA</span><strong id="stat-media">--</strong><small data-i18n="intel.mediaSmall">CON FOTO O VIDEO</small></article>
-          <article class="intel-card panel"><span class="kicker" data-i18n="intel.coming">PRÓXIMAMENTE</span><strong id="stat-coming">--</strong><small data-i18n="intel.comingSmall">EN APERTURA</small></article>
-          <article class="intel-card panel"><span class="kicker" data-i18n="intel.ww2">WWII</span><strong id="stat-ww2">--</strong><small data-i18n="intel.ww2Small">BOTADOS 1939–45</small></article>
-        </div>
-
-        <div class="intel-panels">
-          <article class="panel type-panel">
-            <div class="panel__head"><span class="kicker" data-i18n="intel.distribution">DISTRIBUCIÓN</span><h3 data-i18n="intel.byPropulsion">POR PROPULSIÓN</h3></div>
-            <div id="type-bars" class="type-bars"></div>
-          </article>
-          <article class="panel coverage-panel">
-            <div class="panel__head"><span class="kicker" data-i18n="intel.coverage">COBERTURA</span><h3 data-i18n="intel.coverageTitle">ARCHIVO MULTIMEDIA</h3></div>
-            <div class="coverage">
-              <strong id="coverage-pct">--%</strong>
-              <p data-i18n="intel.coverageText">de las unidades tiene foto o video validado.</p>
-              <div class="coverage__bar"><span id="coverage-bar"></span></div>
-              <p class="coverage__fine" data-i18n="intel.coverageFine">El resto se muestra con plano técnico hasta completar la digitalización.</p>
-            </div>
-          </article>
-        </div>
-
-        <article class="panel channel-panel">
-          <div class="panel__head">
-            <span class="kicker" data-i18n="intel.channel">CANAL DE VÍDEO</span>
-            <h3 data-i18n="intel.channelTitle">LA FLOTA EN MOVIMIENTO</h3>
-          </div>
-          <div class="channel" id="channel" hidden>
-            <button class="channel__facade" type="button" id="channel-play">
-              <span class="channel__grid" aria-hidden="true"></span>
-              <span class="channel__play" aria-hidden="true"><svg class="icon"><use href="#i-play"></use></svg></span>
-              <span class="channel__title" id="channel-title"></span>
-              <span class="channel__cta" data-i18n="intel.channelPlay">REPRODUCIR LA LISTA</span>
-            </button>
-          </div>
-          <p class="channel__note" id="channel-note" hidden>
-            <span data-i18n="intel.channelNote">No se carga nada de YouTube hasta que pulses reproducir.</span>
-            <a class="channel__link" id="channel-link" href="" target="_blank" rel="noopener noreferrer">YOUTUBE <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>
-          </p>
-        </article>
-      </section>
-
-      <section class="section about" id="about">
-        <div class="about__grid">
-          <div class="about__logo">
-            <img src="assets/img/logo.jpg" alt="elSnorkel.com — Comunidad Submarinista Latinoamericana" width="180" height="180" data-i18n-attr="alt:about.logoAlt">
-            <span class="about__stamp" data-i18n="about.stamp">ARCHIVO<br>ABIERTO</span>
-          </div>
-          <div class="about__body">
-            <p class="kicker" data-i18n="section.about.kicker">// 07 — ORIGEN</p>
-            <h2 class="section__title" id="about-title">SOBRE EL ARCHIVO</h2>
-            <div id="about-text" class="about__text"></div>
-            <dl class="about__meta">
-              <div><dt data-i18n="about.source">FUENTE</dt><dd data-i18n="about.sourceValue">Archivo elSnorkel.com</dd></div>
-              <div><dt data-i18n="about.map">MAPA</dt><dd>Leaflet + Esri Dark Gray</dd></div>
-              <div><dt data-i18n="about.data">DATOS</dt><dd data-i18n="about.dataValue">Snapshot estático validado</dd></div>
-              <div><dt data-i18n="about.license">LICENCIA</dt><dd data-i18n="about.licenseValue">Contenido del proyecto</dd></div>
+          <div class="origin__body">
+            <h2 class="section__title" data-i18n="origin.title">ABOUT THE ARCHIVE</h2>
+            <div class="origin__text" id="origin-text"></div>
+            <dl class="origin__meta">
+              <div><dt data-i18n="about.source">SOURCE</dt><dd>elSnorkel.com archive</dd></div>
+              <div><dt data-i18n="about.map">PLOT</dt><dd>Leaflet + Esri dark tiles</dd></div>
+              <div><dt data-i18n="about.data">DATA</dt><dd data-i18n="about.dataValue">Validated static snapshot</dd></div>
+              <div><dt data-i18n="about.license">LICENSE</dt><dd data-i18n="about.licenseValue">Project content</dd></div>
             </dl>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="footer">
-      <div class="footer__top">
-        <a class="brand brand--footer" href="#top" aria-label="elSnorkel, inicio" data-i18n-attr="aria-label:brand.home">
-          <img src="assets/img/logo.jpg" alt="" class="brand__mark" width="36" height="36">
+    <footer class="foot">
+      <div class="foot__top">
+        <a href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+          <img src="assets/img/logo.jpg" alt="" width="34" height="34">
         </a>
-        <nav class="footer__nav" aria-label="Enlaces de pie" data-i18n-attr="aria-label:footer.navAria">
-          <a href="#map-section" data-i18n="nav.map">MAPA</a>
-          <a href="#featured" data-i18n="nav.featured">DESTACADOS</a>
-          <a href="#registry" data-i18n="nav.registry">REGISTRO</a>
-          <a href="#timeline" data-i18n="nav.timeline">CRONOLOGÍA</a>
-          <a href="#intel" data-i18n="nav.intel">INTEL</a>
-          <a href="#about" data-i18n="nav.origin">ORIGEN</a>
+        <nav class="foot__nav" aria-label="Footer links" data-i18n-attr="aria-label:footer.navAria">
+          <a href="#plot" data-i18n="nav.plot">PLOT</a>
+          <a href="#console" data-i18n="nav.console">CONSOLE</a>
+          <a href="#eras" data-i18n="nav.eras">ERAS</a>
+          <a href="registro.html" data-i18n="nav.register">REGISTER</a>
+          <a href="#origin" data-i18n="nav.origin">ORIGIN</a>
         </nav>
-        <div class="social" id="social-links"></div>
+        <div class="social" id="social-foot"></div>
       </div>
-      <div class="footer__share">
-        <span class="footer__share-label" data-i18n="share.siteLabel">COMPARTIR EL ARCHIVO</span>
+      <div class="foot__share">
+        <span data-i18n="share.siteLabel">SHARE THE ARCHIVE</span>
         <div class="share" id="share-site"></div>
       </div>
-      <div class="footer__bottom">
-        <p id="footer-text">© 2026 elSnorkel.com. Todos los derechos reservados.</p>
-        <p class="footer__fine"><span data-i18n="footer.fine">ARCHIVO ACTUALIZADO</span> <span id="footer-date"></span></p>
+      <div class="foot__bottom">
+        <p data-i18n="foot.rights">© 2026 elSnorkel.com</p>
+        <p class="foot__fine"><span data-i18n="footer.fine">ARCHIVE UPDATED</span> <span id="footer-date"></span></p>
       </div>
     </footer>
   </div>
 
-  <div class="lang-nudge" id="lang-nudge" hidden>
-    <span class="lang-nudge__mark" aria-hidden="true"><svg class="icon"><use href="#i-sonar"></use></svg></span>
-    <p class="lang-nudge__text" id="lang-nudge-text"></p>
-    <div class="lang-nudge__actions">
-      <button class="btn btn--primary btn--sm" type="button" id="lang-nudge-accept"></button>
-      <button class="btn btn--ghost btn--sm" type="button" id="lang-nudge-dismiss"></button>
+  <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Film" data-i18n-attr="aria-label:modal.title">
+    <button class="modal__backdrop" id="modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close"></button>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <span class="kicker" data-i18n="modal.title">FILM</span>
+        <button class="icon-btn" id="modal-x" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+      <div class="modal__frame" id="modal-frame"></div>
     </div>
   </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admiralty Chart — first viewport</title>
+<style>
+  :root{
+    --paper:#f2ead9; --ink:#123c4a; --red:#b23a2f; --teal:#2f6d7a;
+    --graphite:#3d4a4e; --rule:rgba(18,60,74,.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1440px;height:900px;overflow:hidden;background:var(--paper);color:var(--ink);
+    font-family:Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}
+  .sheet{position:relative;width:1440px;height:900px;
+    background:
+      repeating-linear-gradient(0deg, rgba(18,60,74,.055) 0 1px, transparent 1px 60px),
+      repeating-linear-gradient(90deg, rgba(18,60,74,.055) 0 1px, transparent 1px 60px),
+      radial-gradient(1200px 800px at 30% 20%, rgba(255,255,255,.55), transparent 70%),
+      var(--paper);}
+  .sheet::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(700px 500px at 78% 62%, rgba(178,58,47,.045), transparent 70%),
+      radial-gradient(600px 600px at 10% 90%, rgba(47,109,122,.06), transparent 70%);}
+
+  /* borde de carta */
+  .frame{position:absolute;inset:26px;border:1.5px solid var(--ink);z-index:2}
+  .frame::before{content:"";position:absolute;inset:7px;border:1px solid var(--rule)}
+
+  /* título / cartela */
+  .cartouche{position:absolute;left:64px;top:64px;width:520px;padding:32px 34px 28px;
+    border:1.5px solid var(--ink);background:rgba(242,234,217,.92);z-index:6;
+    box-shadow:10px 10px 0 rgba(18,60,74,.07)}
+  .cartouche .eyebrow{font-family:"Arial Narrow",Arial,sans-serif;font-size:11px;letter-spacing:.34em;
+    color:var(--teal);text-transform:uppercase;margin-bottom:16px}
+  .cartouche h1{font-size:66px;line-height:.94;letter-spacing:-.015em;font-weight:400}
+  .cartouche h1 em{display:block;font-style:italic;color:var(--red)}
+  .cartouche .meta{display:flex;gap:22px;margin-top:20px;padding-top:16px;border-top:1px solid var(--rule);
+    font-family:"Arial Narrow",Arial,sans-serif;font-size:10px;letter-spacing:.22em;color:var(--graphite);text-transform:uppercase}
+  .cartouche .meta b{color:var(--ink);font-weight:700}
+
+  /* sondas */
+  .sounding{position:absolute;font-family:"Arial Narrow",Arial,sans-serif;font-size:12px;color:var(--teal);
+    letter-spacing:.02em;opacity:.9}
+  .sounding i{font-style:normal;font-size:8px;vertical-align:super;color:var(--red);margin-left:1px}
+
+  /* contactos */
+  .mark{position:absolute;width:0;height:0}
+  .mark .ring{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border:1.5px solid var(--ink);border-radius:50%}
+  .mark .dot{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+  .mark.live .ring{border-color:var(--red)}
+  .mark.live .dot{background:var(--red)}
+  .mark .tag{position:absolute;left:16px;top:-9px;white-space:nowrap;
+    font-family:"Arial Narrow",Arial,sans-serif;font-size:10px;letter-spacing:.18em;color:var(--ink);
+    background:rgba(242,234,217,.75);padding:2px 4px}
+  .mark.live .tag{color:var(--red);font-weight:700}
+
+  /* derrota */
+  .route{position:absolute;inset:0;width:100%;height:100%;z-index:3}
+
+  /* rosa de los vientos */
+  .rose{position:absolute;left:900px;top:250px;width:300px;height:300px;opacity:.9}
+
+  /* índice */
+  .index{position:absolute;right:64px;top:64px;bottom:64px;width:300px;z-index:6;
+    background:rgba(242,234,217,.94);border-left:1.5px solid var(--ink);padding:26px 0 0 26px}
+  .index h2{font-family:"Arial Narrow",Arial,sans-serif;font-size:10px;letter-spacing:.34em;
+    color:var(--teal);text-transform:uppercase;margin-bottom:16px}
+  .index dl{display:grid;grid-template-columns:34px 1fr;row-gap:0;column-gap:10px}
+  .index .row{display:contents}
+  .index .n{font-family:"Arial Narrow",Arial,sans-serif;font-size:10px;letter-spacing:.1em;color:var(--red);
+    padding:9px 0 8px;border-bottom:1px solid rgba(18,60,74,.10)}
+  .index .item{font-size:15px;padding:8px 0;border-bottom:1px solid rgba(18,60,74,.10);line-height:1.1}
+  .index .item small{display:block;font-family:"Arial Narrow",Arial,sans-serif;font-size:9px;letter-spacing:.16em;
+    color:var(--graphite);margin-top:4px;text-transform:uppercase}
+  .index .more{margin-top:18px;font-family:"Arial Narrow",Arial,sans-serif;font-size:10px;letter-spacing:.24em;
+    color:var(--ink);border-bottom:1.5px solid var(--red);display:inline-block;padding-bottom:5px}
+
+  /* cta */
+  .cta{position:absolute;left:64px;bottom:74px;z-index:7;display:flex;align-items:center;gap:26px}
+  .btn{display:inline-flex;align-items:center;gap:14px;padding:16px 26px;border:1.5px solid var(--ink);
+    font-family:"Arial Narrow",Arial,sans-serif;font-size:12px;letter-spacing:.26em;text-transform:uppercase;
+    background:var(--ink);color:var(--paper)}
+  .stamp{width:108px;height:108px;border:1.5px solid var(--red);border-radius:50%;color:var(--red);
+    display:grid;place-content:center;text-align:center;transform:rotate(-8deg);
+    font-family:"Arial Narrow",Arial,sans-serif;font-size:9px;letter-spacing:.2em;line-height:1.5;text-transform:uppercase}
+  .stamp b{display:block;font-size:15px;letter-spacing:.1em}
+
+  /* escala */
+  .scale{position:absolute;left:64px;bottom:210px;z-index:6;font-family:"Arial Narrow",Arial,sans-serif;
+    font-size:9px;letter-spacing:.2em;color:var(--graphite)}
+  .scale .bar{display:flex;margin-top:6px}
+  .scale .bar span{width:34px;height:7px;border:1px solid var(--ink)}
+  .scale .bar span:nth-child(odd){background:var(--ink)}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="frame"></div>
+
+  <svg class="route" viewBox="0 0 1440 900" fill="none" aria-hidden="true">
+    <path d="M120 760 C 300 690, 360 620, 470 590 S 660 560, 742 470 S 830 330, 980 316 S 1160 300, 1290 220"
+      stroke="#b23a2f" stroke-width="1.6" stroke-dasharray="7 6" opacity=".85"/>
+    <circle cx="470" cy="590" r="3" fill="#b23a2f"/>
+    <circle cx="742" cy="470" r="3" fill="#b23a2f"/>
+    <circle cx="980" cy="316" r="3" fill="#b23a2f"/>
+    <path d="M1000 120 C 1060 190, 1040 250, 1090 300 S 1150 380, 1130 440" stroke="#2f6d7a" stroke-width="1" opacity=".4"/>
+    <path d="M60 120 C 140 160, 180 220, 170 300 S 120 420, 150 500" stroke="#2f6d7a" stroke-width="1" opacity=".28"/>
+  </svg>
+
+  <!-- rosa de los vientos -->
+  <svg class="rose" viewBox="0 0 300 300" aria-hidden="true">
+    <g stroke="#123c4a" fill="none">
+      <circle cx="150" cy="150" r="104" stroke-width="1"/>
+      <circle cx="150" cy="150" r="88" stroke-width=".7" opacity=".6"/>
+      <circle cx="150" cy="150" r="12" stroke-width="1"/>
+    </g>
+    <g fill="#123c4a">
+      <path d="M150 36 L162 138 L150 150 L138 138 Z"/>
+      <path d="M150 264 L162 162 L150 150 L138 162 Z" opacity=".55"/>
+      <path d="M36 150 L138 138 L150 150 L138 162 Z" opacity=".8"/>
+      <path d="M264 150 L162 138 L150 150 L162 162 Z" opacity=".35"/>
+    </g>
+    <g fill="#b23a2f">
+      <path d="M150 36 L156 132 L150 138 L144 132 Z" opacity=".9"/>
+    </g>
+    <g fill="#123c4a" font-family="Arial" font-size="10" letter-spacing="2">
+      <text x="146" y="26">N</text><text x="146" y="288">S</text>
+      <text x="278" y="154">E</text><text x="14" y="154">W</text>
+    </g>
+  </svg>
+
+  <!-- sondas -->
+  <span class="sounding" style="left:620px;top:700px">24<i>6</i></span>
+  <span class="sounding" style="left:700px;top:648px">31</span>
+  <span class="sounding" style="left:560px;top:640px">18<i>4</i></span>
+  <span class="sounding" style="left:800px;top:700px">42</span>
+  <span class="sounding" style="left:840px;top:620px">27<i>2</i></span>
+  <span class="sounding" style="left:520px;top:530px">12</span>
+  <span class="sounding" style="left:640px;top:470px">09<i>3</i></span>
+  <span class="sounding" style="left:720px;top:390px">36</span>
+  <span class="sounding" style="left:860px;top:420px">21</span>
+  <span class="sounding" style="left:960px;top:520px">15<i>7</i></span>
+  <span class="sounding" style="left:1050px;top:640px">33</span>
+  <span class="sounding" style="left:1120px;top:540px">08</span>
+  <span class="sounding" style="left:820px;top:260px">44</span>
+  <span class="sounding" style="left:1120px;top:250px">17<i>1</i></span>
+
+  <!-- contactos -->
+  <div class="mark" style="left:742px;top:470px">
+    <span class="ring"></span><span class="dot"></span>
+    <span class="tag">U-995 · LABOE</span>
+  </div>
+  <div class="mark live" style="left:980px;top:316px">
+    <span class="ring"></span><span class="dot"></span>
+    <span class="tag">HMAS ONSLOW · LIVE</span>
+  </div>
+  <div class="mark" style="left:470px;top:590px">
+    <span class="ring"></span><span class="dot"></span>
+    <span class="tag">USS CODB · 42.3N</span>
+  </div>
+  <div class="mark" style="left:1130px;top:440px">
+    <span class="ring"></span><span class="dot"></span>
+  </div>
+  <div class="mark" style="left:600px;top:300px">
+    <span class="ring"></span><span class="dot"></span>
+  </div>
+
+  <!-- cartela -->
+  <div class="cartouche">
+    <div class="eyebrow">North Atlantic · Survey of Preserved Hulls</div>
+    <h1>Submarine<br><em>Museums</em></h1>
+    <div class="meta">
+      <span><b>160</b> objects</span>
+      <span><b>35</b> waters</span>
+      <span><b>27</b> on film</span>
+    </div>
+  </div>
+
+  <!-- índice -->
+  <aside class="index">
+    <h2>Index of named objects</h2>
+    <dl>
+      <div class="row"><span class="n">04</span><span class="item">U-995<small>Laboe · DE · 1943</small></span></div>
+      <div class="row"><span class="n">07</span><span class="item">HMAS Onslow<small>Sydney · AU · 1968</small></span></div>
+      <div class="row"><span class="n">11</span><span class="item">USS Cod<small>Cleveland · US · 1943</small></span></div>
+      <div class="row"><span class="n">18</span><span class="item">B-39<small>San Diego · US · 1967</small></span></div>
+      <div class="row"><span class="n">22</span><span class="item">HMS Alliance<small>Gosport · UK · 1945</small></span></div>
+      <div class="row"><span class="n">29</span><span class="item">U-434<small>Moscow · RU · 1936</small></span></div>
+      <div class="row"><span class="n">33</span><span class="item">Le Redoutable<small>Cherbourg · FR · 1967</small></span></div>
+      <div class="row"><span class="n">41</span><span class="item">INS Kursura<small>Visakhapatnam · IN · 1969</small></span></div>
+      <div class="row"><span class="n">48</span><span class="item">S 502 Enrico Toti<small>Milan · IT · 1967</small></span></div>
+      <div class="row"><span class="n">53</span><span class="item">Peral<small>Cartagena · ES · 1888</small></span></div>
+    </dl>
+    <span class="more">Full register — 160 entries</span>
+  </aside>
+
+  <div class="scale">
+    NAUTICAL MILES · 0 — 50
+    <div class="bar"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="cta">
+    <button class="btn">Enter the catalogue
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h11M9 3l5 5-5 5"/></svg>
+    </button>
+    <span style="font-family:'Arial Narrow',Arial,sans-serif;font-size:10px;letter-spacing:.26em;color:#3d4a4e">CHART No. 26 · ED. 2026</span>
+  </div>
+</div>
+</body>
+</html>

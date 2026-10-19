@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#04070a">
+  <title data-i18n="meta.registerTitle">The Register // Submarine Museums</title>
+  <meta name="description" content="Every preserved submarine in one register: filter by propulsion, situation, era or country, and open the numbered file." data-i18n-attr="content:meta.registerDescription">
+  <link rel="canonical" href="https://submarinos-museo-del-mundo.elsnorkel.com/registro.html">
+  <link rel="icon" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="register">
+  <a class="skip" href="#register-list" data-i18n="register.skip">Skip to the register</a>
+
+  <svg class="sprite" aria-hidden="true" width="0" height="0">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.2 4.2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="1.2"/><path d="M15 9V4.2A1.2 1.2 0 0 0 13.8 3H4.2A1.2 1.2 0 0 0 3 4.2v9.6A1.2 1.2 0 0 0 4.2 15H9"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.4 8.4M18.5 14v5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.5s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z"/><circle cx="12" cy="10.2" r="2.4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="1"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></symbol>
+    <symbol id="i-sonar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="12" r="5.4"/><circle cx="12" cy="12" r="9.4"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 5v14M17 5v14M3 9h4M17 9h4M3 15h4M17 15h4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="sit-flote" viewBox="0 0 24 24">
+      <path d="M4.4 11.6c2.6-1.6 12.6-1.6 15.2 0 .9.5.6 1.9-.4 2.2-3 1-11.4 1-14.4 0-1-.3-1.3-1.7-.4-2.2z" fill="currentColor" stroke="none"/>
+      <path d="M9.4 11.8V8.8h5.2v3"/><path d="M12 8.8V6h1.3M10.4 6h5.2"/><path d="M2.8 16.6h18.4"/>
+      <path d="M4.6 19.4h2.4M9.4 19.4h2.4M14.2 19.4h2.4M19 19.4h1.4"/>
+    </symbol>
+    <symbol id="sit-agua" viewBox="0 0 24 24">
+      <path d="M7 13.4c0-3 2.2-4.8 5-4.8s5 1.8 5 4.8"/><path d="M9.6 9.4V6.8h4.8v2.6"/><path d="M12 6.8V4h1.3M10.4 4h5.2"/>
+      <path d="M2.6 14.4c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
+      <path d="M2.6 17.8c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
+      <path d="M2.6 21.2c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
+    </symbol>
+    <symbol id="sit-tierra" viewBox="0 0 24 24">
+      <path d="M4.6 11.4c2.7-1.5 12.1-1.5 14.8 0 .9.5.6 1.8-.4 2.1-2.9.9-11.1.9-14 0-1-.3-1.3-1.6-.4-2.1z"/>
+      <circle cx="8.2" cy="12.2" r="1"/><circle cx="12" cy="12.2" r="1"/><circle cx="15.8" cy="12.2" r="1"/>
+      <path d="M9.6 9.6V7.2h4.8v2.4"/><path d="M12 7.2V4.6h1.3M10.4 4.6h5.2"/><path d="M7.2 15.4l1.8 3M16.8 15.4l-1.8 3M5.2 18.4h13.6"/>
+    </symbol>
+    <symbol id="sit-cerrado" viewBox="0 0 24 24"><use href="#sit-tierra"/><path d="M3.8 20.4 20.2 3.6"/></symbol>
+    <symbol id="sit-monumento" viewBox="0 0 24 24">
+      <path d="M10.2 3 12 1.6 13.8 3l1.2 9.6H9z" fill="currentColor" stroke="none"/>
+      <path d="M8.2 12.6h7.6v2.6H8.2z"/><path d="M5.6 15.2h12.8v2.8H5.6z"/>
+    </symbol>
+  </svg>
+
+  <div class="boot boot--page" id="boot" aria-live="polite">
+    <div class="boot__log" id="boot-log"><p><span data-i18n="boot.l2">LOADING CONTACTS</span><b>···</b></p></div>
+    <div class="boot__bar"><i id="boot-bar"></i></div>
+  </div>
+
+  <div class="app app--register" id="app" hidden>
+    <header class="hud" id="hud">
+      <a class="hud__brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+        <img src="assets/img/logo.jpg" alt="" width="38" height="38">
+      </a>
+      <div class="hud__id">
+        <b data-i18n="hud.id">NMMA // NAVAL ARCHIVE</b>
+        <span class="hud__live"><i aria-hidden="true"></i><span data-i18n="hud.live">PLOT LIVE</span></span>
+      </div>
+      <nav class="hud__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+        <a href="index.html#plot" data-i18n="nav.plot">PLOT</a>
+        <a href="index.html#console" data-i18n="nav.console">CONSOLE</a>
+        <a href="index.html#eras" data-i18n="nav.eras">ERAS</a>
+        <a href="index.html#featured" data-i18n="nav.featured">FEATURED</a>
+      </nav>
+      <div class="hud__tools">
+        <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+          <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+        </div>
+        <a class="btn btn--line btn--sm hud__register" href="index.html" data-i18n="register.back">BACK TO PLOT</a>
+        <button class="icon-btn hud__menu" id="menu-open" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu" data-i18n-attr="aria-label:hud.menu">
+          <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="menu" id="menu" hidden>
+      <div class="menu__head">
+        <span class="kicker" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
+        <button class="icon-btn" id="menu-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+      <nav class="menu__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+        <a href="index.html#plot"><span>01</span><b data-i18n="nav.plot">PLOT</b></a>
+        <a href="index.html#console"><span>02</span><b data-i18n="nav.console">CONSOLE</b></a>
+        <a href="index.html#eras"><span>03</span><b data-i18n="nav.eras">ERAS</b></a>
+        <a href="index.html#featured"><span>04</span><b data-i18n="nav.featured">FEATURED</b></a>
+        <a href="index.html#origin"><span>05</span><b data-i18n="nav.origin">ORIGIN</b></a>
+        <a href="registro.html"><span>06</span><b data-i18n="nav.register">REGISTER</b></a>
+      </nav>
+      <div class="menu__foot">
+        <div class="lang lang--lg" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+          <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="register">
+      <header class="register__head">
+        <div class="register__intro">
+          <h1 class="register__title" data-i18n="register.title">EVERY HULL ON RECORD</h1>
+          <p class="register__note" data-i18n="register.note">Filter the archive by propulsion, condition, era or water. Every row opens a numbered file.</p>
+        </div>
+        <dl class="register__stats">
+          <div><dt data-i18n="cover.stat1">CONTACTS</dt><dd id="reg-total">--</dd></div>
+          <div><dt data-i18n="cover.stat2">WATERS</dt><dd id="reg-countries">--</dd></div>
+          <div><dt data-i18n="cover.stat3">ON FILM</dt><dd id="reg-films">--</dd></div>
+        </dl>
+      </header>
+
+      <div class="register__controls">
+        <label class="search" for="search">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+          <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="SEARCH UNIT, MUSEUM OR CITY" data-i18n-attr="placeholder:filter.search">
+        </label>
+        <div class="chips" id="type-filters" role="group" aria-label="Filter by propulsion" data-i18n-attr="aria-label:filter.propulsion"></div>
+        <div class="chips" id="situation-filters" role="group" aria-label="Filter by situation" data-i18n-attr="aria-label:filter.situation"></div>
+        <label class="select" for="era-filter">
+          <span class="sr-only" data-i18n="filter.era">Era</span>
+          <select id="era-filter">
+            <option value="all" data-i18n="filter.allEras">ALL ERAS</option>
+          </select>
+          <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+        </label>
+        <label class="select" for="country-filter">
+          <span class="sr-only" data-i18n="filter.country">Country</span>
+          <select id="country-filter">
+            <option value="all" data-i18n="filter.allCountries">ALL COUNTRIES</option>
+          </select>
+          <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+        </label>
+        <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false" data-i18n="filter.video">WITH FILM</button>
+        <label class="select select--sort" for="sort-select">
+          <span class="sr-only" data-i18n="filter.sort">Sort</span>
+          <select id="sort-select">
+            <option value="default" data-i18n="sort.default">ARCHIVE ORDER</option>
+            <option value="name" data-i18n="sort.name">NAME A–Z</option>
+            <option value="year-desc" data-i18n="sort.yearDesc">LAUNCH ↓</option>
+            <option value="year-asc" data-i18n="sort.yearAsc">LAUNCH ↑</option>
+            <option value="country" data-i18n="sort.country">COUNTRY A–Z</option>
+          </select>
+          <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+        </label>
+        <button class="chip chip--reset" id="reset-filters" type="button" hidden data-i18n="filter.clearAll">CLEAR FILTERS</button>
+      </div>
+
+      <div class="register__meta">
+        <p><b id="register-count">--</b> <span data-i18n="register.results">CONTACTS ON RECORD</span></p>
+        <button class="register__reset" id="register-reset" type="button" hidden data-i18n="filter.clearAll">CLEAR FILTERS</button>
+      </div>
+
+      <div class="register__body">
+        <div class="register__list-wrap">
+          <div class="register__cols" aria-hidden="true">
+            <span data-i18n="registry.code">CODE</span>
+            <span data-i18n="registry.unit">UNIT / MUSEUM</span>
+            <span data-i18n="registry.type">TYPE</span>
+            <span data-i18n="registry.country">WATERS</span>
+            <span data-i18n="registry.year">YEAR</span>
+            <span></span>
+          </div>
+          <ol class="register__list" id="register-list"></ol>
+          <div class="register__empty" id="register-empty" hidden>
+            <p class="kicker" data-i18n="registry.emptyKicker">NO MATCHES</p>
+            <p data-i18n="registry.emptyText">No units match the active filters.</p>
+            <button class="btn btn--line btn--sm" id="register-empty-reset" type="button" data-i18n="filter.clearAll">CLEAR FILTERS</button>
+          </div>
+        </div>
+
+        <aside class="register__side" id="register-side">
+          <div class="dossier" id="register-dossier">
+            <div class="empty">
+              <span class="empty__rings" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="kicker" data-i18n="dossier.emptyKicker">NO CONTACT LOCKED</p>
+              <p data-i18n="register.emptySide">Pick a row to open its file.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__top">
+        <a href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+          <img src="assets/img/logo.jpg" alt="" width="34" height="34">
+        </a>
+        <nav class="foot__nav" aria-label="Footer links" data-i18n-attr="aria-label:footer.navAria">
+          <a href="index.html#plot" data-i18n="nav.plot">PLOT</a>
+          <a href="index.html#console" data-i18n="nav.console">CONSOLE</a>
+          <a href="index.html#eras" data-i18n="nav.eras">ERAS</a>
+          <a href="registro.html" data-i18n="nav.register">REGISTER</a>
+          <a href="index.html#origin" data-i18n="nav.origin">ORIGIN</a>
+        </nav>
+        <div class="social" id="social-foot"></div>
+      </div>
+      <div class="foot__bottom">
+        <p data-i18n="foot.rights">© 2026 elSnorkel.com</p>
+        <p class="foot__fine"><span data-i18n="footer.fine">ARCHIVE UPDATED</span> <span id="footer-date"></span></p>
+      </div>
+    </footer>
+  </div>
+
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

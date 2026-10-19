@@ -1,411 +1,187 @@
-/* ============================================================
-   SUBMARINOS MUSEO // ARCHIVO NAVAL
-   app.js — arranque, mapa, filtros, registro y dossier
-   ============================================================ */
+/* ==========================================================================
+   SUBMARINE MUSEUMS — ACOUSTIC PLOT
+   Static archive: JSON in, plot + console + register out.
+   ========================================================================== */
 
 const DATA_URL = "data/submarines.json";
 const CONFIG_URL = "data/config.json";
 const I18N_URL = "data/i18n.json";
-const LANG_STORAGE_KEY = "snk-lang";
-const LANGS = ["es", "en"];
-const DEFAULT_LANG = "es";
+
+const LANG_KEY = "snk-lang";
+const SOUND_KEY = "snk-sound";
+const GATE_KEY = "snk-gate";
+const LANGS = ["en", "es"];
+const DEFAULT_LANG = "en";
 
 const TYPE_META = {
-  diesel: { label: "Diésel", icon: "i-sub", color: "#ffb020" },
-  nuclear: { label: "Nuclear", icon: "i-atom", color: "#9dff4d" },
-  electric: { label: "Eléctrico", icon: "i-bolt", color: "#4db8ff" },
-  "hand-crank": { label: "Manivela", icon: "i-gear", color: "#c9b98f" }
+  diesel: { color: "#ffb648" },
+  nuclear: { color: "#7dffb2" },
+  electric: { color: "#5bc8ff" },
+  "hand-crank": { color: "#d8c9a3" }
 };
-
 const TYPE_ORDER = ["diesel", "nuclear", "electric", "hand-crank"];
 
-/*
- * Épocas del archivo. Se derivan del año de botadura (`launchYear`), así que
- * no hace falta ninguna columna nueva en la hoja. Los tramos son amplios a
- * propósito: cada uno tiene que dar material suficiente para una fila.
- */
 const ERA_META = {
-  precursores: { min: 0, max: 1899, range: "≤ 1899", color: "#c9b98f" },
-  "gran-guerra": { min: 1900, max: 1918, range: "1900–1918", color: "#e0a35c" },
-  entreguerras: { min: 1919, max: 1938, range: "1919–1938", color: "#9ec46f" },
-  "segunda-guerra": { min: 1939, max: 1945, range: "1939–1945", color: "#57e6c0" },
-  "guerra-fria": { min: 1946, max: 1991, range: "1946–1991", color: "#4db8ff" },
-  modernos: { min: 1992, max: 9999, range: "1992 →", color: "#c6ff3d" }
+  precursores: { min: 0, max: 1899, range: "≤ 1899" },
+  "gran-guerra": { min: 1900, max: 1918, range: "1900–1918" },
+  entreguerras: { min: 1919, max: 1938, range: "1919–1938" },
+  "segunda-guerra": { min: 1939, max: 1945, range: "1939–1945" },
+  "guerra-fria": { min: 1946, max: 1974, range: "1946–1974" },
+  modernos: { min: 1975, max: 9999, range: "1975 →" }
 };
-
-const ERA_ORDER = [
-  "precursores",
-  "gran-guerra",
-  "entreguerras",
-  "segunda-guerra",
-  "guerra-fria",
-  "modernos"
-];
-
-/* Cuántas fichas muestra cada fila antes de «ver todas». */
-const RAIL_LIMIT = 6;
+const ERA_ORDER = ["precursores", "gran-guerra", "entreguerras", "segunda-guerra", "guerra-fria", "modernos"];
 
 const SITUATION_META = {
-  flote: { label: "A flote", icon: "sit-flote", color: "#8ee2ff" },
-  agua: { label: "En el agua", icon: "sit-agua", color: "#2f9bff" },
-  tierra: { label: "En tierra", icon: "sit-tierra", color: "#d777ff" },
-  cerrado: { label: "Bajo techo", icon: "sit-cerrado", color: "#3fe85f" },
-  monumento: { label: "Solo monumento", icon: "sit-monumento", color: "#ff6a35" }
+  flote: { color: "var(--flote)", icon: "sit-flote" },
+  agua: { color: "var(--agua)", icon: "sit-agua" },
+  tierra: { color: "var(--tierra)", icon: "sit-tierra" },
+  cerrado: { color: "var(--cerrado)", icon: "sit-cerrado" },
+  monumento: { color: "var(--monumento)", icon: "sit-monumento" }
 };
-
-const COIN_MARKER_DIR = "assets/img/coins/marker/";
-
 const SITUATION_ORDER = ["flote", "agua", "tierra", "cerrado", "monumento"];
+
 const BASE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const LABEL_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
+const TILE_ATTRIB = 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>';
+
+const SITE_URL = "https://submarinos-museo-del-mundo.elsnorkel.com/";
 
 const state = {
-  units: [],
-  unitById: new Map(),
-  filtered: [],
-  selectedId: null,
-  markers: new Map(),
-  cluster: null,
-  map: null,
-  bounds: null,
-  halo: null,
-  config: {},
-  i18n: {},
+  page: document.body.dataset.page || "home",
   lang: DEFAULT_LANG,
+  i18n: { en: {}, es: {} },
+  units: [],
+  config: {},
   filters: {
     q: "",
-    types: new Set(),
-    situations: new Set(),
+    type: "all",
+    situation: "all",
     country: "all",
     era: "all",
-    media: false,
     video: false,
+    media: false,
     coming: false
   },
-  searchFrame: 0,
-  toastTimer: 0,
-  railFrame: 0,
-  channel: null,
-  langSuggestion: "",
-  prefersReduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  sort: "default",
+  lockedId: null,
+  map: null,
+  cluster: null,
+  markers: new Map(),
+  added: new Set(),
+  acquiring: false,
+  sound: false,
+  audio: null,
+  booted: false,
+  revealTimer: null
 };
 
 const dom = {};
 
-const ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;"
-};
+/* ---------- utilities ---------- */
 
-const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ESCAPES[character]);
+const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ESCAPES[c]);
 
-const nextFrame = () =>
-  new Promise((resolve) => {
-    let settled = false;
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const done = () => {
-      if (settled) return;
-      settled = true;
-      resolve();
-    };
-
-    // Con la pestaña en segundo plano requestAnimationFrame no se dispara:
-    // el temporizador evita que el arranque se quede colgado.
-    requestAnimationFrame(() => requestAnimationFrame(done));
-    window.setTimeout(done, 400);
-  });
-
-/* ---------- Idioma (ES / EN) ---------- */
+function dict() {
+  return state.i18n[state.lang] || state.i18n[DEFAULT_LANG] || {};
+}
 
 function tOrNull(key) {
-  const dictionary = state.i18n[state.lang];
-  if (!dictionary) return null;
-  const value = dictionary[key];
-  return typeof value === "string" ? value : null;
+  if (!key) return null;
+  const d = dict();
+  if (Object.prototype.hasOwnProperty.call(d, key) && d[key] !== "") return d[key];
+  const fallback = state.i18n[DEFAULT_LANG] || {};
+  return Object.prototype.hasOwnProperty.call(fallback, key) ? fallback[key] : null;
 }
 
 function t(key, vars) {
-  let value = key;
-
-  for (const dictionary of [state.i18n[state.lang], state.i18n[DEFAULT_LANG]]) {
-    if (dictionary && typeof dictionary[key] === "string") {
-      value = dictionary[key];
-      break;
-    }
-  }
-
-  if (!vars) return value;
-
-  return Object.entries(vars).reduce(
-    (accumulator, [name, replacement]) =>
-      accumulator.replaceAll(`{${name}}`, String(replacement)),
-    value
-  );
+  const raw = tOrNull(key) ?? key;
+  if (!vars) return raw;
+  return raw.replace(/\{(\w+)\}/g, (_, name) => (vars[name] ?? ""));
 }
 
-function typeLabelOf(typeKey) {
-  return t(`type.${typeKey}`);
+function typeLabelOf(key) {
+  return t(`type.${key}`);
 }
 
 function situationLabelOf(key) {
-  return SITUATION_META[key] ? t(`situation.${key}`) : "";
+  return key ? t(`situation.${key}`) : "";
+}
+
+function eraLabelOf(key) {
+  return t(`era.${key}`);
 }
 
 function countryLabel(name) {
   const raw = String(name || "").trim();
   if (!raw) return "";
-
-  const key = `country.${raw}`;
-  return (
-    tOrNull(key) ??
-    (state.i18n[DEFAULT_LANG] ? state.i18n[DEFAULT_LANG][key] : null) ??
-    raw
-  );
+  return tOrNull(`country.${raw}`) || raw;
 }
 
-function bilingualCountry(name) {
-  const raw = String(name || "").trim();
-  if (!raw) return "";
-
-  return LANGS.map((lang) => {
-    const dictionary = state.i18n[lang];
-    return dictionary ? dictionary[`country.${raw}`] || "" : "";
-  })
-    .filter(Boolean)
-    .join(" ");
+function setText(el, value) {
+  if (el) el.textContent = value ?? "";
 }
 
-function translateNode(node) {
-  const key = node.dataset.i18n;
-  if (!key) return;
-
-  const value = tOrNull(key);
-  if (value == null) return;
-
-  if (value.includes("\n")) {
-    node.innerHTML = value
-      .split("\n")
-      .map((line) => esc(line))
-      .join("<br>");
-  } else {
-    node.textContent = value;
-  }
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
-
-function applyStaticI18n() {
-  document.documentElement.lang = state.lang;
-
-  document.querySelectorAll("[data-i18n]").forEach(translateNode);
-
-  document.querySelectorAll("[data-i18n-attr]").forEach((node) => {
-    for (const pair of node.dataset.i18nAttr.split(";")) {
-      const [attribute, key] = pair.split(":").map((part) => part.trim());
-      if (!attribute || !key) continue;
-
-      const value = tOrNull(key);
-      if (value != null) node.setAttribute(attribute, value);
-    }
-  });
-
-  document.querySelectorAll("[data-lang]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.lang === state.lang));
-  });
-}
-
-function resolveLang() {
-  const requested = (new URLSearchParams(window.location.search).get("lang") || "").toLowerCase();
-  if (LANGS.includes(requested)) return requested;
-
-  try {
-    const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
-    if (stored && LANGS.includes(stored)) return stored;
-  } catch {
-    /* localStorage puede no estar disponible en este contexto. */
-  }
-
-  const preferred = (navigator.language || "").slice(0, 2).toLowerCase();
-  return LANGS.includes(preferred) ? preferred : DEFAULT_LANG;
-}
-
-function configText(key, sheetValue) {
-  const translated = tOrNull(`config.${key}`);
-  if (state.lang !== DEFAULT_LANG && translated != null) return translated;
-  return sheetValue || translated || "";
-}
-
-function normalizeFooterYear(text) {
-  const year = String(new Date().getFullYear());
-  return String(text || "").replace(/(©\s*)(\d{4})/, `$1${year}`);
-}
-
-function cacheDom() {
-  const byId = (id) => document.getElementById(id);
-
-  dom.app = byId("app");
-  dom.boot = byId("boot");
-  dom.toast = byId("toast");
-
-  dom.headerCount = byId("header-count");
-  dom.hudHeader = document.querySelector(".hud-header");
-  dom.hudMenu = byId("hud-menu");
-  dom.hero = document.querySelector(".hero");
-  dom.heroBg = byId("hero-bg");
-  dom.heroVideo = byId("hero-video");
-  dom.heroCanvas = byId("hero-canvas");
-  dom.periBrg = byId("peri-brg");
-  dom.periDep = byId("peri-dep");
-  dom.heroSubtitle = byId("hero-subtitle");
-  dom.heroTotal = byId("hero-total");
-  dom.heroCountries = byId("hero-countries");
-  dom.heroTypes = byId("hero-types");
-  dom.heroMedia = byId("hero-media");
-
-  dom.featuredTitle = byId("featured-title");
-  dom.featuredCount = byId("featured-count");
-  dom.featuredCountLabel = byId("featured-count-label");
-  dom.featuredBillboard = byId("featured-billboard");
-  dom.featuredRails = byId("featured-rails");
-
-  dom.eraCards = byId("era-cards");
-  dom.eraCardsNote = byId("era-cards-note");
-
-  dom.mapSection = byId("map-section");
-  dom.map = byId("map");
-  dom.mapCount = byId("map-count");
-  dom.mapCountLabel = byId("map-count-label");
-  dom.mapLegend = byId("map-legend");
-  dom.mapZoom = byId("map-zoom");
-  dom.mapCoords = byId("map-coords");
-
-  dom.search = byId("search");
-  dom.typeFilters = byId("type-filters");
-  dom.countryFilter = byId("country-filter");
-  dom.eraFilter = byId("era-filter");
-  dom.mediaFilter = byId("media-filter");
-  dom.videoFilter = byId("video-filter");
-  dom.situationFilters = byId("situation-filters");
-  dom.comingFilter = byId("coming-filter");
-  dom.resetFilters = byId("reset-filters");
-
-  dom.dossierSection = byId("dossier");
-  dom.dossierContent = byId("dossier-content");
-  dom.dossierClose = byId("dossier-close");
-
-  dom.registryList = byId("registry-list");
-  dom.registryEmpty = byId("registry-empty");
-  dom.registryCount = byId("registry-count");
-  dom.registryCountLabel = byId("registry-count-label");
-  dom.registryReset = byId("registry-reset");
-  dom.sortSelect = byId("sort-select");
-
-  dom.timelineCount = byId("timeline-count");
-  dom.timelineCountLabel = byId("timeline-count-label");
-  dom.timelineLanes = byId("timeline-lanes");
-  dom.timelineEmpty = byId("timeline-empty");
-  dom.timelineReadout = byId("timeline-readout");
-  dom.timelineUndated = byId("timeline-undated");
-  dom.timelineUndatedCount = byId("timeline-undated-count");
-  dom.timelineUndatedList = byId("timeline-undated-list");
-
-  dom.shareSite = byId("share-site");
-  dom.langNudge = byId("lang-nudge");
-  dom.langNudgeText = byId("lang-nudge-text");
-  dom.langNudgeAccept = byId("lang-nudge-accept");
-  dom.langNudgeDismiss = byId("lang-nudge-dismiss");
-  dom.channel = byId("channel");
-  dom.channelPlay = byId("channel-play");
-  dom.channelTitle = byId("channel-title");
-  dom.channelNote = byId("channel-note");
-  dom.channelLink = byId("channel-link");
-
-  dom.generatedAt = byId("generated-at");
-  dom.statTotal = byId("stat-total");
-  dom.statCountries = byId("stat-countries");
-  dom.statMuseums = byId("stat-museums");
-  dom.statMedia = byId("stat-media");
-  dom.statComing = byId("stat-coming");
-  dom.statWw2 = byId("stat-ww2");
-  dom.typeBars = byId("type-bars");
-  dom.coveragePct = byId("coverage-pct");
-  dom.coverageBar = byId("coverage-bar");
-
-  dom.aboutTitle = byId("about-title");
-  dom.aboutText = byId("about-text");
-  dom.socialLinks = byId("social-links");
-  dom.footerText = byId("footer-text");
-  dom.footerDate = byId("footer-date");
-}
-
-/* ---------- Utilidades ---------- */
 
 function safeUrl(raw) {
-  if (!raw) return "";
-
+  const value = String(raw || "").trim();
+  if (!value) return "";
   try {
-    const url = new URL(String(raw).trim(), document.baseURI);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
-    return url.href;
-  } catch {
+    const url = new URL(value, window.location.href);
+    if (["http:", "https:", "data:"].includes(url.protocol)) return url.href;
+  } catch (_) {
     return "";
   }
+  return "";
 }
 
 function firstUrl(raw) {
-  if (!raw) return "";
-
-  for (const part of String(raw).trim().split(/\s+/)) {
-    const url = safeUrl(part);
-    if (url) return url;
+  if (Array.isArray(raw)) {
+    for (const entry of raw) {
+      const found = firstUrl(entry);
+      if (found) return found;
+    }
+    return "";
   }
-
-  return "";
+  return safeUrl(raw);
 }
 
 function youtubeId(raw) {
   const value = safeUrl(raw);
   if (!value) return "";
-
-  let url;
-  try {
-    url = new URL(value);
-  } catch {
-    return "";
-  }
-
+  const url = new URL(value);
   const host = url.hostname.replace(/^www\./, "").toLowerCase();
-  let id = "";
-
-  if (host === "youtu.be") {
-    id = url.pathname.slice(1);
-  } else if (
-    host === "youtube.com" ||
-    host === "m.youtube.com" ||
-    host === "music.youtube.com" ||
-    host === "youtube-nocookie.com"
-  ) {
-    if (url.pathname === "/watch") {
-      id = url.searchParams.get("v") || "";
-    } else {
-      const match = url.pathname.match(/^\/(?:embed|shorts|live|v)\/([A-Za-z0-9_-]{6,20})/);
-      if (match) id = match[1];
-    }
-  }
-
-  id = id.split(/[/?&#]/)[0];
-  return /^[A-Za-z0-9_-]{6,20}$/.test(id) ? id : "";
+  if (host === "youtu.be") return url.pathname.slice(1).split("/")[0] || "";
+  if (!host.endsWith("youtube.com") && !host.endsWith("youtube-nocookie.com")) return "";
+  if (url.searchParams.get("v")) return url.searchParams.get("v");
+  const parts = url.pathname.split("/").filter(Boolean);
+  if (parts[0] === "embed" || parts[0] === "shorts" || parts[0] === "live") return parts[1] || "";
+  return "";
 }
 
 function isDirectVideo(url) {
-  return /\.(mp4|webm|ogv|ogg|mov|m4v)(?:[?#].*)?$/i.test(String(url || ""));
+  return /\.(mp4|webm|ogg|ogv)(\?|#|$)/i.test(String(url || ""));
 }
 
 function getVideoUrl(unit) {
+  if (!unit) return "";
   if (unit.videoUrl) return unit.videoUrl;
-  if (youtubeId(unit.link)) return unit.link;
-  return "";
+  return youtubeId(unit.link) ? unit.link : "";
+}
+
+function hasVideo(unit) {
+  return Boolean(getVideoUrl(unit));
 }
 
 function hasMedia(unit) {
@@ -413,84 +189,21 @@ function hasMedia(unit) {
 }
 
 function isFeatured(unit) {
-  /*
-   * Solo la marca de la hoja. Tener vídeo llegó a contar como destacado y, con
-   * los vídeos de la lista rellenados, Destacados pasaba de 11 a 35 unidades:
-   * el vídeo tiene su propia fila.
-   */
   return unit.featured === true;
 }
 
-function normalizeText(value) {
-  return String(value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/æ/gi, "ae")
-    .replace(/ø/gi, "o")
-    .replace(/ß/g, "ss")
-    .toLowerCase()
-    .trim();
-}
-
-function typeMeta(typeKey) {
-  return TYPE_META[typeKey] || TYPE_META.diesel;
-}
-
-function eraMeta(eraKey) {
-  return ERA_META[eraKey] || null;
-}
-
-/*
- * Época de una unidad a partir del año de botadura. Devuelve "" si la hoja aún
- * no tiene año, que es el caso de 65 de las 160 unidades.
- */
 function eraOf(year) {
   const value = Number(year);
   if (!Number.isFinite(value) || value <= 0) return "";
-
   for (const key of ERA_ORDER) {
     const meta = ERA_META[key];
     if (value >= meta.min && value <= meta.max) return key;
   }
-
   return "";
-}
-
-function eraLabelOf(eraKey) {
-  return ERA_META[eraKey] ? t(`era.${eraKey}`) : "";
-}
-
-function situationMeta(key) {
-  return SITUATION_META[key] || null;
-}
-
-function bilingualWords(prefix, key) {
-  if (!key) return "";
-
-  return LANGS.map((lang) => {
-    const dictionary = state.i18n[lang];
-    return dictionary ? dictionary[`${prefix}.${key}`] || "" : "";
-  })
-    .filter(Boolean)
-    .join(" ");
-}
-
-function resolveSituation(raw) {
-  const key = String(raw.situation || "")
-    .toLowerCase()
-    .trim();
-
-  if (SITUATION_META[key]) return key;
-  if (raw.afloat === true) return "flote";
-  return "";
-}
-
-function pad2(value) {
-  return String(value).padStart(2, "0");
 }
 
 function pad3(value) {
-  return String(Math.max(0, Math.round(value))).padStart(3, "0");
+  return String(Math.max(0, Number(value) || 0)).padStart(3, "0");
 }
 
 function parseDossierNumber(value) {
@@ -498,21 +211,16 @@ function parseDossierNumber(value) {
   return match ? Number(match[1]) : 9999;
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric"
-});
-
 function formatDate(raw) {
-  if (!raw) return "--";
-
-  const value = String(raw);
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? new Date(`${value}T12:00:00`)
-    : new Date(value);
-
-  return Number.isNaN(date.getTime()) ? "--" : DATE_FORMAT.format(date);
+  const value = String(raw || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "—";
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(state.lang === "es" ? "es-ES" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(date);
 }
 
 function formatCoords(unit) {
@@ -521,53 +229,11 @@ function formatCoords(unit) {
   return `${Math.abs(unit.lat).toFixed(2)}°${ns} / ${Math.abs(unit.lng).toFixed(2)}°${ew}`;
 }
 
-function setText(element, value) {
-  if (element) element.textContent = value;
-}
-
-function countByType() {
-  const counts = {};
-  for (const unit of state.units) counts[unit.typeKey] = (counts[unit.typeKey] || 0) + 1;
-  return counts;
-}
-
-function sanitizeRich(html) {
-  const template = document.createElement("template");
-  template.innerHTML = String(html || "");
-
-  const allowed = new Set(["B", "STRONG", "I", "EM", "BR", "P", "SPAN", "A"]);
-
-  template.content.querySelectorAll("*").forEach((element) => {
-    if (!allowed.has(element.tagName)) {
-      element.replaceWith(...Array.from(element.childNodes));
-      return;
-    }
-
-    for (const attribute of Array.from(element.attributes)) {
-      if (element.tagName === "A" && attribute.name === "href") {
-        const url = safeUrl(attribute.value);
-        if (url) element.setAttribute("href", url);
-        else element.removeAttribute("href");
-      } else {
-        element.removeAttribute(attribute.name);
-      }
-    }
-
-    if (element.tagName === "A" && element.hasAttribute("href")) {
-      element.setAttribute("target", "_blank");
-      element.setAttribute("rel", "noopener noreferrer");
-    }
-  });
-
-  return template.innerHTML;
-}
-
-/* ---------- Datos ---------- */
+/* ---------- data ---------- */
 
 function resolveType(raw) {
   const key = String(raw.typeKey || "").toLowerCase();
   if (TYPE_META[key]) return key;
-
   const label = `${raw.type || ""} ${raw.typeLabel || ""}`.toLowerCase();
   if (label.includes("nuclear")) return "nuclear";
   if (label.includes("electric") || label.includes("eléctric")) return "electric";
@@ -575,28 +241,34 @@ function resolveType(raw) {
   return "diesel";
 }
 
+function resolveSituation(raw) {
+  const key = String(raw.situation || "").toLowerCase().trim();
+  if (SITUATION_META[key]) return key;
+  const label = normalizeText(`${raw.situation || ""} ${raw.situationLabel || ""}`);
+  if (label.includes("flote") || label.includes("afloat")) return "flote";
+  if (label.includes("agua") || label.includes("water")) return "agua";
+  if (label.includes("tierra") || label.includes("land")) return "tierra";
+  if (label.includes("cerrado") || label.includes("cover")) return "cerrado";
+  if (label.includes("monumento") || label.includes("monument")) return "monumento";
+  return "";
+}
+
 function normalizeUnit(raw, index) {
   if (!raw || typeof raw !== "object") return null;
-
   const lat = Number(raw.lat);
   const lng = Number(raw.lng);
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-    return null;
-  }
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
 
   const typeKey = resolveType(raw);
-  const meta = TYPE_META[typeKey];
   const launchYear = Number(raw.launchYear);
-  const situationKey = resolveSituation(raw);
+  const situation = resolveSituation(raw);
 
   const unit = {
     id: String(raw.id || "").trim() || `unit-${index + 1}`,
     dossier: String(raw.dossier || "").trim(),
-    name: String(raw.name || "Unidad sin nombre").trim(),
+    name: String(raw.name || "—").trim(),
     type: String(raw.type || "").trim(),
     typeKey,
-    typeLabel: meta.label,
     class: String(raw.class || "").trim(),
     country: String(raw.country || "").trim(),
     city: String(raw.city || "").trim(),
@@ -608,2553 +280,1529 @@ function normalizeUnit(raw, index) {
     image: firstUrl(raw.image),
     videoUrl: firstUrl(raw.videoUrl),
     link: firstUrl(raw.link),
-    situation: situationKey,
-    situationLabel: situationKey ? SITUATION_META[situationKey].label : "",
+    situation,
     featured: raw.featured === true,
-    afloat: raw.afloat === true || situationKey === "flote" || situationKey === "agua",
+    afloat: raw.afloat === true || situation === "flote" || situation === "agua",
     status: raw.status === "coming-soon" ? "coming-soon" : "open",
     description: String(raw.description || "").trim(),
     verticalVideo: raw.verticalVideo === true || raw.videoVertical === true
   };
 
-  unit._search = normalizeText(
-    [
-      unit.name,
-      unit.dossier,
-      unit.museum,
-      unit.city,
-      unit.country,
-      unit.nationality,
-      unit.class,
-      unit.typeLabel,
-      unit.situationLabel,
-      bilingualWords("type", typeKey),
-      bilingualWords("situation", situationKey),
-      bilingualCountry(unit.country)
-    ].join(" ")
-  );
+  unit._search = normalizeText([
+    unit.name,
+    unit.dossier,
+    unit.museum,
+    unit.city,
+    unit.country,
+    unit.nationality,
+    unit.class,
+    typeLabelOf(unit.typeKey),
+    situationLabelOf(unit.situation),
+    countryLabel(unit.country)
+  ].join(" "));
 
   return unit;
 }
 
 async function fetchJSON(url) {
   const response = await fetch(url, { cache: "no-cache" });
-
-  if (!response.ok) {
-    throw new Error(`${t("error.file")} ${url} (HTTP ${response.status}).`);
-  }
-
+  if (!response.ok) throw new Error(`${url} (HTTP ${response.status})`);
   return response.json();
 }
 
-/* ---------- Configuración y cifras ---------- */
+/* ---------- i18n ---------- */
 
-function hydrateConfig(config) {
-  const cfg = config || {};
+function resolveLang() {
+  const param = (new URLSearchParams(window.location.search).get("lang") || "").toLowerCase();
+  if (LANGS.includes(param)) return param;
+  const stored = (localStorage.getItem(LANG_KEY) || "").toLowerCase();
+  if (LANGS.includes(stored)) return stored;
+  const preferred = String(navigator.language || "").slice(0, 2).toLowerCase();
+  return LANGS.includes(preferred) ? preferred : DEFAULT_LANG;
+}
 
-  setText(dom.heroSubtitle, configText("heroSubtitle", cfg.heroSubtitle));
-  setText(dom.featuredTitle, configText("featuredTitle", cfg.featuredTitle));
-  setText(dom.aboutTitle, configText("aboutTitle", cfg.aboutTitle));
+function translateNode(node) {
+  const key = node.dataset.i18n;
+  if (key) {
+    const value = tOrNull(key);
+    if (value !== null) node.textContent = value;
+  }
+  const attrs = node.dataset.i18nAttr;
+  if (attrs) {
+    for (const pair of attrs.split(",")) {
+      const [attr, attrKey] = pair.split(":").map((part) => part.trim());
+      if (!attr || !attrKey) continue;
+      const value = tOrNull(attrKey);
+      if (value !== null) node.setAttribute(attr, value);
+    }
+  }
+}
 
-  const aboutText = configText("aboutText", cfg.aboutText);
-  if (aboutText) dom.aboutText.innerHTML = sanitizeRich(aboutText);
+function applyStaticI18n() {
+  document.querySelectorAll("[data-i18n], [data-i18n-attr]").forEach(translateNode);
+  document.documentElement.lang = state.lang;
+}
 
-  setText(dom.footerText, normalizeFooterYear(configText("footerText", cfg.footerText)));
+function syncLangButtons() {
+  document.querySelectorAll("[data-lang]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.lang === state.lang));
+  });
+}
 
-  const logo = safeUrl(cfg.logo);
-  if (logo) {
-    document.querySelectorAll("img.brand__mark").forEach((image) => {
-      image.src = logo;
+function setLang(lang, { persist = true } = {}) {
+  if (!LANGS.includes(lang) || lang === state.lang) return;
+  state.lang = lang;
+  if (persist) localStorage.setItem(LANG_KEY, lang);
+  applyStaticI18n();
+  syncLangButtons();
+  renderAll();
+  if (state.page === "register") syncUrl();
+}
+
+/* ---------- dom ---------- */
+
+function cacheDom() {
+  const byId = (id) => document.getElementById(id);
+  Object.assign(dom, {
+    app: byId("app"),
+    gate: byId("gate"),
+    boot: byId("boot"),
+    bootLog: byId("boot-log"),
+    bootBar: byId("boot-bar"),
+    menu: byId("menu"),
+    menuOpen: byId("menu-open"),
+    menuClose: byId("menu-close"),
+    modal: byId("modal"),
+    modalFrame: byId("modal-frame"),
+    toast: byId("toast"),
+    map: byId("map"),
+    search: byId("search"),
+    typeFilters: byId("type-filters"),
+    situationFilters: byId("situation-filters"),
+    countryFilter: byId("country-filter"),
+    eraFilter: byId("era-filter"),
+    videoFilter: byId("video-filter"),
+    mediaFilter: byId("media-filter"),
+    comingFilter: byId("coming-filter"),
+    resetFilters: byId("reset-filters"),
+    sort: byId("sort-select"),
+    consoleCount: byId("console-count"),
+    consoleDossier: byId("console-dossier"),
+    log: byId("log"),
+    logCount: byId("log-count"),
+    telemetry: byId("telemetry"),
+    telemetryDate: byId("telemetry-date"),
+    coverEras: byId("cover-eras"),
+    erasGrid: byId("eras-grid"),
+    coverTotal: byId("cover-total"),
+    coverCountries: byId("cover-countries"),
+    coverFilms: byId("cover-films"),
+    coverTypes: byId("cover-types"),
+    gateTotal: byId("gate-total"),
+    gateCountries: byId("gate-countries"),
+    gateFilms: byId("gate-films"),
+    briefingTitle: byId("briefing-title"),
+    acquire: byId("acquire"),
+    acquireCount: byId("acquire-count"),
+    acquireTotal: byId("acquire-total"),
+    acquireBar: byId("acquire-bar"),
+    featuredCount: byId("featured-count"),
+    featuredBillboard: byId("featured-billboard"),
+    featuredRails: byId("featured-rails"),
+    briefingOpen: byId("briefing-open"),
+    briefingPlay: byId("briefing-play"),
+    briefingFrame: byId("briefing-frame"),
+    briefingTitle: byId("briefing-title"),
+    briefingList: byId("briefing-list"),
+    originText: byId("origin-text"),
+    socialFoot: byId("social-foot"),
+    socialMenu: byId("social-menu"),
+    shareSite: byId("share-site"),
+    footerDate: byId("footer-date"),
+    soundToggle: byId("sound-toggle"),
+    plotFeed: byId("plot-feed"),
+    mapZoom: byId("map-zoom"),
+    mapCoords: byId("map-coords"),
+    registerCount: byId("register-count"),
+    registerList: byId("register-list"),
+    registerEmpty: byId("register-empty"),
+    registerDossier: byId("register-dossier"),
+    registerSide: byId("register-side"),
+    sheetBackdrop: byId("sheet-backdrop"),
+    regTotal: byId("reg-total"),
+    regCountries: byId("reg-countries"),
+    regFilms: byId("reg-films"),
+    metaDescription: document.querySelector('meta[name="description"]')
+  });
+}
+
+/* ---------- sound ---------- */
+
+function audioContext() {
+  if (state.audio) return state.audio;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  state.audio = new Ctx();
+  return state.audio;
+}
+
+function tone({ freq = 660, to = 440, dur = 0.5, gain = 0.05, type = "sine", delay = 0 } = {}) {
+  if (!state.sound) return;
+  const ctx = audioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume();
+  const start = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const amp = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, start);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(40, to), start + dur);
+  amp.gain.setValueAtTime(0.0001, start);
+  amp.gain.exponentialRampToValueAtTime(gain, start + 0.02);
+  amp.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  osc.connect(amp).connect(ctx.destination);
+  osc.start(start);
+  osc.stop(start + dur + 0.02);
+}
+
+function sfxPing() {
+  tone({ freq: 780, to: 520, dur: 0.75, gain: 0.05 });
+  tone({ freq: 780, to: 520, dur: 0.5, gain: 0.02, delay: 0.42 });
+}
+
+function sfxClick() {
+  tone({ freq: 1400, to: 900, dur: 0.07, gain: 0.028, type: "triangle" });
+}
+
+function setSound(on, { persist = true } = {}) {
+  state.sound = Boolean(on);
+  if (persist) localStorage.setItem(SOUND_KEY, state.sound ? "1" : "0");
+  if (dom.soundToggle) dom.soundToggle.setAttribute("aria-pressed", String(state.sound));
+  if (state.sound) {
+    audioContext();
+    sfxClick();
+  }
+}
+
+/* ---------- boot / gate ---------- */
+
+async function runBoot() {
+  if (!dom.boot) { reveal(); return; }
+  if (reduceMotion()) { reveal(); return; }
+  dom.boot.hidden = false;
+  if (dom.bootLog) dom.bootLog.innerHTML = "";
+  const keys = ["boot.l1", "boot.l2", "boot.l3", "boot.l4", "boot.l5"];
+  for (let i = 0; i < keys.length; i += 1) {
+    const row = document.createElement("p");
+    row.className = "is-active";
+    row.innerHTML = `<span>${esc(t(keys[i]))}</span><b>${i === keys.length - 1 ? "OK" : `${Math.round(((i + 1) / keys.length) * 100)}%`}</b>`;
+    dom.bootLog?.append(row);
+    if (dom.bootBar) dom.bootBar.style.width = `${((i + 1) / keys.length) * 100}%`;
+    await wait(i === 0 ? 380 : 210);
+    row.classList.remove("is-active");
+  }
+  await wait(240);
+  dom.boot.hidden = true;
+  reveal();
+}
+
+async function enterArchive({ sound = true, boot = true } = {}) {
+  if (state.booted) return;
+  state.booted = true;
+  try { localStorage.setItem(GATE_KEY, "1"); } catch (_) { /* private mode */ }
+  if (sound) setSound(true, { persist: false });
+  if (dom.gate) {
+    dom.gate.classList.add("is-out");
+    window.setTimeout(() => { if (dom.gate) dom.gate.hidden = true; }, 520);
+  }
+  if (boot) await runBoot();
+  else reveal();
+}
+
+function reveal() {
+  if (!dom.app || !dom.app.hidden) return;
+  dom.app.hidden = false;
+  const start = () => {
+    initMap();
+    window.setTimeout(() => {
+      state.map?.invalidateSize();
+      startAcquisition();
+      applyFilters();
+      revealDeepLink();
+    }, 60);
+  };
+  let started = false;
+  const once = () => {
+    if (started) return;
+    started = true;
+    start();
+  };
+  window.requestAnimationFrame(once);
+  window.setTimeout(once, 80);
+}
+
+function initGate() {
+  if (!dom.gate) { reveal(); return; }
+  const seen = (() => { try { return localStorage.getItem(GATE_KEY) === "1"; } catch (_) { return false; } })();
+  if (seen) {
+    dom.gate.hidden = true;
+    reveal();
+    return;
+  }
+  dom.gate.querySelector("#gate-enter")?.addEventListener("click", () => enterArchive({ sound: true, boot: true }));
+  dom.gate.querySelector("#gate-skip")?.addEventListener("click", () => enterArchive({ sound: false, boot: false }));
+  dom.gate.querySelector("#gate-enter")?.focus({ preventScroll: true });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && dom.gate && !dom.gate.hidden) enterArchive({ sound: false, boot: false });
+  }, { once: false });
+}
+
+/* ---------- map ---------- */
+
+function contactIcon(unit, locked = false) {
+  const color = TYPE_META[unit.typeKey]?.color || "#e8f1f5";
+  return L.divIcon({
+    className: "",
+    html: `<span class="contact${locked ? " is-locked" : ""}"><i class="contact__dot" style="--c:${color}"></i></span>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+}
+
+function initMap() {
+  if (state.map || !dom.map || !window.L) return;
+  const L = window.L;
+
+  state.map = L.map(dom.map, {
+    center: [26, 4],
+    zoom: 2,
+    minZoom: 2,
+    maxZoom: 11,
+    zoomControl: false,
+    scrollWheelZoom: false,
+    worldCopyJump: true,
+    attributionControl: true
+  });
+
+  L.tileLayer(BASE_TILES, { maxZoom: 11, attribution: TILE_ATTRIB }).addTo(state.map);
+  L.tileLayer(LABEL_TILES, { maxZoom: 11, opacity: 0.5 }).addTo(state.map);
+
+  state.cluster = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    maxClusterRadius: 46,
+    disableClusteringAtZoom: 7,
+    chunkedLoading: true,
+    iconCreateFunction: (cluster) => L.divIcon({
+      className: "cluster",
+      html: `<span class="cluster__in">${cluster.getChildCount()}</span>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    })
+  });
+  state.map.addLayer(state.cluster);
+
+  state.units.forEach((unit) => {
+    const marker = L.marker([unit.lat, unit.lng], {
+      icon: contactIcon(unit),
+      title: `${unit.dossier} ${unit.name}`,
+      riseOnHover: true,
+      keyboard: false
     });
+    marker.bindTooltip(`${esc(unit.dossier)} · ${esc(unit.name)}`, { direction: "top", offset: [0, -8], opacity: 1 });
+    marker.on("click", () => lockUnit(unit.id, { fly: true }));
+    state.markers.set(unit.id, marker);
+  });
 
-    const aboutLogo = document.querySelector(".about__logo img");
-    if (aboutLogo) aboutLogo.src = logo;
-  }
-
-  const heroImage = safeUrl(cfg.heroImage);
-  if (heroImage) {
-    document.documentElement.style.setProperty(
-      "--hero-image",
-      `url("${heroImage.replace(/"/g, "%22")}")`
-    );
-  }
-
-  mountHeroVideo(cfg);
-
-  renderSocial(cfg.social);
-
-  mountChannel(cfg);
-
-  const snapshot = formatDate(cfg.generatedAt);
-  setText(dom.generatedAt, snapshot);
-  setText(dom.footerDate, snapshot);
+  state.map.on("zoomend", updateMapReadout);
+  state.map.on("mousemove", (event) => {
+    if (!dom.mapCoords) return;
+    const { lat, lng } = event.latlng;
+    dom.mapCoords.textContent = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"} / ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? "E" : "W"}`;
+  });
+  updateMapReadout();
 }
 
-/*
- * Video de fondo del hero (opcional).
- *
- * Sigue el patron de la Royal Navy: una codificacion de escritorio y otra
- * mas liviana para movil, con la imagen del hero como poster. Si la hoja no
- * trae video no se toca nada y queda la imagen de siempre.
- */
-function mountHeroVideo(cfg) {
-  const video = dom.heroVideo;
-  if (!video) return;
+function updateMapReadout() {
+  if (!state.map || !dom.mapZoom) return;
+  dom.mapZoom.textContent = `Z ${String(state.map.getZoom()).padStart(2, "0")}`;
+}
 
-  const desktop = safeUrl(cfg.heroVideo);
-  const mobile = safeUrl(cfg.heroVideoMobile);
-  const useMobile = Boolean(mobile) && window.matchMedia("(max-width: 760px)").matches;
-  const src = useMobile ? mobile : desktop;
+function startAcquisition() {
+  if (!state.cluster || state.acquiring) return;
+  state.acquiring = true;
+  const total = state.units.length;
+  let index = 0;
 
-  if (!src) {
-    video.removeAttribute("src");
-    video.hidden = true;
-    if (dom.heroBg) dom.heroBg.classList.remove("has-video");
+  if (dom.acquireTotal) dom.acquireTotal.textContent = String(total);
+  if (dom.coverTotal) dom.coverTotal.textContent = String(total);
+
+  if (reduceMotion()) {
+    state.units.forEach((unit) => state.cluster.addLayer(state.markers.get(unit.id)));
+    state.units.forEach((unit) => state.added.add(unit.id));
+    finishAcquisition();
     return;
   }
 
-  const poster = safeUrl(cfg.heroImage);
-  if (poster) video.poster = poster;
-
-  video.muted = true;
-  video.loop = true;
-  video.setAttribute("playsinline", "");
-  video.preload = "metadata";
-  video.hidden = false;
-  video.src = src;
-
-  if (dom.heroBg) dom.heroBg.classList.add("has-video");
+  const perTick = Math.max(1, Math.ceil(total / 80));
+  const tick = () => {
+    if (!state.acquiring) return;
+    const batch = state.units.slice(index, index + perTick);
+    index += perTick;
+    batch.forEach((unit) => {
+      state.cluster.addLayer(state.markers.get(unit.id));
+      state.added.add(unit.id);
+      if (index % 24 === 0) pushFeed(`<b>${esc(unit.dossier)}</b> ${esc(unit.name)}`);
+    });
+    updateAcquireCounter();
+    if (index < total) {
+      window.setTimeout(tick, 26);
+    } else {
+      finishAcquisition();
+    }
+  };
+  tick();
 }
 
-/*
- * El autoplay solo se pide cuando el hero esta en pantalla, la pestana esta
- * visible y no hay preferencia de movimiento reducido. Si el navegador lo
- * bloquea queda el poster, asi que no hay que forzar nada.
- */
-function syncHeroVideo(onScreen) {
-  const video = dom.heroVideo;
-  if (!video || video.hidden || !video.src) return;
+function updateAcquireCounter() {
+  const count = state.added.size;
+  if (dom.acquireCount) dom.acquireCount.textContent = pad3(count);
+  if (dom.acquireBar) {
+    const pct = state.units.length ? (count / state.units.length) * 100 : 0;
+    dom.acquireBar.style.width = `${pct.toFixed(1)}%`;
+  }
+}
 
-  if (!onScreen || state.prefersReduced || document.hidden) {
-    video.pause();
+function finishAcquisition() {
+  state.acquiring = false;
+  updateAcquireCounter();
+  dom.acquire?.classList.add("is-done");
+  pushFeed(t("feed.ready", { n: state.units.length }), true);
+  sfxPing();
+  applyFilters();
+}
+
+function pushFeed(html, keep = false) {
+  if (!dom.plotFeed) return;
+  const row = document.createElement("p");
+  row.innerHTML = html;
+  dom.plotFeed.append(row);
+  if (keep) {
+    while (dom.plotFeed.children.length > 5) dom.plotFeed.firstElementChild.remove();
     return;
   }
-
-  const attempt = video.play();
-  if (attempt && typeof attempt.catch === "function") attempt.catch(() => {});
+  while (dom.plotFeed.children.length > 5) dom.plotFeed.firstElementChild.remove();
 }
 
-function socialLabel(key, url) {
-  const name = String(key || "").toLowerCase();
+/* ---------- filters ---------- */
 
-  if (name.includes("face")) return "FACEBOOK";
-  if (name.includes("insta")) return "INSTAGRAM";
-  if (name.includes("you")) return "YOUTUBE";
-  if (name.includes("twit") || name === "x" || name.includes("x_")) return "X";
-  if (name.includes("link")) return "LINKEDIN";
-  if (name.includes("tik")) return "TIKTOK";
-  if (name.includes("telegram")) return "TELEGRAM";
-  if (name.includes("whats")) return "WHATSAPP";
-  if (name.includes("thread")) return "THREADS";
-  if (name.includes("web") || name.includes("site")) return "WEB";
+function matchesFilters(unit) {
+  const f = state.filters;
+  if (f.type !== "all" && unit.typeKey !== f.type) return false;
+  if (f.situation !== "all" && unit.situation !== f.situation) return false;
+  if (f.country !== "all" && unit.country !== f.country) return false;
+  if (f.era !== "all" && eraOf(unit.launchYear) !== f.era) return false;
+  if (f.video && !hasVideo(unit)) return false;
+  if (f.media && !hasMedia(unit)) return false;
+  if (f.coming && unit.status !== "coming-soon") return false;
+  if (f.q) {
+    const needle = normalizeText(f.q);
+    if (needle && !unit._search.includes(needle)) return false;
+  }
+  return true;
+}
 
-  try {
-    return new URL(url).hostname.replace(/^www\./, "").split(".")[0].slice(0, 12).toUpperCase();
-  } catch {
-    return "ENLACE";
+function filteredUnits() {
+  return state.units.filter(matchesFilters);
+}
+
+function applyFilters({ render = true } = {}) {
+  const list = filteredUnits();
+
+  if (state.cluster) {
+    const allowed = new Set(list.map((unit) => unit.id));
+    const toAdd = [];
+    const toRemove = [];
+    for (const unit of state.units) {
+      const marker = state.markers.get(unit.id);
+      if (!marker) continue;
+      const isIn = state.cluster.hasLayer(marker);
+      const should = allowed.has(unit.id);
+      if (should && !isIn) toAdd.push(marker);
+      if (!should && isIn) toRemove.push(marker);
+    }
+    if (toRemove.length) state.cluster.removeLayers(toRemove);
+    if (toAdd.length) state.cluster.addLayers(toAdd);
+  }
+
+  const count = list.length;
+  const label = count === 1 ? t("section.map.one") : t("section.map.many");
+  if (dom.consoleCount) dom.consoleCount.textContent = String(count);
+  if (dom.registerCount) dom.registerCount.textContent = String(count);
+  if (dom.logCount) dom.logCount.textContent = String(count);
+  if (dom.featuredCount) dom.featuredCount.textContent = String(state.units.filter(isFeatured).length);
+  if (dom.resetFilters) dom.resetFilters.hidden = !hasActiveFilters();
+  document.getElementById("register-reset")?.toggleAttribute("hidden", !hasActiveFilters());
+
+  if (render) {
+    renderLog(list);
+    if (state.page === "register") renderRegister();
+    syncUrl();
+  }
+
+  if (state.lockedId && !list.some((unit) => unit.id === state.lockedId)) {
+    const stillThere = state.units.find((unit) => unit.id === state.lockedId);
+    if (stillThere) renderDossier(stillThere);
+  }
+  return list;
+}
+
+function hasActiveFilters() {
+  const f = state.filters;
+  return Boolean(f.q) || f.type !== "all" || f.situation !== "all" || f.country !== "all" || f.era !== "all" || f.video || f.media || f.coming;
+}
+
+function resetFilters() {
+  state.filters = { q: "", type: "all", situation: "all", country: "all", era: "all", video: false, media: false, coming: false };
+  if (dom.search) dom.search.value = "";
+  if (dom.countryFilter) dom.countryFilter.value = "all";
+  if (dom.eraFilter) dom.eraFilter.value = "all";
+  document.querySelectorAll("[data-type], [data-situation]").forEach((chip) => chip.setAttribute("aria-pressed", "false"));
+  if (dom.videoFilter) dom.videoFilter.setAttribute("aria-pressed", "false");
+  if (dom.mediaFilter) dom.mediaFilter.setAttribute("aria-pressed", "false");
+  if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", "false");
+  applyFilters();
+}
+
+/* ---------- rendering: filters + log ---------- */
+
+function renderFilterChips() {
+  const counts = new Map();
+  const sitCounts = new Map();
+  state.units.forEach((unit) => {
+    counts.set(unit.typeKey, (counts.get(unit.typeKey) || 0) + 1);
+    if (unit.situation) sitCounts.set(unit.situation, (sitCounts.get(unit.situation) || 0) + 1);
+  });
+
+  if (dom.typeFilters) {
+    dom.typeFilters.innerHTML = TYPE_ORDER.map((key) => {
+      const color = TYPE_META[key].color;
+      const active = state.filters.type === key;
+      return `<button class="chip" type="button" data-type="${key}" aria-pressed="${active}">
+        <i style="--chip:${color}"></i><span>${esc(typeLabelOf(key))}</span><b>${counts.get(key) || 0}</b>
+      </button>`;
+    }).join("");
+  }
+
+  if (dom.situationFilters) {
+    const rows = SITUATION_ORDER.filter((key) => sitCounts.get(key)).map((key) => {
+      const meta = SITUATION_META[key];
+      const active = state.filters.situation === key;
+      return `<button class="chip" type="button" data-situation="${key}" aria-pressed="${active}">
+        <i style="--chip:${meta.color}"></i><span>${esc(situationLabelOf(key))}</span><b>${sitCounts.get(key) || 0}</b>
+      </button>`;
+    });
+    dom.situationFilters.innerHTML = rows.join("");
+  }
+
+  if (dom.countryFilter) {
+    const countries = [...new Set(state.units.map((unit) => unit.country).filter(Boolean))]
+      .sort((a, b) => countryLabel(a).localeCompare(countryLabel(b), state.lang));
+    dom.countryFilter.innerHTML = `<option value="all">${esc(t("filter.allCountries"))}</option>` +
+      countries.map((name) => `<option value="${esc(name)}">${esc(countryLabel(name))}</option>`).join("");
+    dom.countryFilter.value = state.filters.country;
+  }
+
+  if (dom.eraFilter) {
+    dom.eraFilter.innerHTML = `<option value="all">${esc(t("filter.allEras"))}</option>` +
+      ERA_ORDER.map((key) => `<option value="${key}">${esc(eraLabelOf(key))} · ${ERA_META[key].range}</option>`).join("");
+    dom.eraFilter.value = state.filters.era;
   }
 }
 
-function renderSocial(social) {
-  if (!dom.socialLinks) return;
-
-  const links = Object.entries(social && typeof social === "object" ? social : {})
-    .map(([key, value]) => [key, safeUrl(value)])
-    .filter(([, url]) => Boolean(url));
-
-  dom.socialLinks.hidden = links.length === 0;
-  dom.socialLinks.innerHTML = links
-    .map(
-      ([key, url]) =>
-        `<a class="social__link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(
-          socialLabel(key, url)
-        )}</a>`
-    )
-    .join("");
+function renderLog(list) {
+  if (!dom.log) return;
+  const rows = list.slice(0, 10);
+  dom.log.innerHTML = rows.map((unit) => {
+    const active = unit.id === state.lockedId;
+    return `<li><button class="log__row${active ? " is-locked" : ""}" type="button" data-unit="${esc(unit.id)}">
+      <span class="code">${esc(unit.dossier || "—")}</span>
+      <span class="name">${esc(unit.name)}</span>
+      <span class="meta">${unit.launchYear || ""}</span>
+    </button></li>`;
+  }).join("") || `<li class="log__row"><span class="code">—</span><span class="name">${esc(t("registry.emptyKicker"))}</span><span class="meta"></span></li>`;
 }
 
-/* ---------- Compartir ---------- */
+/* ---------- dossier ---------- */
 
-/*
- * Los enlaces de compartir se construyen al pintar, no al pulsar: así son
- * enlaces normales y el navegador los puede abrir en otra pestaña.
- */
-const SHARE_NETWORKS = [
-  {
-    key: "share.whatsapp",
-    href: (url, text) => `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`
-  },
-  {
-    key: "share.telegram",
-    href: (url, text) =>
-      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`
-  },
-  {
-    key: "share.x",
-    href: (url, text) =>
-      `https://twitter.com/intent/tweet?url=${encodeURIComponent(
-        url
-      )}&text=${encodeURIComponent(text)}`
-  },
-  {
-    key: "share.facebook",
-    href: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
-  },
-  {
-    key: "share.linkedin",
-    href: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
-  },
-  {
-    key: "share.email",
-    href: (url, text) =>
-      `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`
+function missionTag(unit) {
+  if (unit.status === "coming-soon") return `<span class="tag tag--alarm">${esc(t("dossier.badgeComing"))}</span>`;
+  if (unit.afloat) return `<span class="tag">${esc(t("dossier.badgeAfloat"))}</span>`;
+  return "";
+}
+
+function dossierMarkup(unit) {
+  const typeColor = TYPE_META[unit.typeKey]?.color || "#e8f1f5";
+  const sitMeta = unit.situation ? SITUATION_META[unit.situation] : null;
+  const video = getVideoUrl(unit);
+  const src = safeUrl(unit.link);
+  const place = [unit.city, countryLabel(unit.country)].filter(Boolean).join(", ");
+
+  const media = video
+    ? `<button class="dossier__media${unit.image ? "" : " dossier__media--teal"}" type="button" data-video="${esc(unit.id)}" aria-label="${esc(`${t("dossier.playVideo", { name: unit.name })} ${t("dossier.videoFallback")}`)}">
+        ${unit.image ? `<img src="${esc(unit.image)}" alt="" loading="lazy">` : ""}
+        <span class="dossier__play"><span>${esc(t("dossier.playVideo", { name: unit.name }))}</span><span class="dossier__play-cta">▶ ${esc(t("dossier.videoFallback"))}</span></span>
+      </button>`
+    : unit.image
+      ? `<div class="dossier__media"><img src="${esc(unit.image)}" alt="${esc(unit.name)}" loading="lazy"></div>`
+      : `<div class="dossier__media dossier__media--empty">${esc(t("dossier.blueprintPending"))}</div>`;
+
+  const facts = [
+    [t("dossier.specClass"), unit.class],
+    [t("dossier.specLaunch"), unit.launchYear || ""],
+    [t("dossier.specMuseum"), unit.museum],
+    [t("dossier.specCity"), place],
+    [t("dossier.specSituation"), unit.situation ? situationLabelOf(unit.situation) : ""],
+    [t("dossier.specCoords"), formatCoords(unit)]
+  ].map(([label, value]) => `<div><dt>${esc(label)}</dt><dd class="${value ? "" : "is-empty"}">${esc(value || t("dossier.undocumented"))}</dd></div>`).join("");
+
+  return `
+    <div class="dossier__top">
+      <span class="dossier__code">${esc(unit.dossier || "—")}</span>
+      <button class="dossier__close" type="button" data-dossier-close>
+        ${esc(t("dossier.close"))} <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+      </button>
+    </div>
+    <${state.page === "register" ? "h2" : "h3"} class="dossier__name">${esc(unit.name)}</${state.page === "register" ? "h2" : "h3"}>
+    <div class="dossier__status">
+      <span class="tag tag--type" style="--c:${typeColor}"><i></i>${esc(typeLabelOf(unit.typeKey))}</span>
+      ${sitMeta ? `<span class="tag" style="--c:${sitMeta.color}"><i></i>${esc(situationLabelOf(unit.situation))}</span>` : ""}
+      ${missionTag(unit)}
+    </div>
+    ${media}
+    <dl class="dossier__facts">${facts}</dl>
+    <p class="dossier__desc">${esc(unit.description || t("dossier.noDescription"))}</p>
+    <div class="dossier__actions">
+      <button class="btn btn--amber btn--sm" type="button" data-locate="${esc(unit.id)}">${esc(t("dossier.viewMap"))}</button>
+      <button class="btn btn--line btn--sm" type="button" data-copy="${esc(unit.id)}">${esc(t("dossier.copyLink"))} </button>
+      ${src ? `<a class="dossier__link" href="${esc(src)}" target="_blank" rel="noopener noreferrer">${esc(t("dossier.openSource"))} <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>` : ""}
+    </div>`;
+}
+
+function renderDossier(unit, { target = null, sheet = false } = {}) {
+  if (!unit) return;
+  const el = target || (state.page === "register" ? dom.registerDossier : dom.consoleDossier);
+  if (!el) return;
+  el.innerHTML = dossierMarkup(unit);
+  if (sheet && dom.registerSide) {
+    dom.registerSide.classList.add("is-open");
+    if (dom.sheetBackdrop) dom.sheetBackdrop.hidden = false;
   }
-];
+}
 
-/*
- * El archivo tiene dos páginas: la home (index.html) y el registro
- * (registro.html). Los enlaces públicos apuntan siempre a la home, que es
- * donde vive el expediente, y arrastran el idioma activo.
- */
+function clearDossier(target) {
+  const el = target || (state.page === "register" ? dom.registerDossier : dom.consoleDossier);
+  if (!el) return;
+  el.innerHTML = `<div class="empty">
+    <span class="empty__rings" aria-hidden="true"><i></i><i></i><i></i></span>
+    <p class="kicker">${esc(t("dossier.emptyKicker"))}</p>
+    <p>${esc(state.page === "register" ? t("register.emptySide") : t("dossier.emptyText"))}</p>
+  </div>`;
+  if (dom.registerSide) dom.registerSide.classList.remove("is-open");
+  if (dom.sheetBackdrop) dom.sheetBackdrop.hidden = true;
+}
+
+function lockUnit(id, { fly = false, scroll = false, sheet = false } = {}) {
+  const unit = state.units.find((entry) => entry.id === id);
+  if (!unit) return;
+
+  if (state.lockedId && state.markers.get(state.lockedId)) {
+    const previous = state.markers.get(state.lockedId);
+    previous.setIcon(contactIcon(state.units.find((entry) => entry.id === state.lockedId), false));
+  }
+
+  state.lockedId = unit.id;
+  state.markers.get(unit.id)?.setIcon(contactIcon(unit, true));
+
+  renderDossier(unit, { sheet });
+  renderLog(filteredUnits());
+  if (state.page === "register") renderRegister();
+
+  if (fly && state.map) {
+    state.map.flyTo([unit.lat, unit.lng], Math.max(state.map.getZoom(), 5), { duration: 0.9 });
+  }
+  if (scroll) {
+    document.getElementById("console")?.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+  }
+  if (sheet) document.body.classList.add("is-locked");
+
+  sfxClick();
+  syncUrl();
+}
+
+function unlockUnit() {
+  if (state.lockedId && state.markers.get(state.lockedId)) {
+    const unit = state.units.find((entry) => entry.id === state.lockedId);
+    if (unit) state.markers.get(state.lockedId).setIcon(contactIcon(unit, false));
+  }
+  state.lockedId = null;
+  clearDossier();
+  renderLog(filteredUnits());
+  if (state.page === "register") renderRegister();
+  if (dom.registerSide) dom.registerSide.classList.remove("is-open");
+  if (dom.sheetBackdrop) dom.sheetBackdrop.hidden = true;
+  document.body.classList.remove("is-locked");
+  syncUrl();
+}
+
+function mountVideo(unit, container) {
+  const video = getVideoUrl(unit);
+  if (!video || !container) return;
+  const id = youtubeId(video);
+  const frame = document.createElement("div");
+  frame.className = "dossier__media dossier__media--frame";
+  if (id) {
+    frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0&modestbranding=1" title="${esc(unit.name)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+  } else if (isDirectVideo(video)) {
+    frame.innerHTML = `<video controls autoplay playsinline src="${esc(video)}"></video>`;
+  } else {
+    return;
+  }
+  container.replaceWith(frame);
+}
+
+/* ---------- stats + telemetry ---------- */
+
+function archiveStats() {
+  const units = state.units;
+  return {
+    total: units.length,
+    countries: new Set(units.map((unit) => unit.country).filter(Boolean)).size,
+    museums: new Set(units.map((unit) => unit.museum).filter(Boolean)).size,
+    films: units.filter(hasVideo).length,
+    photos: units.filter((unit) => unit.image).length,
+    dated: units.filter((unit) => unit.launchYear).length,
+    coming: units.filter((unit) => unit.status === "coming-soon").length,
+    featured: units.filter(isFeatured).length,
+    types: new Set(units.map((unit) => unit.typeKey)).size
+  };
+}
+
+function renderCoverStats() {
+  const s = archiveStats();
+  setText(dom.coverTotal, s.total);
+  setText(dom.coverCountries, s.countries);
+  setText(dom.coverFilms, s.films);
+  setText(dom.coverTypes, String(s.types).padStart(2, "0"));
+  setText(dom.gateTotal, s.total);
+  setText(dom.gateCountries, s.countries);
+  setText(dom.gateFilms, s.films);
+  if (dom.briefingTitle) setText(dom.briefingTitle, `${s.films} ${t("cover.stat3")}`);
+  setText(dom.regTotal, s.total);
+  setText(dom.regCountries, s.countries);
+  setText(dom.regFilms, s.films);
+  setText(dom.acquireTotal, s.total);
+}
+
+function renderTelemetry() {
+  if (!dom.telemetry) return;
+  const s = archiveStats();
+  const counts = new Map();
+  state.units.forEach((unit) => counts.set(unit.typeKey, (counts.get(unit.typeKey) || 0) + 1));
+  const max = Math.max(...TYPE_ORDER.map((key) => counts.get(key) || 0), 1);
+
+  dom.telemetry.innerHTML = TYPE_ORDER.map((key) => {
+    const count = counts.get(key) || 0;
+    const color = TYPE_META[key].color;
+    return `<div class="telemetry__row">
+      <div class="telemetry__top"><span>${esc(typeLabelOf(key))}</span><b>${count}</b></div>
+      <div class="telemetry__bar"><i style="--c:${color};width:${((count / max) * 100).toFixed(1)}%"></i></div>
+    </div>`;
+  }).join("") + `<dl class="telemetry__split">
+    <div><dt>${esc(t("filter.media"))}</dt><dd>${s.photos}</dd></div>
+    <div><dt>${esc(t("filter.video"))}</dt><dd>${s.films}</dd></div>
+    <div><dt>${esc(t("filter.coming"))}</dt><dd>${s.coming}</dd></div>
+  </dl>`;
+
+  if (dom.telemetryDate) dom.telemetryDate.textContent = formatDate(state.config.generatedAt);
+  if (dom.footerDate) dom.footerDate.textContent = formatDate(state.config.generatedAt);
+}
+
+/* ---------- eras ---------- */
+
+function eraCounts() {
+  const counts = new Map(ERA_ORDER.map((key) => [key, 0]));
+  state.units.forEach((unit) => {
+    const era = eraOf(unit.launchYear);
+    if (era) counts.set(era, (counts.get(era) || 0) + 1);
+  });
+  return counts;
+}
+
+function sparkPath(units, min, max) {
+  const buckets = 10;
+  const span = Math.max(1, max - min);
+  const counts = new Array(buckets).fill(0);
+  units.forEach((unit) => {
+    if (!unit.launchYear) return;
+    const idx = Math.min(buckets - 1, Math.max(0, Math.floor(((unit.launchYear - min) / span) * buckets)));
+    counts[idx] += 1;
+  });
+  const peak = Math.max(...counts, 1);
+  const step = 100 / (buckets - 1);
+  const points = counts.map((count, i) => [i * step, 100 - (count / peak) * 86]);
+  const line = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const area = `${line} L100 100 L0 100 Z`;
+  return { line, area };
+}
+
+function renderEras() {
+  const counts = eraCounts();
+  const max = Math.max(...counts.values(), 1);
+
+  if (dom.coverEras) {
+    dom.coverEras.innerHTML = ERA_ORDER.map((key, index) => {
+      const count = counts.get(key) || 0;
+      return `<a class="cover__era" href="${esc(registryHref({ era: key }))}">
+        <span class="n">${String(index + 1).padStart(2, "0")}</span>
+        <span class="t">${esc(eraLabelOf(key))}</span>
+        <span class="y">${esc(ERA_META[key].range)}</span>
+        <span class="bar"><i style="width:${((count / max) * 100).toFixed(0)}%"></i></span>
+      </a>`;
+    }).join("");
+  }
+
+  if (dom.erasGrid) {
+    dom.erasGrid.innerHTML = ERA_ORDER.map((key, index) => {
+      const meta = ERA_META[key];
+      const units = state.units.filter((unit) => eraOf(unit.launchYear) === key);
+      const { line, area } = sparkPath(units, meta.min, meta.max >= 9999 ? 2030 : meta.max);
+      return `<a class="era-card reveal" href="${esc(registryHref({ era: key }))}">
+        <span class="era-card__n">${String(index + 1).padStart(2, "0")}</span>
+        <svg class="era-card__spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="area" d="${area}"></path>
+          <path d="${line}"></path>
+        </svg>
+        <span class="era-card__name">${esc(eraLabelOf(key))}</span>
+        <span class="era-card__years">${esc(meta.range)}</span>
+        <span class="era-card__foot"><span>${counts.get(key) || 0} ${esc(t("eras.count"))}</span><span>${esc(t("eras.open"))} <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></span></span>
+      </a>`;
+    }).join("");
+  }
+}
+
+/* ---------- cards + rails ---------- */
+
+function unitHref(unit) {
+  const url = new URL("registro.html", siteRoot());
+  if (unit?.id) url.searchParams.set("unit", unit.id);
+  if (state.lang !== DEFAULT_LANG) url.searchParams.set("lang", state.lang);
+  return url.href;
+}
+
+function unitCardMarkup(unit) {
+  const color = TYPE_META[unit.typeKey]?.color || "#e8f1f5";
+  const video = getVideoUrl(unit);
+  const media = unit.image
+    ? `<img src="${esc(unit.image)}" alt="" loading="lazy">`
+    : `<span class="unit-card__media--empty" aria-hidden="true"><svg><use href="#i-sonar"></use></svg></span>`;
+  return `<a class="unit-card" href="${esc(unitHref(unit))}">
+    <span class="unit-card__media">${media}<span class="unit-card__badge">${esc(unit.dossier || "—")}</span></span>
+    <span class="unit-card__body">
+      <span class="unit-card__name">${esc(unit.name)}</span>
+      <span class="unit-card__meta">${esc(countryLabel(unit.country))}${unit.launchYear ? ` · ${unit.launchYear}` : ""}</span>
+      <span class="unit-card__foot" style="--c:${color}">
+        <span>${esc(typeLabelOf(unit.typeKey))}</span>
+        ${video ? `<svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg>` : ""}
+      </span>
+    </span>
+  </a>`;
+}
+
+function billboardMarkup(unit) {
+  if (!unit) return "";
+  const video = getVideoUrl(unit);
+  const place = [unit.museum, unit.city, countryLabel(unit.country)].filter(Boolean).join(" · ");
+  return `<div class="billboard__media ${unit.image ? "" : "billboard__media--empty"}">
+      ${unit.image ? `<img src="${esc(unit.image)}" alt="${esc(unit.name)}" loading="lazy">` : ""}
+    </div>
+    <div class="billboard__body">
+      <div>
+        <span class="billboard__code">${esc(unit.dossier || "—")} · ${esc(typeLabelOf(unit.typeKey))}</span>
+        <h3 class="billboard__name">${esc(unit.name)}</h3>
+        <p class="billboard__meta">${esc(place)}${unit.launchYear ? `<br>${esc(t("dossier.specLaunch"))} ${unit.launchYear}` : ""}</p>
+      </div>
+      <div class="billboard__actions">
+        <a class="btn btn--amber btn--sm" href="${esc(unitHref(unit))}">${esc(t("billboard.open"))} <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></a>
+        ${video ? `<button class="btn btn--line btn--sm" type="button" data-video="${esc(unit.id)}"><svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg> ${esc(t("dossier.videoFallback"))}</button>` : ""}
+      </div>
+    </div>`;
+}
+
+function railMarkup({ title, color = "var(--amber)", units, total = 0, filterKey = "" }) {
+  if (!units.length) return "";
+  return `<section class="rail-group">
+    <header class="rail__head">
+      <h3 class="rail__title" style="--c:${color}"><i></i>${esc(title)} <span>${String(total || units.length).padStart(2, "0")}</span></h3>
+      ${filterKey ? `<a class="rail__more" href="${esc(registryHref(filterKey))}">${esc(t("rail.seeAll"))} →</a>` : ""}
+    </header>
+    <div class="rail">${units.map(unitCardMarkup).join("")}</div>
+  </section>`;
+}
+
+function renderFeatured() {
+  const featured = state.units.filter(isFeatured);
+  const billboardUnit = featured.find((unit) => unit.image) || featured[0];
+  if (dom.featuredBillboard && billboardUnit) {
+    dom.featuredBillboard.hidden = false;
+    dom.featuredBillboard.innerHTML = billboardMarkup(billboardUnit);
+  }
+
+  if (!dom.featuredRails) return;
+  const withVideoAll = state.units.filter(hasVideo);
+  const withVideo = withVideoAll.slice(0, 12);
+  const byType = TYPE_ORDER.map((key) => {
+    const all = state.units
+      .filter((unit) => unit.typeKey === key)
+      .sort((a, b) => Number(Boolean(b.image)) - Number(Boolean(a.image)));
+    return { key, all, units: all.slice(0, 10) };
+  });
+
+  dom.featuredRails.innerHTML =
+    railMarkup({ title: t("rail.withVideo"), color: "var(--nuclear)", units: withVideo, total: withVideoAll.length, filterKey: { video: true } }) +
+    byType.map(({ key, all, units }) => railMarkup({
+      title: typeLabelOf(key),
+      color: TYPE_META[key].color,
+      units,
+      total: all.length,
+      filterKey: { type: key }
+    })).join("");
+}
+
+/* ---------- social, share, briefing, origin ---------- */
+
+const SOCIAL_LABELS = {
+  website_url: "WEB",
+  facebook_url: "FACEBOOK",
+  twitter_url: "X",
+  x_url: "X",
+  linkedin_url: "LINKEDIN",
+  youtube_url: "YOUTUBE",
+  instagram_url: "INSTAGRAM",
+  tiktok_url: "TIKTOK"
+};
+
+function renderSocial() {
+  const social = state.config.social || {};
+  const links = Object.entries(social)
+    .map(([key, url]) => [SOCIAL_LABELS[key], safeUrl(url)])
+    .filter(([label, url]) => label && url);
+  const markup = links.map(([label, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`).join("");
+  [dom.socialFoot, dom.socialMenu].forEach((el) => { if (el) el.innerHTML = markup; });
+}
+
+const SHARE = {
+  x: (url, title) => `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+  facebook: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+  linkedin: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  whatsapp: (url, title) => `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,
+  email: (url, title) => `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`
+};
+
 function siteRoot() {
   const url = new URL(window.location.href);
-  return `${url.origin}${url.pathname.replace(/[^/]*$/, "")}`;
+  url.search = "";
+  url.hash = "";
+  return url.href;
 }
 
-function langParams(params) {
-  if (state.lang && state.lang !== DEFAULT_LANG) params.set("lang", state.lang);
-  return params;
+function shareUrlFor(unit) {
+  const url = new URL("registro.html", siteRoot());
+  url.searchParams.set("unit", unit.id);
+  if (state.lang !== DEFAULT_LANG) url.searchParams.set("lang", state.lang);
+  return url.href;
 }
 
-/* Enlace a la home, opcionalmente con una unidad abierta. */
-function homeUrlFor(unit) {
-  const params = langParams(new URLSearchParams());
-  if (unit) params.set("unit", unit.id);
-
-  const query = params.toString();
-  return `index.html${query ? `?${query}` : ""}`;
+function renderShare() {
+  if (!dom.shareSite) return;
+  const url = SITE_URL;
+  const title = t("meta.title");
+  dom.shareSite.innerHTML = Object.entries({ x: "X", facebook: "FACEBOOK", linkedin: "LINKEDIN", whatsapp: "WHATSAPP", email: "EMAIL" })
+    .map(([key, label]) => `<a href="${esc(SHARE[key](url, title))}" target="_blank" rel="noopener noreferrer">${label}</a>`)
+    .join("") + `<button type="button" data-copy-url="${esc(url)}">${esc(t("share.copy"))}</button>`;
 }
 
-/* Enlace a la página del registro con los filtros ya puestos. */
-function registryUrlFor({ era = "", type = "", situation = "", q = "" } = {}) {
-  const params = langParams(new URLSearchParams());
-  if (era) params.set("era", era);
-  if (type) params.set("type", type);
-  if (situation) params.set("situacion", situation);
-  if (q) params.set("q", q);
+function showModal(html, portrait = false) {
+  if (!dom.modal || !dom.modalFrame) return;
+  dom.modalFrame.classList.toggle("is-portrait", Boolean(portrait));
+  dom.modalFrame.innerHTML = html;
+  dom.modal.hidden = false;
+  document.body.classList.add("is-locked");
+  dom.modal.querySelector("button")?.focus();
+  sfxClick();
+}
 
+function openVideoModal(unit) {
+  const video = getVideoUrl(unit);
+  if (!video) return;
+  const id = youtubeId(video);
+  if (id) {
+    showModal(`<iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0&modestbranding=1" title="${esc(unit.name)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`, unit.verticalVideo);
+    return;
+  }
+  if (isDirectVideo(video)) {
+    showModal(`<video controls autoplay playsinline src="${esc(video)}"></video>`, unit.verticalVideo);
+  }
+}
+
+function mountBriefing() {
+  const playlist = safeUrl(state.config.youtubePlaylist);
+  if (playlist && dom.briefingList) dom.briefingList.href = playlist;
+
+  const open = () => {
+    if (!playlist) return;
+    const url = new URL(playlist);
+    const list = url.searchParams.get("list");
+    if (!list) return;
+    showModal(`<iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(list)}&autoplay=1" title="${esc(t("briefing.title"))}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`);
+  };
+  dom.briefingOpen?.addEventListener("click", open);
+  dom.briefingPlay?.addEventListener("click", open);
+}
+
+function closeModal() {
+  if (!dom.modal || dom.modal.hidden) return;
+  dom.modal.hidden = true;
+  if (dom.modalFrame) {
+    dom.modalFrame.innerHTML = "";
+    dom.modalFrame.classList.remove("is-portrait");
+  }
+  document.body.classList.remove("is-locked");
+}
+
+function renderOrigin() {
+  if (!dom.originText) return;
+  const text = t("origin.text");
+  dom.originText.innerHTML = sanitizeRich(text);
+}
+
+function sanitizeRich(html) {
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+  const allowed = new Set(["B", "STRONG", "I", "EM", "BR", "P", "SPAN", "A"]);
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT);
+  const remove = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!allowed.has(node.tagName)) {
+      remove.push(node);
+      continue;
+    }
+    [...node.attributes].forEach((attr) => {
+      if (!(node.tagName === "A" && attr.name === "href")) node.removeAttribute(attr.name);
+    });
+    if (node.tagName === "A") {
+      const href = safeUrl(node.getAttribute("href"));
+      if (href) node.setAttribute("href", href);
+      else node.removeAttribute("href");
+    }
+  }
+  remove.forEach((node) => node.replaceWith(...node.childNodes));
+  return template.innerHTML;
+}
+
+/* ---------- register ---------- */
+
+function sortUnits(units) {
+  const list = units.slice();
+  switch (state.sort) {
+    case "name":
+      return list.sort((a, b) => a.name.localeCompare(b.name, state.lang));
+    case "year-desc":
+      return list.sort((a, b) => (b.launchYear || -1) - (a.launchYear || -1));
+    case "year-asc":
+      return list.sort((a, b) => (a.launchYear || 9999) - (b.launchYear || 9999));
+    case "country":
+      return list.sort((a, b) => countryLabel(a.country).localeCompare(countryLabel(b.country), state.lang) || a.name.localeCompare(b.name));
+    default:
+      return list.sort((a, b) => parseDossierNumber(a.dossier) - parseDossierNumber(b.dossier) || a.name.localeCompare(b.name));
+  }
+}
+
+function registerRowMarkup(unit) {
+  const color = TYPE_META[unit.typeKey]?.color || "#e8f1f5";
+  const active = unit.id === state.lockedId;
+  return `<li><button class="reg-row${active ? " is-locked" : ""}" type="button" data-unit="${esc(unit.id)}" aria-pressed="${active}">
+    <span class="reg-row__code">${esc(unit.dossier || "—")}</span>
+    <span class="reg-row__unit">
+      <b class="reg-row__name">${esc(unit.name)}</b>
+      <span class="reg-row__museum">${esc([unit.museum, unit.city].filter(Boolean).join(" · ") || countryLabel(unit.country))}</span>
+    </span>
+    <span class="reg-row__type" style="--c:${color}"><i></i>${esc(typeLabelOf(unit.typeKey))}</span>
+    <span class="reg-row__country">${esc(countryLabel(unit.country))}</span>
+    <span class="reg-row__year">${unit.launchYear || "—"}</span>
+    <span class="reg-row__flags">
+      ${hasVideo(unit) ? `<svg class="icon icon--film is-on" aria-hidden="true"><use href="#i-film"></use></svg>` : ""}
+      ${unit.image ? `<svg class="icon is-on" aria-hidden="true"><use href="#i-pin"></use></svg>` : ""}
+    </span>
+  </button></li>`;
+}
+
+function renderRegister() {
+  if (!dom.registerList) return;
+  const list = sortUnits(filteredUnits());
+  dom.registerList.innerHTML = list.map(registerRowMarkup).join("");
+  if (dom.registerEmpty) dom.registerEmpty.hidden = list.length > 0;
+  if (dom.registerList) dom.registerList.hidden = list.length === 0;
+}
+
+/* ---------- urls ---------- */
+
+function langParam() {
+  return state.lang !== DEFAULT_LANG ? state.lang : "";
+}
+
+function registryHref(overrides = {}) {
+  const params = new URLSearchParams();
+  const f = { ...state.filters, ...overrides };
+  if (f.q) params.set("q", f.q);
+  if (f.type && f.type !== "all") params.set("type", f.type);
+  if (f.situation && f.situation !== "all") params.set("situacion", f.situation);
+  if (f.country && f.country !== "all") params.set("pais", f.country);
+  if (f.era && f.era !== "all") params.set("era", f.era);
+  if (f.video) params.set("video", "1");
+  if (f.media) params.set("foto", "1");
+  if (f.coming) params.set("proximamente", "1");
+  if (langParam()) params.set("lang", langParam());
   const query = params.toString();
   return `registro.html${query ? `?${query}` : ""}`;
 }
 
-/* Enlace público de una unidad, o el del archivo entero si no se pasa ninguna. */
-function shareUrlFor(unit) {
-  const params = langParams(new URLSearchParams());
-  if (unit) params.set("unit", unit.id);
-
+function syncUrl() {
+  if (state.page !== "register") return;
+  const params = new URLSearchParams();
+  const f = state.filters;
+  if (f.q) params.set("q", f.q);
+  if (f.type !== "all") params.set("type", f.type);
+  if (f.situation !== "all") params.set("situacion", f.situation);
+  if (f.country !== "all") params.set("pais", f.country);
+  if (f.era !== "all") params.set("era", f.era);
+  if (f.video) params.set("video", "1");
+  if (f.media) params.set("foto", "1");
+  if (f.coming) params.set("proximamente", "1");
+  if (state.sort !== "default") params.set("orden", state.sort);
+  if (state.lockedId) params.set("unit", state.lockedId);
+  if (langParam()) params.set("lang", langParam());
   const query = params.toString();
-  return `${siteRoot()}${query ? `?${query}` : ""}`;
+  history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${state.lockedId ? "" : ""}`);
 }
 
-function shareBarMarkup({ url, title, label = "", withCopy = true }) {
-  const links = SHARE_NETWORKS.map(
-    (network) =>
-      `<a class="share__btn" href="${esc(
-        network.href(url, title)
-      )}" target="_blank" rel="noopener noreferrer">${esc(t(network.key))}</a>`
-  ).join("");
-
-  const native =
-    typeof navigator !== "undefined" && typeof navigator.share === "function"
-      ? `<button class="share__btn share__btn--native" type="button" data-share-native>${esc(
-          t("share.native")
-        )}</button>`
-      : "";
-
-  /* En el expediente ya hay un botón de copiar arriba, así que no se repite. */
-  const copy = withCopy
-    ? `<button class="share__btn" type="button" data-share-copy>${esc(t("share.copy"))}</button>`
-    : "";
-
-  return `${label ? `<span class="share__label">${esc(label)}</span>` : ""}<span class="share__row" data-share-url="${esc(
-    url
-  )}" data-share-title="${esc(title)}">${native}${links}${copy}</span>`;
+function readUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const f = state.filters;
+  f.q = params.get("q") || "";
+  f.type = TYPE_META[params.get("type")] ? params.get("type") : "all";
+  f.situation = SITUATION_META[params.get("situacion")] ? params.get("situacion") : "all";
+  f.country = params.get("pais") || "all";
+  f.era = ERA_META[params.get("era")] ? params.get("era") : "all";
+  f.video = params.get("video") === "1";
+  f.media = params.get("foto") === "1";
+  f.coming = params.get("proximamente") === "1";
+  state.sort = ["name", "year-desc", "year-asc", "country"].includes(params.get("orden")) ? params.get("orden") : "default";
+  return params.get("unit");
 }
 
-function renderShareSite() {
-  if (!dom.shareSite) return;
-
-  dom.shareSite.innerHTML = shareBarMarkup({
-    url: shareUrlFor(null),
-    title: t("share.siteTitle")
-  });
-}
-
-/* Un solo escuchador sirve para el pie y para el expediente. */
-function handleShareClick(event) {
-  const target = event.target instanceof Element ? event.target : null;
-  if (!target) return;
-
-  const row = target.closest("[data-share-url]");
-  if (!row) return;
-
-  if (target.closest("[data-share-native]")) {
-    if (typeof navigator.share === "function") {
-      navigator
-        .share({ title: row.dataset.shareTitle, url: row.dataset.shareUrl })
-        .catch(() => {});
-    }
-    return;
-  }
-
-  if (target.closest("[data-share-copy]")) {
-    event.preventDefault();
-    copyText(row.dataset.shareUrl)
-      .then(() => showToast(t("share.copied")))
-      .catch(() => showToast(t("toast.copyFailed")));
-  }
-}
-
-/* ---------- Canal de vídeo (lista de YouTube) ---------- */
-
-function youtubeListId(raw) {
-  const value = safeUrl(raw);
-  if (!value) return "";
-
-  try {
-    const url = new URL(value);
-    const host = url.hostname.replace(/^www\./, "");
-    if (!/(^|\.)youtube\.com$/.test(host)) return "";
-    return url.searchParams.get("list") || "";
-  } catch {
-    return "";
-  }
-}
-
-/*
- * La lista se anuncia, pero no se carga nada de YouTube hasta que el visitante
- * pulsa reproducir: así no hay cookies ni peticiones a terceros de entrada.
- */
-function mountChannel(config) {
-  if (!dom.channel) return;
-
-  const cfg = config || {};
-  const raw = cfg.youtubePlaylist || "";
-  const listId = youtubeListId(raw);
-
-  if (!listId) {
-    dom.channel.hidden = true;
-    if (dom.channelNote) dom.channelNote.hidden = true;
-    state.channel = null;
-    return;
-  }
-
-  state.channel = { url: safeUrl(raw), listId };
-
-  setText(dom.channelTitle, cfg.youtubeTitle || t("intel.channelFallback"));
-  if (dom.channelNote) dom.channelNote.hidden = false;
-  if (dom.channelLink) dom.channelLink.href = state.channel.url;
-  dom.channel.hidden = false;
-}
-
-function playChannel() {
-  if (!state.channel || !dom.channel) return;
-
-  const iframe = document.createElement("iframe");
-  iframe.className = "channel__iframe";
-  iframe.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(
-    state.channel.listId
-  )}&autoplay=1&rel=0`;
-  iframe.title = t("intel.channelTitle");
-  iframe.setAttribute("loading", "lazy");
-  iframe.setAttribute(
-    "allow",
-    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-  );
-  iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-  iframe.setAttribute("allowfullscreen", "");
-
-  dom.channel.classList.add("is-playing");
-  dom.channel.innerHTML = "";
-  dom.channel.appendChild(iframe);
-}
-
-/* ---------- Aviso de idioma sugerido por el navegador ---------- */
-
-const LANG_NUDGE_KEY = "snk-lang-nudge";
-
-/*
- * Solo se sugiere cuando el idioma no viene forzado por la URL ni elegido a
- * mano. Se mira primero el idioma principal del navegador (el mismo que usa
- * resolveLang) y, solo si no está catalogado, el resto de preferencias; si
- * ninguna encaja, se propone el inglés como idioma puente del archivo.
- */
-function langSuggestion() {
-  if (new URLSearchParams(window.location.search).get("lang")) return "";
-
-  try {
-    if (window.localStorage.getItem(LANG_STORAGE_KEY)) return "";
-  } catch {
-    /* Sin localStorage se puede sugerir igual; solo no se recuerda. */
-  }
-
-  const codes = (
-    Array.isArray(navigator.languages) && navigator.languages.length
-      ? navigator.languages
-      : [navigator.language || ""]
-  ).map((value) => String(value).toLowerCase().slice(0, 2));
-
-  const primary = String(navigator.language || "")
-    .toLowerCase()
-    .slice(0, 2);
-  const candidate = LANGS.includes(primary) ? primary : codes.find((code) => LANGS.includes(code));
-
-  if (candidate) return candidate === state.lang ? "" : candidate;
-  return state.lang === "en" ? "" : "en";
-}
-
-function dismissLangNudge() {
-  try {
-    window.localStorage.setItem(LANG_NUDGE_KEY, "1");
-  } catch {
-    /* Da igual: solo se pierde el recordatorio entre visitas. */
-  }
-
-  if (dom.langNudge) dom.langNudge.hidden = true;
-}
-
-function renderLangNudge() {
-  if (!dom.langNudge) return;
-
-  let dismissed = false;
-  try {
-    dismissed = window.localStorage.getItem(LANG_NUDGE_KEY) === "1";
-  } catch {
-    /* Sin localStorage el aviso se puede repetir; no es grave. */
-  }
-
-  const target = dismissed ? "" : langSuggestion();
-  state.langSuggestion = target;
-
-  if (!target) {
-    dom.langNudge.hidden = true;
-    return;
-  }
-
-  /* El nombre del idioma se dice en el idioma que se está viendo. */
-  const name = t(`lang.${target}`);
-  setText(dom.langNudgeText, t("langSuggest.text", { lang: name }));
-  setText(dom.langNudgeAccept, t("langSuggest.accept", { lang: name.toUpperCase() }));
-  setText(dom.langNudgeDismiss, t("langSuggest.dismiss"));
-  dom.langNudge.hidden = false;
-}
-
-function renderStats() {
-  const units = state.units;
-  const total = units.length;
-  const countries = new Set(units.map((unit) => unit.country).filter(Boolean)).size;
-  const museums = new Set(units.map((unit) => unit.museum).filter(Boolean)).size;
-  const media = units.filter(hasMedia).length;
-  const coming = units.filter((unit) => unit.status === "coming-soon").length;
-  const ww2 = units.filter(
-    (unit) => unit.launchYear && unit.launchYear >= 1939 && unit.launchYear <= 1945
-  ).length;
-  const types = new Set(units.map((unit) => unit.typeKey)).size;
-
-  setText(dom.headerCount, total);
-  setText(dom.heroTotal, total);
-  setText(dom.heroCountries, countries);
-  setText(dom.heroTypes, pad2(types));
-  setText(dom.heroMedia, media);
-  setText(dom.statTotal, total);
-  setText(dom.statCountries, countries);
-  setText(dom.statMuseums, museums);
-  setText(dom.statMedia, media);
-  setText(dom.statComing, coming);
-  setText(dom.statWw2, ww2);
-
-  const coverage = total ? Math.round((media / total) * 100) : 0;
-  setText(dom.coveragePct, `${coverage}%`);
-  if (dom.coverageBar) dom.coverageBar.style.width = `${coverage}%`;
-}
-
-function buildTypeFilters() {
-  if (!dom.typeFilters) return;
-
-  const counts = countByType();
-
-  dom.typeFilters.innerHTML = TYPE_ORDER.map((key) => {
-    const meta = TYPE_META[key];
-    return `<button class="chip" type="button" data-type="${key}" aria-pressed="false" style="--type-color:${meta.color}">
-      <span class="chip__dot" aria-hidden="true"></span>${esc(typeLabelOf(key))}<span class="chip__count">${
-      counts[key] || 0
-    }</span>
-    </button>`;
-  }).join("");
-}
-
-function buildSituationFilters() {
-  if (!dom.situationFilters) return;
-
-  const counts = new Map();
-
-  for (const unit of state.units) {
-    if (!unit.situation) continue;
-    counts.set(unit.situation, (counts.get(unit.situation) || 0) + 1);
-  }
-
-  const keys = SITUATION_ORDER.filter((key) => counts.get(key));
-  dom.situationFilters.hidden = keys.length === 0;
-  dom.situationFilters.innerHTML = keys
-    .map((key) => {
-      const meta = SITUATION_META[key];
-      return `<button class="chip" type="button" data-situation="${key}" aria-pressed="false" style="--sit-color:${meta.color}">
-        <span class="sit-icon" aria-hidden="true"><svg class="icon"><use href="#${meta.icon}"></use></svg></span>${esc(
-        situationLabelOf(key)
-      )}<span class="chip__count">${counts.get(key)}</span>
-      </button>`;
-    })
-    .join("");
-}
-
-function buildCountryFilter() {
-  if (!dom.countryFilter) return;
-
-  const counts = new Map();
-
-  for (const unit of state.units) {
-    if (!unit.country) continue;
-    counts.set(unit.country, (counts.get(unit.country) || 0) + 1);
-  }
-
-  const countries = Array.from(counts.keys()).sort((a, b) =>
-    countryLabel(a).localeCompare(countryLabel(b), state.lang)
-  );
-  const selected = state.filters.country;
-
-  dom.countryFilter.innerHTML = "";
-
-  const all = document.createElement("option");
-  all.value = "all";
-  all.textContent = t("filter.allCountries");
-  dom.countryFilter.append(all);
-
-  for (const country of countries) {
-    const option = document.createElement("option");
-    option.value = country;
-    option.textContent = `${countryLabel(country)} (${counts.get(country)})`;
-    dom.countryFilter.append(option);
-  }
-
-  dom.countryFilter.value = selected === "all" || counts.has(selected) ? selected : "all";
-  state.filters.country = dom.countryFilter.value;
-}
-
-/*
- * Filtro por época. Solo aparecen los tramos con unidades, así que si la hoja
- * no trae años (o no hay nadie en un tramo) la opción no se muestra.
- */
-function buildEraFilter() {
-  if (!dom.eraFilter) return;
-
-  const counts = new Map();
-
-  for (const unit of state.units) {
-    const key = eraOf(unit.launchYear);
-    if (!key) continue;
-    counts.set(key, (counts.get(key) || 0) + 1);
-  }
-
-  const keys = ERA_ORDER.filter((key) => counts.get(key));
-  const selected = state.filters.era;
-
-  dom.eraFilter.innerHTML = "";
-
-  const all = document.createElement("option");
-  all.value = "all";
-  all.textContent = t("filter.allEras");
-  dom.eraFilter.append(all);
-
-  for (const key of keys) {
-    const option = document.createElement("option");
-    option.value = key;
-    option.textContent = `${eraLabelOf(key)} · ${ERA_META[key].range} (${counts.get(key)})`;
-    dom.eraFilter.append(option);
-  }
-
-  dom.eraFilter.value = selected === "all" || counts.has(selected) ? selected : "all";
-  state.filters.era = dom.eraFilter.value;
-
-  /* Si no hay ninguna época con datos, el control no aporta nada. */
-  const wrapper = dom.eraFilter.closest(".select-wrap");
-  if (wrapper) wrapper.hidden = keys.length === 0;
-}
-
-function buildLegend() {
-  if (!dom.mapLegend) return;
-
-  const counts = countByType();
-
-  dom.mapLegend.innerHTML = TYPE_ORDER.map((key) => {
-    const meta = TYPE_META[key];
-    return `<span class="legend-item" style="--type-color:${meta.color}">
-      <span class="legend-dot" aria-hidden="true"></span>${esc(typeLabelOf(key))} <b>${
-      counts[key] || 0
-    }</b>
-    </span>`;
-  }).join("");
-}
-
-function buildTypeBars() {
-  if (!dom.typeBars) return;
-
-  const counts = countByType();
-  const total = state.units.length;
-  const max = Math.max(...TYPE_ORDER.map((key) => counts[key] || 0), 1);
-
-  dom.typeBars.innerHTML = TYPE_ORDER.map((key) => {
-    const meta = TYPE_META[key];
-    const count = counts[key] || 0;
-    const percent = total ? Math.round((count / total) * 100) : 0;
-    const width = Math.max(2, Math.round((count / max) * 100));
-
-    return `<div class="type-row" title="${esc(t("intel.ofArchive", { percent }))}">
-      <span class="type-row__label"><span class="legend-dot" style="--type-color:${meta.color}" aria-hidden="true"></span>${esc(
-      typeLabelOf(key)
-    )}</span>
-      <span class="type-row__bar"><span style="--w:${width}%;--type-color:${meta.color}"></span></span>
-      <span class="type-row__num">${count}</span>
-    </div>`;
-  }).join("");
-}
-
-function featuredCardMarkup(unit) {
-  const meta = typeMeta(unit.typeKey);
-  const image = unit.image
-    ? `<img src="${esc(unit.image)}" alt="${esc(
-        t("alt.featured", { name: unit.name })
-      )}" loading="lazy" referrerpolicy="no-referrer" data-card-fallback>`
-    : `<span class="featured-card__fallback">${blueprintMarkup()}</span>`;
-  const location =
-    [unit.museum, unit.city].filter(Boolean).join(" · ") ||
-    countryLabel(unit.country) ||
-    t("featured.locationUndocumented");
-
-  return `<button class="featured-card" type="button" data-unit="${esc(unit.id)}">
-    <span class="featured-card__media">
-      ${image}
-      <span class="featured-card__shade" aria-hidden="true"></span>
-      <span class="featured-card__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
-    meta.icon
-  }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
-      ${unit.launchYear ? `<span class="featured-card__year">${esc(unit.launchYear)}</span>` : ""}
-    </span>
-    <span class="featured-card__body">
-      <span class="featured-card__code">${esc(unit.dossier || unit.id)}</span>
-      <span class="featured-card__name">${esc(unit.name)}</span>
-      <span class="featured-card__loc">${esc(location)}</span>
-    </span>
-  </button>`;
-}
-
-/* ---------- Destacados: cartel + filas ---------- */
-
-/*
- * Orden de las filas: primero las unidades con imagen, porque la fila se lee
- * mejor y el resto cae al plano técnico. Dentro de cada bloque se respeta el
- * orden del archivo.
- */
-function byMediaFirst(a, b) {
-  return Number(hasMedia(b)) - Number(hasMedia(a));
-}
-
-/* Cronológico: es el orden natural de una época, y las sin año van al final. */
-function byYearAsc(a, b) {
-  const ya = a.launchYear || 9999;
-  const yb = b.launchYear || 9999;
-  return ya - yb || a.name.localeCompare(b.name, state.lang, { sensitivity: "base" });
-}
-
-function railSlice(units, sorter) {
-  return [...units].sort(sorter).slice(0, RAIL_LIMIT);
-}
-
-function billboardMarkup(unit) {
-  const meta = typeMeta(unit.typeKey);
-  const media = unit.image
-    ? `<img src="${esc(unit.image)}" alt="${esc(t("alt.view", { name: unit.name }))}" referrerpolicy="no-referrer" data-card-fallback>`
-    : blueprintMarkup();
-
-  const place = [countryLabel(unit.country), unit.city].filter(Boolean).join(" · ");
-  const facts = [unit.museum, place, unit.launchYear ? String(unit.launchYear) : ""].filter(Boolean);
-
-  return `<div class="billboard__media" aria-hidden="true">
-      ${media}
-      <span class="billboard__scrim"></span>
-      <span class="billboard__code">${esc(unit.dossier || unit.id)}</span>
-    </div>
-    <div class="billboard__body">
-      <p class="kicker"><span class="kicker__line"></span>${esc(t("billboard.kicker"))}</p>
-      <p class="billboard__name">${esc(unit.name)}</p>
-      <p class="billboard__facts">
-        <span class="billboard__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
-    meta.icon
-  }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
-        ${facts.map((fact) => `<span class="billboard__fact">${esc(fact)}</span>`).join("")}
-      </p>
-      <p class="billboard__text">${esc(unit.description || "")}</p>
-      <div class="billboard__actions">
-        <button class="btn btn--primary" type="button" data-unit-action="dossier" data-unit="${esc(unit.id)}">
-          <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg><span>${esc(
-            t("billboard.open")
-          )}</span>
-        </button>
-        <button class="btn btn--ghost" type="button" data-unit-action="map" data-unit="${esc(unit.id)}">
-          <svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg><span>${esc(
-            t("billboard.map")
-          )}</span>
-        </button>
-      </div>
-    </div>`;
-}
-
-function railMarkup(rail) {
-  const cards = rail.units.map(featuredCardMarkup).join("");
-  const more = rail.filterKey
-    ? `<button class="rail__more" type="button" ${rail.filterKey}>${esc(t("rail.seeAll"))}</button>`
-    : "";
-
-  return `<div class="rail" data-rail="${esc(rail.key)}" style="--rail-color:${rail.color}">
-    <div class="rail__head">
-      <p class="rail__title"><span class="rail__dot" aria-hidden="true"></span>${esc(rail.title)}${
-    rail.note ? `<span class="rail__note">${esc(rail.note)}</span>` : ""
-  }<span class="rail__count">${rail.count}</span></p>
-      ${more}
-    </div>
-    <div class="rail__viewport">
-      <button class="rail__arrow rail__arrow--prev" type="button" data-rail-nav="-1" aria-label="${esc(
-        t("rail.prev")
-      )}"><svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></button>
-      <div class="rail__track" data-rail-track tabindex="0" role="group" aria-label="${esc(rail.title)}">${cards}</div>
-      <button class="rail__arrow rail__arrow--next" type="button" data-rail-nav="1" aria-label="${esc(
-        t("rail.next")
-      )}"><svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></button>
-    </div>
-  </div>`;
-}
-
-function railGroupMarkup(groupKey, title, rails) {
-  return `<section class="rail-group" data-group="${esc(groupKey)}">
-    <h3 class="rail-group__title"><span>${esc(title)}</span></h3>
-    ${rails.map(railMarkup).join("")}
-  </section>`;
-}
-
-/* Una fila por propulsión. */
-function typeRails() {
-  return TYPE_ORDER.map((typeKey) => {
-    const units = state.units.filter((unit) => unit.typeKey === typeKey);
-    if (!units.length) return null;
-
-    return {
-      key: `type-${typeKey}`,
-      title: typeLabelOf(typeKey),
-      color: TYPE_META[typeKey].color,
-      count: units.length,
-      units: railSlice(units, byYearAsc),
-      filterKey: `data-rail-type="${esc(typeKey)}"`
-    };
-  }).filter(Boolean);
-}
-
-/*
- * Unidades con vídeo reproducible. Es una fila propia: los vídeos de museo son
- * material externo y no convierten una unidad en destacada.
- */
-function videoRailData() {
-  return state.units.filter((unit) => Boolean(getVideoUrl(unit)));
-}
-
-/* Una fila por época, derivada del año de botadura. */
-function eraRails() {
-  return ERA_ORDER.map((eraKey) => {
-    const units = state.units.filter((unit) => eraOf(unit.launchYear) === eraKey);
-    if (!units.length) return null;
-
-    const meta = ERA_META[eraKey];
-
-    return {
-      key: `era-${eraKey}`,
-      title: eraLabelOf(eraKey),
-      note: meta.range,
-      color: meta.color,
-      count: units.length,
-      units: railSlice(units, byYearAsc),
-      filterKey: `data-rail-era="${esc(eraKey)}"`
-    };
-  }).filter(Boolean);
-}
-
-function renderBillboard(featured) {
-  const host = dom.featuredBillboard;
-  if (!host) return;
-
-  /* El cartel pide imagen: si ninguna destacada la tiene, se cae al plano. */
-  const unit = featured.find(hasMedia) || featured[0];
-
-  if (!unit) {
-    host.hidden = true;
-    host.innerHTML = "";
-    return;
-  }
-
-  host.hidden = false;
-  host.innerHTML = billboardMarkup(unit);
-}
-
-function renderFeatured() {
-  if (!dom.featuredRails) return;
-
-  const featured = state.units.filter(isFeatured);
-
-  setText(dom.featuredCount, featured.length);
-  setText(
-    dom.featuredCountLabel,
-    t(featured.length === 1 ? "section.featured.one" : "section.featured.many")
-  );
-
-  renderBillboard(featured);
-
-  const html = [];
-
-  if (featured.length) {
-    html.push(
-      railMarkup({
-        key: "featured",
-        title: t("rail.featured"),
-        color: "var(--accent)",
-        count: featured.length,
-        units: railSlice(featured, byMediaFirst),
-        filterKey: ""
-      })
-    );
-  }
-
-  const videos = videoRailData();
-  if (videos.length) {
-    html.push(
-      railMarkup({
-        key: "video",
-        title: t("rail.withVideo"),
-        color: "var(--sonar)",
-        count: videos.length,
-        units: railSlice(videos, byMediaFirst),
-        filterKey: ""
-      })
-    );
-  }
-
-  const byType = typeRails();
-  if (byType.length) html.push(railGroupMarkup("type", t("rail.byType"), byType));
-
-  const byEra = eraRails();
-  if (byEra.length) html.push(railGroupMarkup("era", t("rail.byEra"), byEra));
-
-  dom.featuredRails.innerHTML = html.join("");
-
-  syncRailArrows();
-}
-
-/* Habilita o deshabilita las flechas según la posición de cada fila. */
-function syncRailArrows() {
-  if (!dom.featuredRails) return;
-
-  dom.featuredRails.querySelectorAll(".rail").forEach((rail) => {
-    const track = rail.querySelector("[data-rail-track]");
-    if (!track) return;
-
-    const max = track.scrollWidth - track.clientWidth;
-    const scrollable = max > 4;
-
-    rail.classList.toggle("is-static", !scrollable);
-
-    const prev = rail.querySelector('[data-rail-nav="-1"]');
-    const next = rail.querySelector('[data-rail-nav="1"]');
-
-    if (prev) prev.disabled = !scrollable || track.scrollLeft <= 2;
-    if (next) next.disabled = !scrollable || track.scrollLeft >= max - 2;
-  });
-}
-
-/*
- * «Ver todas» de una fila: limpia el resto de filtros, aplica el de la fila y
- * baja al registro, que es donde está la lista completa. Desde la cronología
- * no se baja a ningún sitio: la propia línea se atenúa y ya se ve el resultado.
- */
-function applyRailFilter(dataset, { scrollToRegistry = true } = {}) {
-  resetFilters({ apply: false });
-
-  if (dataset.railType) state.filters.types.add(dataset.railType);
-  if (dataset.railEra) state.filters.era = dataset.railEra;
-
-  applyFilters();
-
-  if (scrollToRegistry) {
-    const target = document.getElementById("registry");
-
-    if (target) {
-      target.scrollIntoView({
-        behavior: state.prefersReduced ? "auto" : "smooth",
-        block: "start"
-      });
-    }
-  }
-
-  showToast(t("rail.filtered", { count: state.filtered.length }));
-}
-
-function handleFeaturedMediaError(event) {
-  const image = event.target;
-  if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-card-fallback")) return;
-
-  image.outerHTML = `<span class="featured-card__fallback">${blueprintMarkup()}</span>`;
-}
-
-/* ---------- Mapa ---------- */
-function initMap() {
-  if (!window.L) throw new Error("No se pudo cargar el motor de mapas (Leaflet).");
-
-  const L = window.L;
-
-  const map = L.map(dom.map, {
-    minZoom: 2,
-    maxZoom: 16,
-    zoomSnap: 0.5,
-    worldCopyJump: true,
-    attributionControl: true,
-    zoomControl: true
-  });
-
-  state.map = map;
-  map.setView([20, 0], 2);
-
-  L.tileLayer(BASE_TILES, {
-    maxZoom: 16,
-    maxNativeZoom: 16,
-    attribution:
-      '&copy; <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a> · HERE, Garmin, NOAA'
-  }).addTo(map);
-
-  L.tileLayer(LABEL_TILES, {
-    maxZoom: 16,
-    maxNativeZoom: 16
-  }).addTo(map);
-
-  const clusterOptions = {
-    showCoverageOnHover: false,
-    spiderfyOnMaxZoom: true,
-    zoomToBoundsOnClick: true,
-    animate: !state.prefersReduced,
-    maxClusterRadius: (zoom) => (zoom > 8 ? 30 : 46),
-    spiderfyDistanceMultiplier: 1.5,
-    spiderLegPolylineOptions: { weight: 1, color: "#c6ff3d", opacity: 0.4 },
-    iconCreateFunction: (cluster) => {
-      const count = cluster.getChildCount();
-      const size = count < 10 ? 34 : count < 100 ? 42 : 52;
-      const variant = count < 10 ? "" : count < 100 ? " snk-cluster--mid" : " snk-cluster--lg";
-
-      return L.divIcon({
-        className: "snk-cluster-wrap",
-        html: `<span class="snk-cluster${variant}" style="--size:${size}px" role="img" aria-label="${esc(
-          t("map.cluster", { count })
-        )}">${count}</span>`,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2]
-      });
-    }
-  };
-
-  state.cluster =
-    typeof L.markerClusterGroup === "function"
-      ? L.markerClusterGroup(clusterOptions)
-      : L.layerGroup();
-
-  state.cluster.addTo(map);
-
-  state.bounds = L.latLngBounds([]);
-
-  for (const unit of state.units) {
-    state.bounds.extend([unit.lat, unit.lng]);
-
-    const meta = typeMeta(unit.typeKey);
-    const sit = situationMeta(unit.situation);
-
-    // Las unidades con situación conocida usan su moneda como icono de punto.
-    const markerIcon = sit
-      ? L.divIcon({
-          className: "snk-marker-wrap snk-marker-wrap--coin",
-          html: `<span class="snk-coin" style="--sit-color:${sit.color}"><img src="${COIN_MARKER_DIR}${esc(
-            unit.situation
-          )}.svg" alt="" aria-hidden="true" decoding="async"></span>`,
-          iconSize: [40, 40],
-          iconAnchor: [20, 20]
-        })
-      : L.divIcon({
-          className: "snk-marker-wrap",
-          html: `<span class="snk-marker" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg></span>`,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
-        });
-
-    const marker = L.marker([unit.lat, unit.lng], {
-      icon: markerIcon,
-      title: unit.name,
-      alt: `${unit.name} — ${unit.museum || unit.city}`,
-      riseOnHover: true,
-      keyboard: true
-    });
-
-    marker.bindTooltip(esc(unit.name), {
-      direction: "top",
-      offset: [0, -8],
-      opacity: 1,
-      className: "snk-tooltip"
-    });
-
-    marker.on("add", () => {
-      const element = marker.getElement();
-      if (!element) return;
-      element.setAttribute("role", "button");
-      element.setAttribute(
-        "aria-label",
-        `${unit.name}. ${
-          unit.museum || unit.city || countryLabel(unit.country)
-        }. ${t("map.openDossier")}`
-      );
-
-      const markerElement = element.querySelector(".snk-marker, .snk-coin");
-      if (markerElement) {
-        markerElement.classList.toggle("is-active", unit.id === state.selectedId);
-      }
-    });
-
-    marker.on("click", () => selectUnit(unit.id, { scroll: true, focusMap: false }));
-
-    state.markers.set(unit.id, marker);
-    state.cluster.addLayer(marker);
-  }
-
-  addRecenterControl(map);
-  map.on("move zoomend", updateMapHud);
-  map.on("zoomend moveend", refreshSelectionStyles);
-  updateMapHud();
-}
-
-function addRecenterControl(map) {
-  const L = window.L;
-
-  const recenter = L.control({ position: "topleft" });
-
-  recenter.onAdd = () => {
-    const button = L.DomUtil.create("button", "map-recenter");
-    button.type = "button";
-    button.title = t("map.recenter");
-    button.setAttribute("aria-label", t("map.recenterAria"));
-    button.innerHTML =
-      '<svg class="icon" aria-hidden="true"><use href="#i-crosshair"></use></svg>';
-
-    L.DomEvent.disableClickPropagation(button);
-    L.DomEvent.on(button, "click", () => {
-      fitAll();
-      button.blur();
-    });
-
-    return button;
-  };
-
-  recenter.addTo(map);
-}
-
-function fitAll() {
-  if (!state.map || !state.bounds || !state.bounds.isValid()) return;
-
-  const maxZoom = state.map.getSize().x < 700 ? 3 : 4;
-  state.map.fitBounds(state.bounds, { padding: [26, 26], maxZoom });
-}
-
-function updateMapHud() {
-  if (!state.map) return;
-
-  const center = state.map.getCenter();
-  const lat = `${Math.abs(center.lat).toFixed(1)}${center.lat >= 0 ? "N" : "S"}`;
-  const lng = `${Math.abs(center.lng).toFixed(1)}${center.lng >= 0 ? "E" : "W"}`;
-
-  setText(dom.mapZoom, `Z ${pad2(Math.round(state.map.getZoom()))}`);
-  setText(dom.mapCoords, `${lat} / ${lng}`);
-}
-
-/* ---------- Filtros y registro ---------- */
-
-function filtersActive() {
-  const filters = state.filters;
-  return Boolean(
-    filters.q.trim() ||
-      filters.types.size ||
-      filters.situations.size ||
-      filters.country !== "all" ||
-      filters.era !== "all" ||
-      filters.media ||
-      filters.video ||
-      filters.coming
-  );
-}
-
-function applyFilters() {
-  const filters = state.filters;
-  const query = normalizeText(filters.q);
-
-  state.filtered = state.units.filter((unit) => {
-    if (filters.types.size && !filters.types.has(unit.typeKey)) return false;
-    if (filters.situations.size && !filters.situations.has(unit.situation)) return false;
-    if (filters.country !== "all" && unit.country !== filters.country) return false;
-    if (filters.era !== "all" && eraOf(unit.launchYear) !== filters.era) return false;
-    if (filters.media && !hasMedia(unit)) return false;
-    if (filters.video && !getVideoUrl(unit)) return false;
-    if (filters.coming && unit.status !== "coming-soon") return false;
-    if (query && !unit._search.includes(query)) return false;
-    return true;
-  });
-
-  if (dom.typeFilters) {
-    dom.typeFilters.querySelectorAll("[data-type]").forEach((button) => {
-      button.setAttribute("aria-pressed", String(filters.types.has(button.dataset.type)));
-    });
-  }
-
-  if (dom.situationFilters) {
-    dom.situationFilters.querySelectorAll("[data-situation]").forEach((button) => {
-      button.setAttribute("aria-pressed", String(filters.situations.has(button.dataset.situation)));
-    });
-  }
-
-  if (dom.mediaFilter) dom.mediaFilter.setAttribute("aria-pressed", String(filters.media));
-  if (dom.videoFilter) dom.videoFilter.setAttribute("aria-pressed", String(filters.video));
-  if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", String(filters.coming));
-  if (dom.resetFilters) dom.resetFilters.hidden = !filtersActive();
-
-  /* Los desplegables también se sincronizan: el filtro puede venir de una fila
-   * de destacados o de un carril de la cronología, no solo del propio control. */
-  if (dom.countryFilter && dom.countryFilter.value !== filters.country) {
-    dom.countryFilter.value = filters.country;
-  }
-
-  if (dom.eraFilter && dom.eraFilter.value !== filters.era) {
-    dom.eraFilter.value = filters.era;
-  }
-
-  setText(dom.mapCount, state.filtered.length);
-  setText(
-    dom.mapCountLabel,
-    t(state.filtered.length === 1 ? "section.map.one" : "section.map.many")
-  );
-  syncMarkers();
-  renderRegistry();
-  syncTimelineFilter();
-}
-
-function syncMarkers() {
-  if (!state.cluster) return;
-
-  const layers = state.filtered
-    .map((unit) => state.markers.get(unit.id))
-    .filter(Boolean);
-
-  state.cluster.clearLayers();
-  if (layers.length) state.cluster.addLayers(layers);
-
-  refreshSelectionStyles();
-}
-
-function sortUnits(list) {
-  const sorted = [...list];
-  const byName = (a, b) => a.name.localeCompare(b.name, state.lang, { sensitivity: "base" });
-  const byCountry = (a, b) =>
-    a.country.localeCompare(b.country, state.lang, { sensitivity: "base" }) || byName(a, b);
-
-  switch (dom.sortSelect ? dom.sortSelect.value : "default") {
-    case "name":
-      sorted.sort(byName);
-      break;
-    case "year-desc":
-      sorted.sort(
-        (a, b) =>
-          (b.launchYear ?? -Infinity) - (a.launchYear ?? -Infinity) || byName(a, b)
-      );
-      break;
-    case "year-asc":
-      sorted.sort(
-        (a, b) => (a.launchYear ?? Infinity) - (b.launchYear ?? Infinity) || byName(a, b)
-      );
-      break;
-    case "country":
-      sorted.sort(byCountry);
-      break;
-    default:
-      sorted.sort(
-        (a, b) => parseDossierNumber(a.dossier) - parseDossierNumber(b.dossier) || byName(a, b)
-      );
-  }
-
-  return sorted;
-}
-
-function rowMarkup(unit) {
-  const selected = unit.id === state.selectedId;
-  const meta = typeMeta(unit.typeKey);
-  const sit = situationMeta(unit.situation);
-  const coming = unit.status === "coming-soon";
-  const sitInline = sit
-    ? `<span class="sit-inline" style="--sit-color:${sit.color}" title="${esc(
-        situationLabelOf(unit.situation)
-      )}" aria-hidden="true"><svg class="icon"><use href="#${sit.icon}"></use></svg></span>`
-    : "";
-
-  return `<button class="unit-row${selected ? " is-selected" : ""}" type="button" data-unit="${esc(
-    unit.id
-  )}"${selected ? ' aria-current="true"' : ""}>
-    <span class="unit-row__code">${esc(unit.dossier || unit.id)}</span>
-    <span class="unit-row__main">
-      <span class="unit-row__name">${esc(unit.name)}</span>
-      <span class="unit-row__museum">${esc(unit.museum || t("dossier.museumUndocumented"))}${
-    coming ? ` · ${esc(t("dossier.badgeComing"))}` : ""
-  }</span>
-    </span>
-    <span class="unit-row__type" style="--type-color:${meta.color}">${sitInline}<span class="unit-row__dot" aria-hidden="true"></span>${esc(
-    typeLabelOf(unit.typeKey)
-  )}</span>
-    <span class="unit-row__country">${esc(countryLabel(unit.country) || "—")}</span>
-    <span class="unit-row__year">${unit.launchYear || "—"}</span>
-    <span class="unit-row__arrow" aria-hidden="true"><svg class="icon"><use href="#i-arrow"></use></svg></span>
-  </button>`;
-}
-
-function renderRegistry() {
-  if (!dom.registryList) return;
-
-  const list = sortUnits(state.filtered);
-
-  setText(dom.registryCount, list.length);
-  setText(dom.registryCountLabel, t(list.length === 1 ? "section.registry.one" : "section.registry.many"));
-  dom.registryList.hidden = list.length === 0;
-  dom.registryEmpty.hidden = list.length !== 0;
-
-  dom.registryList.innerHTML = list.map(rowMarkup).join("");
-  refreshSelectionStyles();
-}
-
-function refreshSelectionStyles() {
-  state.markers.forEach((marker, id) => {
-    const active = id === state.selectedId;
-    const element = marker.getElement();
-    const markerElement = element ? element.querySelector(".snk-marker, .snk-coin") : null;
-
-    if (markerElement) markerElement.classList.toggle("is-active", active);
-    marker.setZIndexOffset(active ? 1000 : 0);
-  });
-
-  if (dom.registryList) {
-    dom.registryList.querySelectorAll(".unit-row").forEach((row) => {
-      const active = row.dataset.unit === state.selectedId;
-      row.classList.toggle("is-selected", active);
-      if (active) row.setAttribute("aria-current", "true");
-      else row.removeAttribute("aria-current");
-    });
-  }
-
-  syncTimelineSelection();
-}
-
-function resetFilters({ apply = true } = {}) {
-  state.filters.q = "";
-  state.filters.types.clear();
-  state.filters.situations.clear();
-  state.filters.country = "all";
-  state.filters.era = "all";
-  state.filters.media = false;
-  state.filters.video = false;
-  state.filters.coming = false;
-
-  if (dom.search) dom.search.value = "";
-  if (dom.countryFilter) dom.countryFilter.value = "all";
-  if (dom.eraFilter) dom.eraFilter.value = "all";
-
-  if (apply) applyFilters();
-}
-
-/* ---------- Cronología ---------- */
-
-/*
- * Una fila por época, con una columna por año dentro del rango real de esa
- * época. La escala es lineal dentro de la fila y los puntos se apilan hacia
- * arriba, así que el alto de cada columna es la densidad de botaduras de ese
- * año. Los años sin unidades quedan como huecos, que es información real.
- * Las unidades sin año van a la bandeja «sin fecha».
- */
-
-function timelineUnits(eraKey) {
-  return state.units
-    .filter((unit) => eraOf(unit.launchYear) === eraKey)
-    .sort(
-      (a, b) =>
-        a.launchYear - b.launchYear ||
-        a.name.localeCompare(b.name, state.lang, { sensitivity: "base" })
-    );
-}
-
-function timelineDotMarkup(unit) {
-  const meta = typeMeta(unit.typeKey);
-  const label = t("timeline.dotLabel", {
-    name: unit.name,
-    year: unit.launchYear,
-    type: typeLabelOf(unit.typeKey)
-  });
-
-  return `<button class="tl-dot" type="button" data-unit="${esc(unit.id)}" data-year="${esc(
-    unit.launchYear
-  )}" style="--type-color:${meta.color}" aria-label="${esc(label)}" title="${esc(label)}"></button>`;
-}
-
-/* Celdas de la regla: cada una abarca una década completa, o lo que quede.
- * Las celdas cortas (los bordes de cada época) van sin rótulo: así el ancho
- * coincide exactamente con el de la columna de años y nada se descuadra. */
-function decadeRuleMarkup(min, max) {
-  const cells = [];
-  let start = min;
-
-  while (start <= max) {
-    const end = Math.min(max, Math.floor(start / 10) * 10 + 9);
-    const span = end - start + 1;
-
-    cells.push(
-      `<span class="tl-decade" style="--span:${span}">${span >= 3 ? esc(start) : ""}</span>`
-    );
-
-    start = end + 1;
-  }
-
-  return cells.join("");
-}
-
-function timelineLaneMarkup(eraKey) {
-  const units = timelineUnits(eraKey);
-  if (!units.length) return "";
-
-  const meta = ERA_META[eraKey];
-  const byYear = new Map();
-
-  for (const unit of units) {
-    if (!byYear.has(unit.launchYear)) byYear.set(unit.launchYear, []);
-    byYear.get(unit.launchYear).push(unit);
-  }
-
-  const years = [...byYear.keys()];
-  const min = Math.min(...years);
-  const max = Math.max(...years);
-  const columns = [];
-
-  for (let year = min; year <= max; year++) {
-    const list = byYear.get(year) || [];
-
-    columns.push(
-      `<div class="tl-year${year % 10 === 0 ? " is-decade" : ""}" data-year="${year}">${list
-        .map(timelineDotMarkup)
-        .join("")}</div>`
-    );
-  }
-
-  return `<div class="tl-lane" data-era="${esc(eraKey)}" style="--era-color:${meta.color}">
-    <div class="tl-lane__head">
-      <span class="tl-lane__dot" aria-hidden="true"></span>
-      <span class="tl-lane__name">${esc(eraLabelOf(eraKey))}</span>
-      <span class="tl-lane__range">${esc(meta.range)}</span>
-      <span class="tl-lane__count">${units.length}</span>
-      <button class="tl-lane__filter" type="button" data-rail-era="${esc(eraKey)}">${esc(
-    t("timeline.filter")
-  )}</button>
-    </div>
-    <div class="tl-lane__scroll">
-      <div class="tl-lane__track">
-        <div class="tl-years">${columns.join("")}</div>
-        <div class="tl-rule">${decadeRuleMarkup(min, max)}</div>
-      </div>
-    </div>
-  </div>`;
-}
-
-function renderTimelineUndated(undated) {
-  const host = dom.timelineUndated;
-  if (!host) return;
-
-  host.hidden = undated.length === 0;
-  if (!undated.length) return;
-
-  setText(dom.timelineUndatedCount, undated.length);
-
-  dom.timelineUndatedList.innerHTML = undated
-    .slice()
-    .sort((a, b) => String(a.dossier || a.id).localeCompare(String(b.dossier || b.id)))
-    .map((unit) => {
-      const meta = typeMeta(unit.typeKey);
-
-      return `<button class="tl-chip" type="button" data-unit="${esc(unit.id)}" style="--type-color:${
-        meta.color
-      }" title="${esc(t("timeline.select", { name: unit.name }))}">
-        <span class="tl-chip__dot" aria-hidden="true"></span>
-        <span class="tl-chip__name">${esc(unit.name)}</span>
-      </button>`;
-    })
-    .join("");
-}
-
-function renderTimeline() {
-  if (!dom.timelineLanes) return;
-
-  const dated = state.units.filter((unit) => unit.launchYear);
-  const undated = state.units.filter((unit) => !unit.launchYear);
-
-  setText(dom.timelineCount, dated.length);
-  setText(
-    dom.timelineCountLabel,
-    t(dated.length === 1 ? "section.timeline.one" : "section.timeline.many")
-  );
-
-  dom.timelineLanes.innerHTML = ERA_ORDER.map(timelineLaneMarkup).join("");
-
-  if (dom.timelineEmpty) dom.timelineEmpty.hidden = dated.length > 0;
-
-  renderTimelineUndated(undated);
-  resetTimelineReadout();
-  syncTimelineFilter();
-  syncTimelineSelection();
-}
-
-function resetTimelineReadout() {
-  if (!dom.timelineReadout) return;
-
-  dom.timelineReadout.classList.add("is-idle");
-  dom.timelineReadout.innerHTML = `<span class="tl-readout__hint">${esc(t("timeline.hint"))}</span>`;
-}
-
-/* Lectura del punto bajo el cursor o el foco, como un instrumento. */
-function updateTimelineReadout(unit) {
-  const host = dom.timelineReadout;
-  if (!host) return;
-
-  if (!unit) {
-    resetTimelineReadout();
-    return;
-  }
-
-  const meta = typeMeta(unit.typeKey);
-  const place = [unit.museum, unit.city, countryLabel(unit.country)].filter(Boolean).join(" · ");
-  const thumb = unit.image
-    ? `<img class="tl-readout__img" src="${esc(unit.image)}" alt="" referrerpolicy="no-referrer">`
-    : "";
-
-  host.classList.remove("is-idle");
-  host.innerHTML = `${thumb}
-    <span class="tl-readout__code">${esc(unit.dossier || unit.id)}</span>
-    <span class="tl-readout__name">${esc(unit.name)}</span>
-    <span class="tl-readout__year">${esc(unit.launchYear || "—")}</span>
-    <span class="tl-readout__type" style="--type-color:${meta.color}"><svg class="icon" aria-hidden="true"><use href="#${
-    meta.icon
-  }"></use></svg>${esc(typeLabelOf(unit.typeKey))}</span>
-    <span class="tl-readout__place">${esc(place)}</span>`;
-}
-
-/* Lo que no pasa el filtro activo se atenúa, no desaparece. */
-function syncTimelineFilter() {
-  if (!dom.timelineLanes) return;
-
-  const visible = new Set(state.filtered.map((unit) => unit.id));
-
-  dom.timelineLanes.querySelectorAll("[data-unit]").forEach((dot) => {
-    dot.classList.toggle("is-muted", !visible.has(dot.dataset.unit));
-  });
-
-  if (dom.timelineUndatedList) {
-    dom.timelineUndatedList.querySelectorAll("[data-unit]").forEach((chip) => {
-      chip.classList.toggle("is-muted", !visible.has(chip.dataset.unit));
-    });
-  }
-}
-
-function syncTimelineSelection() {
-  if (!dom.timelineLanes) return;
-
-  dom.timelineLanes.querySelectorAll("[data-unit]").forEach((dot) => {
-    dot.classList.toggle("is-selected", dot.dataset.unit === state.selectedId);
-  });
-}
-
-/* ---------- Dossier ---------- */
-
-function blueprintMarkup() {
-  return `<svg class="blueprint" viewBox="0 0 260 120" aria-hidden="true">
-    <path d="M12 70h18l14-24h102l20 12h54l18 12-18 12h-46l-14 10H66L52 80H12z"/>
-    <path d="M66 46V26h30v20M124 58h30M186 70h24M52 80h-8"/>
-    <path d="M42 70h8M96 58h22M148 58h20" stroke-dasharray="3 4"/>
-    <circle cx="52" cy="74" r="6"/>
-    <path d="M58 74h12M12 82h238" stroke-dasharray="4 5"/>
-  </svg>`;
-}
-
-function placeholderMedia(label) {
-  return `<div class="dossier__media dossier__media--empty" data-media>
-    <span class="media-tag">${esc(label || t("dossier.noMedia"))}</span>
-    ${blueprintMarkup()}
-    <span>${esc(t("dossier.blueprintPending"))}</span>
-  </div>`;
-}
-
-function mediaMarkup(unit) {
-  const videoUrl = getVideoUrl(unit);
-  const videoId = youtubeId(videoUrl);
-  const directVideo = videoUrl && isDirectVideo(videoUrl);
-  const vertical =
-    unit.verticalVideo || Boolean(videoId && /\/shorts\//i.test(videoUrl));
-
-  if (videoId) {
-    const thumbnail = unit.image || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-
-    return `<div class="dossier__media dossier__media--video${vertical ? " is-vertical" : ""}" data-media>
-      <img src="${esc(thumbnail)}" alt="${esc(
-        t("alt.view", { name: unit.name })
-      )}" referrerpolicy="no-referrer" data-fallback>
-      <span class="media-tag">VIDEO${vertical ? " // VERTICAL" : " // YOUTUBE"}</span>
-      <button class="play" type="button" data-play="${esc(videoUrl)}" aria-label="${esc(
-      t("dossier.playVideo", { name: unit.name })
-    )}"><span><svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg></span></button>
-    </div>`;
-  }
-
-  if (directVideo) {
-    return `<div class="dossier__media dossier__media--video${vertical ? " is-vertical" : ""}" data-media>
-      <video controls playsinline preload="metadata"${
-        unit.image ? ` poster="${esc(unit.image)}"` : ""
-      } src="${esc(videoUrl)}"></video>
-      <span class="media-tag">VIDEO</span>
-    </div>`;
-  }
-
-  if (unit.image) {
-    const tag = unit.link ? t("dossier.photoSource") : t("dossier.photoArchive");
-    const inner = `<img src="${esc(unit.image)}" alt="${esc(
-      t("alt.featured", { name: unit.name })
-    )}" referrerpolicy="no-referrer" data-fallback><span class="media-tag">${esc(tag)}</span>`;
-
-    if (unit.link) {
-      return `<a class="dossier__media" href="${esc(unit.link)}" target="_blank" rel="noopener noreferrer" data-media>${inner}</a>`;
-    }
-
-    return `<div class="dossier__media" data-media>${inner}</div>`;
-  }
-
-  return placeholderMedia(t("dossier.noMedia"));
-}
-
-function specMarkup(label, value) {
-  return `<div><dt>${esc(label)}</dt><dd>${esc(value || "—")}</dd></div>`;
-}
-
-function renderDossier(unit) {
-  if (!dom.dossierContent) return;
-
-  const meta = typeMeta(unit.typeKey);
-  const sit = situationMeta(unit.situation);
-  const statusBadges = [
-    unit.status === "coming-soon"
-      ? `<span class="status-badge">${esc(t("dossier.badgeComing"))}</span>`
-      : "",
-    sit
-      ? `<span class="sit-badge" style="--sit-color:${sit.color}"><img class="sit-badge__coin" src="assets/img/coins/${esc(
-          unit.situation
-        )}.svg" alt="" aria-hidden="true" loading="lazy" decoding="async">${esc(
-          situationLabelOf(unit.situation)
-        )}</span>`
-      : unit.afloat
-        ? `<span class="status-badge status-badge--afloat">${esc(t("dossier.badgeAfloat"))}</span>`
-        : ""
-  ].join("");
-
-  const linkButton = unit.link
-    ? `<a class="btn btn--primary btn--sm" href="${esc(
-        unit.link
-      )}" target="_blank" rel="noopener noreferrer">${esc(
-        t("dossier.openSource")
-      )} <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>`
-    : "";
-
-  const undocumented = t("dossier.undocumented");
-  const specs = [
-    specMarkup(t("dossier.specClass"), unit.class || undocumented),
-    specMarkup(t("dossier.specLaunch"), unit.launchYear ? String(unit.launchYear) : undocumented),
-    specMarkup(t("dossier.specCountry"), countryLabel(unit.country)),
-    specMarkup(t("dossier.specNavy"), unit.nationality || countryLabel(unit.country)),
-    specMarkup(t("dossier.specCity"), unit.city),
-    specMarkup(t("dossier.specMuseum"), unit.museum),
-    specMarkup(t("dossier.specSituation"), sit ? situationLabelOf(unit.situation) : undocumented),
-    specMarkup(
-      t("dossier.specState"),
-      unit.status === "coming-soon" ? t("dossier.stateComing") : t("dossier.stateOpen")
-    ),
-    specMarkup(t("dossier.specCoords"), formatCoords(unit))
-  ].join("");
-
-  const shareBar = shareBarMarkup({
-    url: shareUrlFor(unit),
-    title: t("share.unitTitle", { name: unit.name }),
-    label: t("share.unitLabel"),
-    withCopy: false
-  });
-
-  dom.dossierContent.classList.remove("is-empty");
-  dom.dossierContent.innerHTML = `${mediaMarkup(unit)}
-    <article class="dossier__body" aria-labelledby="dossier-title">
-      <div class="dossier__top">
-        <span class="type-badge type-badge--icon" style="--type-color:${meta.color}">
-          <svg class="icon" aria-hidden="true"><use href="#${meta.icon}"></use></svg>${esc(
-    typeLabelOf(unit.typeKey)
-  )}
-        </span>
-        ${statusBadges}
-        <span class="dossier__code">${esc(unit.dossier || unit.id)}</span>
-      </div>
-      <h3 class="dossier__title" id="dossier-title">${esc(unit.name)}</h3>
-      <p class="dossier__location">${esc(
-        unit.museum || t("dossier.museumUndocumented")
-      )}<br>${esc(unit.city)}, ${esc(countryLabel(unit.country))} // ${formatCoords(unit)}</p>
-      <p class="dossier__desc">${esc(unit.description || t("dossier.noDescription"))}</p>
-      <dl class="specs">${specs}</dl>
-      <div class="actions">
-        ${linkButton}
-        <button class="btn btn--ghost btn--sm" type="button" data-focus="${esc(
-          unit.id
-        )}"><svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg> ${esc(
-    t("dossier.viewMap")
-  )}</button>
-        <button class="btn btn--ghost btn--sm" type="button" data-copy="${esc(
-          unit.id
-        )}"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg> ${esc(
-    t("dossier.copyLink")
-  )}</button>
-      </div>
-      <div class="share share--dossier">${shareBar}</div>
-    </article>`;
-
-  if (dom.dossierClose) dom.dossierClose.hidden = false;
-}
-
-function emptyDossierMarkup() {
-  return `<div class="dossier__empty">
-    <div class="empty-sonar" aria-hidden="true">
-      <span></span><span></span><span></span>
-      <svg class="icon"><use href="#i-sub"></use></svg>
-    </div>
-    <p class="kicker">${esc(t("dossier.emptyKicker"))}</p>
-    <p>${esc(t("dossier.emptyText"))}</p>
-  </div>`;
-}
-
-function clearSelection({ updateUrl = true } = {}) {
-  state.selectedId = null;
-
-  if (updateUrl) updateURL(null);
-
-  if (dom.dossierContent) {
-    dom.dossierContent.classList.add("is-empty");
-    dom.dossierContent.innerHTML = emptyDossierMarkup();
-  }
-
-  if (dom.dossierClose) dom.dossierClose.hidden = true;
-
-  hideHalo();
-  refreshSelectionStyles();
-}
-
-function selectUnit(
-  id,
-  { scroll = false, focusMap = false, toMap = false, updateUrl = true, instant = false } = {}
-) {
-  const unit = state.unitById.get(id);
+function revealDeepLink() {
+  const id = state.pendingUnit;
+  state.pendingUnit = "";
+  if (!id) return;
+  const unit = state.units.find((entry) => entry.id === id);
   if (!unit) return;
-
-  state.selectedId = id;
-
-  if (updateUrl) updateURL(id);
-
-  renderDossier(unit);
-  refreshSelectionStyles();
-  showHalo(unit);
-
-  if (focusMap && state.map) {
-    state.map.flyTo([unit.lat, unit.lng], Math.max(state.map.getZoom(), 5), {
-      duration: state.prefersReduced ? 0 : 0.8
-    });
-  }
-
-  if (toMap) {
-    setTimeout(() => scrollToMap(), 260);
-  } else if (scroll) {
-    setTimeout(() => scrollToDossier(instant), focusMap ? 260 : 70);
-  }
+  lockUnit(unit.id, { fly: true, scroll: state.page === "home", sheet: state.page === "register" });
 }
 
-function showHalo(unit) {
-  if (!window.L || !state.map) return;
+/* ---------- events ---------- */
 
-  const position = [unit.lat, unit.lng];
+function bindFilters() {
+  dom.search?.addEventListener("input", (event) => {
+    state.filters.q = event.target.value;
+    applyFilters();
+  });
 
-  if (!state.halo) {
-    state.halo = window.L.marker(position, {
-      icon: window.L.divIcon({
-        className: "snk-halo-wrap",
-        html: '<span class="snk-halo"></span>',
-        iconSize: [46, 46],
-        iconAnchor: [23, 23]
-      }),
-      interactive: false,
-      keyboard: false,
-      zIndexOffset: 1500
-    });
-  } else {
-    state.halo.setLatLng(position);
-  }
+  dom.typeFilters?.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-type]");
+    if (!chip) return;
+    const key = chip.dataset.type;
+    const next = state.filters.type === key ? "all" : key;
+    state.filters.type = next;
+    dom.typeFilters.querySelectorAll("[data-type]").forEach((node) => node.setAttribute("aria-pressed", String(node.dataset.type === next)));
+    applyFilters();
+    sfxClick();
+  });
 
-  if (!state.map.hasLayer(state.halo)) state.halo.addTo(state.map);
-}
+  dom.situationFilters?.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-situation]");
+    if (!chip) return;
+    const key = chip.dataset.situation;
+    const next = state.filters.situation === key ? "all" : key;
+    state.filters.situation = next;
+    dom.situationFilters.querySelectorAll("[data-situation]").forEach((node) => node.setAttribute("aria-pressed", String(node.dataset.situation === next)));
+    applyFilters();
+    sfxClick();
+  });
 
-function hideHalo() {
-  if (state.halo && state.map && state.map.hasLayer(state.halo)) {
-    state.map.removeLayer(state.halo);
-  }
-}
+  dom.countryFilter?.addEventListener("change", (event) => {
+    state.filters.country = event.target.value;
+    applyFilters();
+  });
 
-function scrollToDossier(instant = false) {
-  if (!dom.dossierSection) return;
+  dom.eraFilter?.addEventListener("change", (event) => {
+    state.filters.era = event.target.value;
+    applyFilters();
+  });
 
-  dom.dossierSection.scrollIntoView({
-    behavior: instant || state.prefersReduced ? "auto" : "smooth",
-    block: "start"
+  dom.videoFilter?.addEventListener("click", () => {
+    state.filters.video = !state.filters.video;
+    dom.videoFilter.setAttribute("aria-pressed", String(state.filters.video));
+    applyFilters();
+    sfxClick();
+  });
+
+  dom.mediaFilter?.addEventListener("click", () => {
+    state.filters.media = !state.filters.media;
+    dom.mediaFilter.setAttribute("aria-pressed", String(state.filters.media));
+    applyFilters();
+    sfxClick();
+  });
+
+  dom.comingFilter?.addEventListener("click", () => {
+    state.filters.coming = !state.filters.coming;
+    dom.comingFilter.setAttribute("aria-pressed", String(state.filters.coming));
+    applyFilters();
+    sfxClick();
+  });
+
+  dom.resetFilters?.addEventListener("click", resetFilters);
+  document.getElementById("register-reset")?.addEventListener("click", resetFilters);
+  document.getElementById("register-empty-reset")?.addEventListener("click", resetFilters);
+
+  dom.sort?.addEventListener("change", (event) => {
+    state.sort = event.target.value;
+    renderRegister();
+    syncUrl();
   });
 }
 
-function scrollToMap() {
-  if (!dom.mapSection) return;
+function bindDelegates() {
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
 
-  dom.mapSection.scrollIntoView({
-    behavior: state.prefersReduced ? "auto" : "smooth",
-    block: "start"
-  });
-}
-
-function focusUnitOnMap(id) {
-  const unit = state.unitById.get(id);
-  if (!unit || !state.map) return;
-
-  selectUnit(id, { scroll: false, focusMap: false, updateUrl: true });
-
-  state.map.flyTo([unit.lat, unit.lng], Math.max(state.map.getZoom(), 6), {
-    duration: state.prefersReduced ? 0 : 0.85
-  });
-
-  setTimeout(() => {
-    const marker = state.markers.get(id);
-    if (marker && marker.getElement()) marker.openTooltip();
-  }, 720);
-
-  scrollToMap();
-}
-
-function playVideo(button) {
-  const url = button.dataset.play;
-  const media = button.closest("[data-media]");
-  const id = youtubeId(url);
-
-  if (!media) return;
-
-  if (!id) {
-    window.open(url, "_blank", "noopener");
-    return;
-  }
-
-  const unit = state.unitById.get(state.selectedId);
-  const title = unit ? unit.name : t("dossier.videoFallback");
-
-  media.classList.add("is-playing");
-  media.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(
-    id
-  )}?autoplay=1&rel=0" title="${esc(
-    `Video: ${title}`
-  )}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
-}
-
-function handleMediaError(event) {
-  const image = event.target;
-  if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-fallback")) return;
-
-  const media = image.closest("[data-media]");
-  if (!media) return;
-
-  if (media.classList.contains("dossier__media--video")) {
-    image.remove();
-    if (!media.querySelector(".media-fallback")) {
-      media.insertAdjacentHTML("afterbegin", `<div class="media-fallback">${blueprintMarkup()}</div>`);
-    }
-    return;
-  }
-
-  media.outerHTML = placeholderMedia(t("dossier.imageUnavailable"));
-}
-
-/* ---------- Enlaces, URL y avisos ---------- */
-
-function updateURL(id) {
-  try {
-    const url = new URL(window.location.href);
-
-    if (id) url.searchParams.set("unit", id);
-    else url.searchParams.delete("unit");
-
-    if (state.lang && state.lang !== DEFAULT_LANG) url.searchParams.set("lang", state.lang);
-    else url.searchParams.delete("lang");
-
-    window.history.replaceState(
-      { unit: id || null },
-      "",
-      `${url.pathname}${url.search}${url.hash}`
-    );
-  } catch {
-    /* El historial puede no estar disponible en algunos contextos locales. */
-  }
-}
-
-function handleRoute() {
-  const id = new URLSearchParams(window.location.search).get("unit");
-
-  if (id && state.unitById.has(id)) {
-    if (id !== state.selectedId) {
-      selectUnit(id, { scroll: false, focusMap: true, updateUrl: false });
-    }
-  } else if (!id && state.selectedId) {
-    clearSelection({ updateUrl: false });
-  }
-}
-
-async function copyText(text) {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
+    const unitButton = target.closest("[data-unit]");
+    if (unitButton) {
+      event.preventDefault();
+      const id = unitButton.dataset.unit;
+      lockUnit(id, { fly: state.page === "home", scroll: state.page === "home", sheet: state.page === "register" && window.matchMedia("(max-width: 980px)").matches });
       return;
     }
-  } catch {
-    /* Se intenta el método clásico. */
-  }
 
+    const videoButton = target.closest("[data-video]");
+    if (videoButton) {
+      event.preventDefault();
+      const id = videoButton.dataset.video;
+      const unit = state.units.find((entry) => entry.id === id);
+      if (!unit) return;
+      if (videoButton.closest(".dossier")) {
+        mountVideo(unit, videoButton);
+      } else {
+        openVideoModal(unit);
+      }
+      return;
+    }
+
+    const copy = target.closest("[data-copy]");
+    if (copy) {
+      event.preventDefault();
+      const unit = state.units.find((entry) => entry.id === copy.dataset.copy);
+      if (unit) copyText(shareUrlFor(unit));
+      return;
+    }
+
+    const copyUrl = target.closest("[data-copy-url]");
+    if (copyUrl) {
+      event.preventDefault();
+      copyText(copyUrl.dataset.copyUrl);
+      return;
+    }
+
+    const locate = target.closest("[data-locate]");
+    if (locate) {
+      event.preventDefault();
+      if (state.page === "register") {
+        const url = new URL("index.html", siteRoot());
+        url.searchParams.set("unit", locate.dataset.locate);
+        if (state.lang !== DEFAULT_LANG) url.searchParams.set("lang", state.lang);
+        window.location.href = url.href;
+      } else {
+        lockUnit(locate.dataset.locate, { fly: true, scroll: true });
+      }
+      return;
+    }
+
+    if (target.closest("[data-dossier-close]")) {
+      event.preventDefault();
+      unlockUnit();
+      return;
+    }
+
+    if (target.closest("#modal-close") || target.closest("#modal-x")) {
+      event.preventDefault();
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      if (dom.modal && !dom.modal.hidden) closeModal();
+      else if (dom.registerSide?.classList.contains("is-open")) unlockUnit();
+      else if (dom.menu && !dom.menu.hidden) closeMenu();
+    }
+  });
+}
+
+function copyText(text) {
+  const done = () => showToast(t("toast.copied"));
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => showToast(t("toast.copyFailed")));
+    return;
+  }
   const area = document.createElement("textarea");
   area.value = text;
   area.setAttribute("readonly", "");
   area.style.position = "fixed";
-  area.style.top = "-1000px";
   area.style.opacity = "0";
-  document.body.appendChild(area);
+  document.body.append(area);
   area.select();
-
-  let copied = false;
-  try {
-    copied = document.execCommand("copy");
-  } catch {
-    copied = false;
-  }
-
+  try { document.execCommand("copy"); done(); } catch (_) { showToast(t("toast.copyFailed")); }
   area.remove();
-
-  if (!copied) throw new Error("No se pudo copiar el enlace.");
 }
 
-async function copyUnitLink(id) {
-  const unit = state.unitById.get(id);
-  if (!unit) return;
-
-  const url = new URL(window.location.href);
-  url.searchParams.set("unit", unit.id);
-  url.hash = "";
-
-  try {
-    await copyText(url.toString());
-    showToast(t("toast.copied"));
-  } catch {
-    showToast(t("toast.copyFailed"));
-  }
-}
-
+let toastTimer = null;
 function showToast(message) {
   if (!dom.toast) return;
-
-  window.clearTimeout(state.toastTimer);
   dom.toast.textContent = message;
-  dom.toast.classList.add("is-visible");
-
-  state.toastTimer = window.setTimeout(() => {
-    dom.toast.classList.remove("is-visible");
-  }, 2600);
+  dom.toast.classList.add("is-on");
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => dom.toast.classList.remove("is-on"), 2200);
 }
 
-/* ---------- Eventos ---------- */
+/* ---------- menu + lang ---------- */
 
-function bindEvents() {
-  if (dom.search) {
-    dom.search.addEventListener("input", () => {
-      state.filters.q = dom.search.value;
+function openMenu() {
+  if (!dom.menu) return;
+  dom.menu.hidden = false;
+  dom.menuOpen?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("is-locked");
+  dom.menu.querySelector("a, button")?.focus();
+}
 
-      if (state.searchFrame) cancelAnimationFrame(state.searchFrame);
-      state.searchFrame = requestAnimationFrame(() => {
-        state.searchFrame = 0;
-        applyFilters();
-      });
-    });
-  }
+function closeMenu() {
+  if (!dom.menu) return;
+  dom.menu.hidden = true;
+  dom.menuOpen?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("is-locked");
+}
 
-  if (dom.typeFilters) {
-    dom.typeFilters.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-type]");
+function bindShell() {
+  dom.menuOpen?.addEventListener("click", openMenu);
+  dom.menuClose?.addEventListener("click", closeMenu);
+  dom.menu?.addEventListener("click", (event) => {
+    if (event.target.closest("a")) closeMenu();
+  });
+
+  document.querySelectorAll(".lang").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-lang]");
       if (!button) return;
-
-      const key = button.dataset.type;
-      if (state.filters.types.has(key)) state.filters.types.delete(key);
-      else state.filters.types.add(key);
-
-      applyFilters();
-    });
-  }
-
-  if (dom.countryFilter) {
-    dom.countryFilter.addEventListener("change", () => {
-      state.filters.country = dom.countryFilter.value;
-      applyFilters();
-    });
-  }
-
-  if (dom.eraFilter) {
-    dom.eraFilter.addEventListener("change", () => {
-      state.filters.era = dom.eraFilter.value;
-      applyFilters();
-    });
-  }
-
-  if (dom.mediaFilter) {
-    dom.mediaFilter.addEventListener("click", () => {
-      state.filters.media = !state.filters.media;
-      applyFilters();
-    });
-  }
-
-  if (dom.videoFilter) {
-    dom.videoFilter.addEventListener("click", () => {
-      state.filters.video = !state.filters.video;
-      applyFilters();
-    });
-  }
-
-  if (dom.situationFilters) {
-    dom.situationFilters.addEventListener("click", (event) => {
-      const chip = event.target.closest("[data-situation]");
-      if (!chip) return;
-
-      const key = chip.dataset.situation;
-      if (state.filters.situations.has(key)) state.filters.situations.delete(key);
-      else state.filters.situations.add(key);
-
-      applyFilters();
-    });
-  }
-
-  if (dom.comingFilter) {
-    dom.comingFilter.addEventListener("click", () => {
-      state.filters.coming = !state.filters.coming;
-      applyFilters();
-    });
-  }
-
-  if (dom.featuredRails) {
-    dom.featuredRails.addEventListener("error", handleFeaturedMediaError, true);
-
-    dom.featuredRails.addEventListener("click", (event) => {
-      if (!(event.target instanceof Element)) return;
-
-      const nav = event.target.closest("[data-rail-nav]");
-      if (nav) {
-        const track = nav.closest(".rail")?.querySelector("[data-rail-track]");
-        if (!track) return;
-
-        track.scrollBy({
-          left: track.clientWidth * 0.85 * Number(nav.dataset.railNav),
-          behavior: state.prefersReduced ? "auto" : "smooth"
-        });
-        return;
-      }
-
-      const seeAll = event.target.closest("[data-rail-type], [data-rail-era]");
-      if (seeAll) {
-        applyRailFilter(seeAll.dataset);
-        return;
-      }
-
-      const card = event.target.closest("[data-unit]");
-      if (card) selectUnit(card.dataset.unit, { scroll: true, focusMap: true });
-    });
-
-    dom.featuredRails.addEventListener(
-      "scroll",
-      () => {
-        if (state.railFrame) cancelAnimationFrame(state.railFrame);
-        state.railFrame = requestAnimationFrame(syncRailArrows);
-      },
-      true
-    );
-
-    window.addEventListener("resize", () => {
-      if (state.railFrame) cancelAnimationFrame(state.railFrame);
-      state.railFrame = requestAnimationFrame(syncRailArrows);
-    });
-  }
-
-  if (dom.featuredBillboard) {
-    dom.featuredBillboard.addEventListener("error", handleFeaturedMediaError, true);
-
-    dom.featuredBillboard.addEventListener("click", (event) => {
-      if (!(event.target instanceof Element)) return;
-
-      const button = event.target.closest("[data-unit-action]");
-      if (!button) return;
-
-      const unitId = button.dataset.unit;
-      const action = button.dataset.unitAction;
-
-      if (action === "map") {
-        selectUnit(unitId, { focusMap: true, toMap: true });
-        return;
-      }
-
-      selectUnit(unitId, { scroll: true, focusMap: false });
-    });
-  }
-
-  if (dom.timelineLanes) {
-    dom.timelineLanes.addEventListener("click", (event) => {
-      if (!(event.target instanceof Element)) return;
-
-      const filter = event.target.closest("[data-rail-era]");
-      if (filter) {
-        applyRailFilter(filter.dataset, { scrollToRegistry: false });
-        return;
-      }
-
-      const dot = event.target.closest("[data-unit]");
-      if (dot) selectUnit(dot.dataset.unit, { scroll: true, focusMap: true });
-    });
-
-    dom.timelineLanes.addEventListener("pointerover", (event) => {
-      const dot = event.target instanceof Element ? event.target.closest("[data-unit]") : null;
-      if (dot) updateTimelineReadout(state.unitById.get(dot.dataset.unit));
-    });
-
-    dom.timelineLanes.addEventListener("focusin", (event) => {
-      const dot = event.target instanceof Element ? event.target.closest("[data-unit]") : null;
-      if (dot) updateTimelineReadout(state.unitById.get(dot.dataset.unit));
-    });
-
-    dom.timelineLanes.addEventListener("pointerleave", resetTimelineReadout);
-    dom.timelineLanes.addEventListener("focusout", resetTimelineReadout);
-  }
-
-  if (dom.timelineUndatedList) {
-    dom.timelineUndatedList.addEventListener("click", (event) => {
-      const chip = event.target instanceof Element ? event.target.closest("[data-unit]") : null;
-      if (chip) selectUnit(chip.dataset.unit, { scroll: true, focusMap: true });
-    });
-  }
-
-  if (dom.resetFilters) dom.resetFilters.addEventListener("click", resetFilters);
-  if (dom.registryReset) dom.registryReset.addEventListener("click", resetFilters);
-
-  if (dom.sortSelect) {
-    dom.sortSelect.addEventListener("change", renderRegistry);
-  }
-
-  if (dom.registryList) {
-    dom.registryList.addEventListener("click", (event) => {
-      const row = event.target.closest("[data-unit]");
-      if (row) selectUnit(row.dataset.unit, { scroll: true, focusMap: true });
-    });
-  }
-
-  if (dom.dossierClose) {
-    dom.dossierClose.addEventListener("click", () => clearSelection());
-  }
-
-  document.querySelectorAll("[data-lang]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.dataset.lang !== state.lang) setLang(button.dataset.lang);
+      setLang(button.dataset.lang);
     });
   });
 
-  document.addEventListener("click", handleShareClick);
+  dom.soundToggle?.addEventListener("click", () => {
+    setSound(!state.sound);
+  });
 
-  if (dom.channelPlay) {
-    dom.channelPlay.addEventListener("click", playChannel);
+  dom.sheetBackdrop?.addEventListener("click", () => unlockUnit());
+
+  const mq = window.matchMedia("(max-width: 720px)");
+  const onResize = () => {
+    state.map?.invalidateSize();
+    if (!mq.matches) closeMenu();
+  };
+  window.addEventListener("resize", onResize, { passive: true });
+  window.visualViewport?.addEventListener("resize", () => state.map?.invalidateSize(), { passive: true });
+}
+
+/* ---------- reveal on scroll ---------- */
+
+let revealObserver = null;
+function observeReveals() {
+  if (reduceMotion() || !("IntersectionObserver" in window)) return;
+  if (!revealObserver) {
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-in");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
   }
-
-  if (dom.langNudgeAccept) {
-    dom.langNudgeAccept.addEventListener("click", () => {
-      const next = state.langSuggestion;
-      if (next && next !== state.lang) setLang(next);
-      if (dom.langNudge) dom.langNudge.hidden = true;
-    });
-  }
-
-  if (dom.langNudgeDismiss) {
-    dom.langNudgeDismiss.addEventListener("click", dismissLangNudge);
-  }
-
-  if (dom.dossierContent) {
-    dom.dossierContent.addEventListener("error", handleMediaError, true);
-
-    dom.dossierContent.addEventListener("click", (event) => {
-      if (!(event.target instanceof Element)) return;
-
-      const play = event.target.closest("[data-play]");
-      if (play) {
-        event.preventDefault();
-        playVideo(play);
-        return;
-      }
-
-      const focus = event.target.closest("[data-focus]");
-      if (focus) {
-        event.preventDefault();
-        focusUnitOnMap(focus.dataset.focus);
-        return;
-      }
-
-      const copy = event.target.closest("[data-copy]");
-      if (copy) {
-        event.preventDefault();
-        copyUnitLink(copy.dataset.copy);
-      }
-    });
-  }
-
-  window.addEventListener("popstate", handleRoute);
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape" || !state.selectedId) return;
-
-    const target = event.target;
-    if (
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLSelectElement ||
-      target instanceof HTMLTextAreaElement
-    ) {
-      return;
+  document.querySelectorAll(".reveal:not(.is-in)").forEach((el) => revealObserver.observe(el));
+  document.querySelectorAll(".section__head, .billboard, .briefing__copy, .briefing__facade, .origin__body").forEach((el) => {
+    if (!el.classList.contains("reveal")) {
+      el.classList.add("reveal");
+      revealObserver.observe(el);
     }
-
-    clearSelection();
   });
 }
 
-/* ---------- Arranque ---------- */
+/* ---------- nav active ---------- */
 
-/* ---------- Héroe: escena (paralaje, lectura y canvas) ---------- */
-
-function initHeroScene() {
-  const hero = dom.hero;
-  if (!hero) return;
-
-  const reduce = state.prefersReduced;
-  let ticking = false;
-
-  const updateParallax = () => {
-    ticking = false;
-
-    const y = Math.min(window.scrollY || window.pageYOffset || 0, window.innerHeight * 1.4);
-
-    hero.style.setProperty("--hero-scroll", y.toFixed(1));
-
-    if (dom.periBrg) dom.periBrg.textContent = pad3((y * 0.42) % 360);
-    if (dom.periDep) dom.periDep.textContent = pad3(20 + y * 0.06);
-  };
-
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(updateParallax);
-    },
-    { passive: true }
-  );
-
-  updateParallax();
-
-  const video = dom.heroVideo;
-  if (video && !video.hidden && video.src && !reduce) {
-    let videoOnScreen = false;
-
-    if ("IntersectionObserver" in window) {
-      const videoObserver = new IntersectionObserver(
-        (entries) => {
-          videoOnScreen = entries.some((entry) => entry.isIntersecting);
-          syncHeroVideo(videoOnScreen);
-        },
-        { threshold: 0.12 }
-      );
-
-      videoObserver.observe(hero);
-    } else {
-      videoOnScreen = true;
-    }
-
-    document.addEventListener("visibilitychange", () => syncHeroVideo(videoOnScreen));
-    syncHeroVideo(videoOnScreen);
-  }
-
-  const canvas = dom.heroCanvas;
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d", { alpha: true });
-  if (!ctx) return;
-
-  let width = 1;
-  let height = 1;
-  let frame = 0;
-  let last = 0;
-  let pulse = 0;
-  let onScreen = true;
-  let snow = [];
-  let bubbles = [];
-  let pings = [];
-
-  const seed = () => {
-    snow = [];
-    bubbles = [];
-    pings = [];
-
-    const snowCount = Math.min(80, Math.max(24, Math.round((width * height) / 30000)));
-
-    for (let i = 0; i < snowCount; i += 1) {
-      snow.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: 0.6 + Math.random() * 1.8,
-        s: 0.05 + Math.random() * 0.22,
-        a: 0.05 + Math.random() * 0.28,
-        ph: Math.random() * Math.PI * 2
-      });
-    }
-
-    const bubbleCount = Math.min(14, Math.max(6, Math.round(width / 110)));
-
-    for (let i = 0; i < bubbleCount; i += 1) {
-      bubbles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: 0.8 + Math.random() * 2.4,
-        s: 0.16 + Math.random() * 0.5,
-        d: 0.4 + Math.random() * 1.4,
-        ph: Math.random() * Math.PI * 2
-      });
-    }
-  };
-
-  const draw = (dt) => {
-    ctx.clearRect(0, 0, width, height);
-
-    for (const flake of snow) {
-      if (dt) {
-        flake.y += flake.s * dt * 0.06;
-        flake.x += Math.sin(flake.ph + flake.y * 0.01) * 0.14;
-
-        if (flake.y - flake.r > height) {
-          flake.y = -flake.r;
-          flake.x = Math.random() * width;
-        }
-      }
-
-      ctx.beginPath();
-      ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(198, 255, 61, ${flake.a})`;
-      ctx.fill();
-    }
-
-    for (const bubble of bubbles) {
-      if (dt) {
-        bubble.y -= bubble.s * dt * 0.06;
-        bubble.x += Math.sin(bubble.ph + bubble.y * 0.02) * bubble.d * 0.14;
-
-        if (bubble.y + bubble.r < 0) {
-          bubble.y = height + bubble.r;
-          bubble.x = Math.random() * width;
-        }
-      }
-
-      ctx.beginPath();
-      ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(87, 230, 192, 0.38)";
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-    }
-
-    if (dt) {
-      pulse += dt;
-
-      if (pulse > 4200) {
-        pulse = 0;
-        pings.push({ x: width * 0.72, y: height * 0.44, r: 0, life: 0 });
-      }
-    }
-
-    for (let i = pings.length - 1; i >= 0; i -= 1) {
-      const ping = pings[i];
-
-      if (dt) {
-        ping.r += dt * 0.16;
-        ping.life += dt;
-
-        if (ping.life > 4200) {
-          pings.splice(i, 1);
-          continue;
-        }
-      }
-
-      ctx.beginPath();
-      ctx.arc(ping.x, ping.y, ping.r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(87, 230, 192, ${Math.max(0, 0.42 * (1 - ping.life / 4200))})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  };
-
-  const loop = (now) => {
-    frame = requestAnimationFrame(loop);
-
-    const dt = Math.min(now - last || 16, 48);
-    last = now;
-    draw(dt);
-  };
-
-  const start = () => {
-    if (frame) return;
-    last = performance.now();
-    frame = requestAnimationFrame(loop);
-  };
-
-  const stop = () => {
-    if (!frame) return;
-    cancelAnimationFrame(frame);
-    frame = 0;
-  };
-
-  const resize = () => {
-    const rect = hero.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-
-    width = Math.max(1, Math.round(rect.width));
-    height = Math.max(1, Math.round(rect.height));
-
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    seed();
-    draw(0);
-  };
-
-  resize();
-  window.addEventListener("resize", resize);
-
-  if (reduce) return;
-
-  if ("IntersectionObserver" in window) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        onScreen = entries.some((entry) => entry.isIntersecting);
-
-        if (onScreen && !document.hidden) start();
-        else stop();
-      },
-      { threshold: 0 }
-    );
-
-    observer.observe(hero);
-  } else {
-    start();
-  }
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) stop();
-    else if (onScreen) start();
-  });
+function bindNavSpy() {
+  const links = [...document.querySelectorAll(".hud__nav a[href^='#']")];
+  if (!links.length || !("IntersectionObserver" in window)) return;
+  const sections = links.map((link) => document.querySelector(link.getAttribute("href"))).filter(Boolean);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const id = `#${entry.target.id}`;
+      links.forEach((link) => link.classList.toggle("is-active", link.getAttribute("href") === id));
+    });
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  sections.forEach((section) => observer.observe(section));
 }
+
+/* ---------- render all ---------- */
 
 function renderAll() {
-  applyStaticI18n();
-  hydrateConfig(state.config);
-  renderStats();
+  renderCoverStats();
+  renderFilterChips();
+  renderTelemetry();
+  renderEras();
   renderFeatured();
-  buildTypeFilters();
-  buildSituationFilters();
-  buildCountryFilter();
-  buildEraFilter();
-  renderTimeline();
-  buildLegend();
-  buildTypeBars();
-  applyFilters();
-  renderShareSite();
-  renderLangNudge();
+  renderLog(filteredUnits());
+  renderSocial();
+  renderShare();
+  renderOrigin();
+  observeReveals();
 
-  if (state.selectedId) {
-    const unit = state.unitById.get(state.selectedId);
+  document.querySelectorAll("[data-dossier-close]").forEach((node) => {
+    node.setAttribute("aria-label", t("dossier.close"));
+  });
+
+  if (state.lockedId) {
+    const unit = state.units.find((entry) => entry.id === state.lockedId);
     if (unit) renderDossier(unit);
+  } else {
+    clearDossier();
+  }
+
+  if (state.page === "register") {
+    renderRegister();
+    if (dom.search) dom.search.value = state.filters.q;
+    if (dom.countryFilter) dom.countryFilter.value = state.filters.country;
+    if (dom.eraFilter) dom.eraFilter.value = state.filters.era;
+    if (dom.sort) dom.sort.value = state.sort;
+    if (dom.videoFilter) dom.videoFilter.setAttribute("aria-pressed", String(state.filters.video));
+    if (dom.mediaFilter) dom.mediaFilter.setAttribute("aria-pressed", String(state.filters.media));
+    if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", String(state.filters.coming));
   }
 }
 
-function setLang(lang, { persist = true } = {}) {
-  const next = LANGS.includes(lang) ? lang : DEFAULT_LANG;
-  if (next === state.lang) return;
-
-  state.lang = next;
-
-  if (persist) {
-    try {
-      window.localStorage.setItem(LANG_STORAGE_KEY, next);
-    } catch {
-      /* localStorage puede no estar disponible en este contexto. */
-    }
-  }
-
-  renderAll();
-  updateURL(state.selectedId);
-}
-
-function showBootError(message, hint) {
-  if (!dom.boot) return;
-
-  if (dom.app) dom.app.hidden = true;
-
-  dom.boot.classList.remove("is-done");
-  dom.boot.setAttribute("role", "alert");
-  dom.boot.innerHTML = `<div class="boot__error">
-    <p class="kicker">${esc(t("error.kicker"))}</p>
-    <h2>${esc(t("error.title"))}</h2>
-    <p>${esc(message)}</p>
-    <p class="boot__sub">${esc(hint)}</p>
-    <button class="btn btn--primary" type="button" id="boot-retry">${esc(t("error.retry"))}</button>
-  </div>`;
-
-  const retry = document.getElementById("boot-retry");
-  if (retry) retry.addEventListener("click", () => window.location.reload());
-}
+/* ---------- init ---------- */
 
 async function init() {
-  cacheDom();
-
   state.lang = resolveLang();
+  cacheDom();
+  bindShell();
+  bindDelegates();
+  bindFilters();
+  bindNavSpy();
 
-  try {
-    const dictionary = await fetchJSON(I18N_URL);
-    state.i18n = dictionary && typeof dictionary === "object" ? dictionary : {};
-  } catch (error) {
-    console.warn("No se pudo cargar el diccionario de idiomas.", error);
-    state.i18n = {};
+  if (dom.soundToggle) {
+    const stored = localStorage.getItem(SOUND_KEY);
+    state.sound = stored === "1";
+    dom.soundToggle.setAttribute("aria-pressed", String(state.sound));
   }
 
   try {
-    if (!window.L) throw new Error(t("error.leaflet"));
-
-    const [rawUnits, config] = await Promise.all([fetchJSON(DATA_URL), fetchJSON(CONFIG_URL)]);
-
-    if (!Array.isArray(rawUnits)) {
-      throw new Error(t("error.format"));
-    }
-
-    const units = rawUnits.map(normalizeUnit).filter(Boolean);
-
-    if (!units.length) {
-      throw new Error(t("error.empty"));
-    }
-
-    state.units = units;
-    state.unitById = new Map(units.map((unit) => [unit.id, unit]));
-    state.config = config && typeof config === "object" ? config : {};
-
-    renderAll();
-
-    if (dom.app) dom.app.hidden = false;
-
-    await nextFrame();
-
-    initMap();
-    bindEvents();
-    initHeroScene();
-    applyFilters();
-
-    /* Las filas recién se pueden medir ahora que #app es visible. */
-    syncRailArrows();
-
-    state.map.invalidateSize();
-    fitAll();
-
-    const routeId = new URLSearchParams(window.location.search).get("unit");
-    const hasRoute = Boolean(routeId && state.unitById.has(routeId));
-
-    updateURL(hasRoute ? routeId : null);
-
-    if (hasRoute) {
-      window.setTimeout(() => {
-        selectUnit(routeId, {
-          scroll: true,
-          focusMap: true,
-          updateUrl: false,
-          instant: true
-        });
-      }, 320);
-    }
-
-    window.setTimeout(() => {
-      if (dom.boot) dom.boot.classList.add("is-done");
-    }, 620);
+    const [i18n, unitsRaw, config] = await Promise.all([
+      fetchJSON(I18N_URL),
+      fetchJSON(DATA_URL),
+      fetchJSON(CONFIG_URL)
+    ]);
+    state.i18n = i18n || { en: {}, es: {} };
+    state.config = config || {};
+    state.units = (Array.isArray(unitsRaw) ? unitsRaw : unitsRaw.units || [])
+      .map(normalizeUnit)
+      .filter(Boolean);
   } catch (error) {
     console.error(error);
-
-    const message = error instanceof Error ? error.message : t("error.unexpected");
-
-    const hint =
-      window.location.protocol === "file:" ? t("error.fileHint") : t("error.networkHint");
-
-    showBootError(message, hint);
+    if (dom.gate) dom.gate.hidden = true;
+    if (dom.boot) dom.boot.hidden = true;
+    if (dom.app) {
+      dom.app.hidden = false;
+      dom.app.innerHTML = `<div class="console__head" style="margin:10vh auto;max-width:640px">
+        <p class="kicker">// ERROR</p>
+        <h2 class="console__title">ARCHIVE OFFLINE</h2>
+        <p>${esc(t("error.networkHint"))}</p>
+      </div>`;
+    }
+    return;
   }
+
+  applyStaticI18n();
+  syncLangButtons();
+  mountBriefing();
+
+  const deepLink = readUrl();
+  state.pendingUnit = deepLink || "";
+  if (deepLink) state.lockedId = deepLink;
+
+  renderCoverStats();
+  renderFilterChips();
+  renderTelemetry();
+  renderEras();
+  renderFeatured();
+  renderSocial();
+  renderShare();
+  renderOrigin();
+  observeReveals();
+
+  if (state.page === "register") {
+    applyFilters();
+    if (dom.search) dom.search.value = state.filters.q;
+    if (dom.countryFilter) dom.countryFilter.value = state.filters.country;
+    if (dom.eraFilter) dom.eraFilter.value = state.filters.era;
+    if (dom.sort) dom.sort.value = state.sort;
+    if (dom.videoFilter) dom.videoFilter.setAttribute("aria-pressed", String(state.filters.video));
+    if (dom.mediaFilter) dom.mediaFilter.setAttribute("aria-pressed", String(state.filters.media));
+    if (dom.comingFilter) dom.comingFilter.setAttribute("aria-pressed", String(state.filters.coming));
+
+    if (dom.boot) {
+      dom.boot.hidden = true;
+      dom.app && (dom.app.hidden = false);
+      if (state.pendingUnit) {
+        const unit = state.units.find((entry) => entry.id === state.pendingUnit);
+        if (unit) renderDossier(unit, { sheet: window.matchMedia("(max-width: 980px)").matches });
+      }
+    }
+    if (dom.app) dom.app.hidden = false;
+    observeReveals();
+    return;
+  }
+
+  initGate();
 }
 
-init();
+document.addEventListener("DOMContentLoaded", init);
