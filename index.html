@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -22,10 +22,22 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-  <link rel="stylesheet" href="assets/css/app.css?v=20261019b">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261020c">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("snk-theme");
+        var theme = stored === "light" || stored === "dark"
+          ? stored
+          : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f2efe6" : "#04070a");
+      } catch (e) { /* private mode */ }
+    })();
+  </script>
 </head>
 <body data-page="home">
-  <a class="skip" href="#console" data-i18n="skip">Skip to the console</a>
+  <a class="skip" href="#plot" data-i18n="skip.plot">Skip to the plot</a>
 
   <svg class="sprite" aria-hidden="true" width="0" height="0">
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
@@ -35,382 +47,243 @@
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
     <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
     <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.4A8.6 8.6 0 0 1 9.6 4 8.6 8.6 0 1 0 20 14.4z"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="1.2"/><path d="M15 9V4.2A1.2 1.2 0 0 0 13.8 3H4.2A1.2 1.2 0 0 0 3 4.2v9.6A1.2 1.2 0 0 0 4.2 15H9"/></symbol>
     <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.4 8.4M18.5 14v5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.5s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z"/><circle cx="12" cy="10.2" r="2.4"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="1"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></symbol>
-    <symbol id="i-sonar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="12" r="5.4"/><circle cx="12" cy="12" r="9.4"/></symbol>
     <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 5v14M17 5v14M3 9h4M17 9h4M3 15h4M17 15h4"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
-
-    <symbol id="sit-flote" viewBox="0 0 24 24">
-      <path d="M4.4 11.6c2.6-1.6 12.6-1.6 15.2 0 .9.5.6 1.9-.4 2.2-3 1-11.4 1-14.4 0-1-.3-1.3-1.7-.4-2.2z" fill="currentColor" stroke="none"/>
-      <path d="M9.4 11.8V8.8h5.2v3"/><path d="M12 8.8V6h1.3M10.4 6h5.2"/><path d="M2.8 16.6h18.4"/>
-      <path d="M4.6 19.4h2.4M9.4 19.4h2.4M14.2 19.4h2.4M19 19.4h1.4"/>
-    </symbol>
-    <symbol id="sit-agua" viewBox="0 0 24 24">
-      <path d="M7 13.4c0-3 2.2-4.8 5-4.8s5 1.8 5 4.8"/><path d="M9.6 9.4V6.8h4.8v2.6"/><path d="M12 6.8V4h1.3M10.4 4h5.2"/>
-      <path d="M2.6 14.4c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
-      <path d="M2.6 17.8c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
-      <path d="M2.6 21.2c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.3 0"/>
-    </symbol>
-    <symbol id="sit-tierra" viewBox="0 0 24 24">
-      <path d="M4.6 11.4c2.7-1.5 12.1-1.5 14.8 0 .9.5.6 1.8-.4 2.1-2.9.9-11.1.9-14 0-1-.3-1.3-1.6-.4-2.1z"/>
-      <circle cx="8.2" cy="12.2" r="1"/><circle cx="12" cy="12.2" r="1"/><circle cx="15.8" cy="12.2" r="1"/>
-      <path d="M9.6 9.6V7.2h4.8v2.4"/><path d="M12 7.2V4.6h1.3M10.4 4.6h5.2"/><path d="M7.2 15.4l1.8 3M16.8 15.4l-1.8 3M5.2 18.4h13.6"/>
-    </symbol>
-    <symbol id="sit-cerrado" viewBox="0 0 24 24"><use href="#sit-tierra"/><path d="M3.8 20.4 20.2 3.6"/></symbol>
-    <symbol id="sit-monumento" viewBox="0 0 24 24">
-      <path d="M10.2 3 12 1.6 13.8 3l1.2 9.6H9z" fill="currentColor" stroke="none"/>
-      <path d="M8.2 12.6h7.6v2.6H8.2z"/><path d="M5.6 15.2h12.8v2.8H5.6z"/>
-    </symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
   </svg>
 
-  <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
-    <div class="gate__grid" aria-hidden="true"></div>
-    <div class="gate__panel">
-      <h1 class="gate__title" id="gate-title">
-        <span data-i18n="gate.title1">SUBMARINE</span>
-        <em data-i18n="gate.title2">MUSEUMS</em>
-      </h1>
-      <p class="gate__sub" data-i18n="gate.sub">160 preserved submarines. 35 countries. One working register of hulls, files and film.</p>
-      <dl class="gate__stats">
-        <div><dt data-i18n="gate.stat1">CONTACTS</dt><dd id="gate-total">160</dd></div>
-        <div><dt data-i18n="gate.stat2">WATERS</dt><dd id="gate-countries">35</dd></div>
-        <div><dt data-i18n="gate.stat3">FILMS</dt><dd id="gate-films">27</dd></div>
-      </dl>
-      <button class="btn btn--amber btn--lg" id="gate-enter" type="button">
-        <span data-i18n="gate.enter">ENTER THE ARCHIVE</span>
-        <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+  <header class="hud">
+    <a class="brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+      <span class="brand__mark" aria-hidden="true"><i></i></span>
+      <span class="brand__text"><b>elSnorkel</b><i data-i18n="brand.sub">NAVAL ARCHIVE</i></span>
+    </a>
+    <div class="hud__id">
+      <b data-i18n="hud.id">NMMA // NAVAL ARCHIVE</b>
+      <span class="hud__live"><i aria-hidden="true"></i><span data-i18n="hud.live">PLOT LIVE</span></span>
+    </div>
+    <nav class="hud__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+      <a href="#plot" class="is-active" data-i18n="nav.plot">PLOT</a>
+      <a href="epocas.html" data-i18n="nav.eras">ERAS</a>
+      <a href="destacados.html" data-i18n="nav.featured">FEATURED</a>
+      <a href="registro.html" data-i18n="nav.register">REGISTER</a>
+      <a href="archivo.html" data-i18n="nav.archive">ARCHIVE</a>
+    </nav>
+    <div class="hud__tools">
+      <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Dark mode" data-i18n-attr="aria-label:theme.toggle">
+        <svg class="icon theme-toggle__sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+        <svg class="icon theme-toggle__moon" aria-hidden="true"><use href="#i-moon"></use></svg>
       </button>
-      <p class="gate__fine" data-i18n="gate.fine">Public record · No account · Sound on</p>
-      <button class="gate__skip" id="gate-skip" type="button" data-i18n="gate.skip">Skip intro</button>
-      <noscript><p class="gate__noscript">This archive needs JavaScript to plot its contacts.</p></noscript>
+      <button class="icon-btn" id="sound-toggle" type="button" aria-pressed="false" aria-label="Sound" data-i18n-attr="aria-label:hud.sound">
+        <svg class="icon icon--on" aria-hidden="true"><use href="#i-sound"></use></svg>
+        <svg class="icon icon--off" aria-hidden="true"><use href="#i-mute"></use></svg>
+      </button>
+      <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+        <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+        <span aria-hidden="true">/</span>
+        <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+      </div>
+      <button class="icon-btn hud__menu" id="menu-open" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu" data-i18n-attr="aria-label:hud.menu">
+        <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
     </div>
-    <div class="gate__foot" aria-hidden="true">
-      <span>NMMA-26</span>
-      <span class="gate__foot-mid">160 CONTACTS / 35 WATERS / 27 FILMS</span>
-      <span data-i18n="gate.foot">OPEN RECORD</span>
+  </header>
+
+  <div class="menu" id="menu" hidden>
+    <div class="menu__head">
+      <span class="mono-label" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
+      <button class="icon-btn" id="menu-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
+        <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+      </button>
+    </div>
+    <nav class="menu__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+      <a href="#plot"><span>01</span><b data-i18n="nav.plot">PLOT</b></a>
+      <a href="epocas.html"><span>02</span><b data-i18n="nav.eras">ERAS</b></a>
+      <a href="destacados.html"><span>03</span><b data-i18n="nav.featured">FEATURED</b></a>
+      <a href="registro.html"><span>04</span><b data-i18n="nav.register">REGISTER</b></a>
+      <a href="archivo.html"><span>05</span><b data-i18n="nav.archive">ARCHIVE</b></a>
+    </nav>
+    <div class="menu__foot">
+      <div class="lang lang--lg" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+        <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+        <span aria-hidden="true">/</span>
+        <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+      </div>
+      <div class="social" id="social-menu"></div>
     </div>
   </div>
 
-  <div class="boot" id="boot" hidden aria-live="polite">
-    <div class="boot__log" id="boot-log"></div>
-    <div class="boot__bar"><i id="boot-bar"></i></div>
-  </div>
-
-  <div class="app" id="app" hidden>
-    <header class="hud" id="hud">
-      <a class="hud__brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
-        <img src="assets/img/logo.jpg" alt="" width="38" height="38">
-      </a>
-      <div class="hud__id">
-        <b data-i18n="hud.id">NMMA // NAVAL ARCHIVE</b>
-        <span class="hud__live"><i aria-hidden="true"></i><span data-i18n="hud.live">PLOT LIVE</span></span>
+  <main class="home">
+    <section class="hero" id="hero">
+      <div class="hero__meta">
+        <span class="stamp" data-i18n="hero.stamp">CLASSIFIED // LEVEL 03</span>
+        <span class="mono-label">NMMA-26 · <span data-i18n="hero.rev">REV 2026</span></span>
       </div>
-      <nav class="hud__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
-        <a href="#plot" data-i18n="nav.plot">PLOT</a>
-        <a href="#console" data-i18n="nav.console">CONSOLE</a>
-        <a href="#eras" data-i18n="nav.eras">ERAS</a>
-        <a href="#featured" data-i18n="nav.featured">FEATURED</a>
-      </nav>
-      <div class="hud__tools">
-        <button class="icon-btn" id="sound-toggle" type="button" aria-pressed="true" aria-label="Sound" data-i18n-attr="aria-label:hud.sound">
-          <svg class="icon icon--on" aria-hidden="true"><use href="#i-sound"></use></svg>
-          <svg class="icon icon--off" aria-hidden="true"><use href="#i-mute"></use></svg>
-        </button>
-        <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
-          <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
-          <span aria-hidden="true">/</span>
-          <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+
+      <h1 class="hero__title">
+        <span data-i18n="hero.title1">SUBMARINE</span>
+        <em data-i18n="hero.title2">MUSEUMS</em>
+      </h1>
+
+      <div class="hero__body">
+        <p class="hero__sub" data-i18n="hero.sub">Every preserved submarine on earth, plotted hull by hull. Locate the museum, read its file, watch the film.</p>
+
+        <aside class="mission" id="mission" aria-labelledby="mission-title">
+          <div class="mission__head">
+            <span class="mono-label" id="mission-title" data-i18n="mission.title">MISSION ASSIGNED</span>
+            <span class="mission__code" id="mission-code">SNK-000</span>
+          </div>
+          <p class="mission__kicker" data-i18n="mission.kicker">YOUR DESTINATION</p>
+          <h2 class="mission__name" id="mission-name">—</h2>
+          <p class="mission__place" id="mission-place">—</p>
+          <div class="mission__actions">
+            <button class="btn btn--solid btn--sm" id="mission-open" type="button" data-i18n="mission.open">OPEN FILE</button>
+            <button class="btn btn--line btn--sm" id="mission-route" type="button" data-i18n="mission.route">ROUTE</button>
+            <button class="btn btn--line btn--sm" id="mission-reroll" type="button" data-i18n="mission.another">ANOTHER</button>
+          </div>
+        </aside>
+
+        <dl class="hero__stats">
+          <div><dt data-i18n="cover.stat1">CONTACTS</dt><dd id="hero-total">--</dd></div>
+          <div><dt data-i18n="cover.stat2">WATERS</dt><dd id="hero-countries">--</dd></div>
+          <div><dt data-i18n="cover.stat3">ON FILM</dt><dd id="hero-films">--</dd></div>
+          <div><dt data-i18n="cover.stat4">PROPULSION</dt><dd id="hero-types">--</dd></div>
+        </dl>
+        <div class="hero__actions">
+          <a class="btn btn--solid btn--lg" href="registro.html">
+            <span data-i18n="hero.cta1">OPEN THE REGISTER</span>
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+          </a>
+          <a class="btn btn--line" href="archivo.html">
+            <span data-i18n="hero.cta2">READ THE METHOD</span>
+          </a>
         </div>
-        <a class="btn btn--amber btn--sm hud__register" href="registro.html" data-i18n="nav.register">REGISTER</a>
-        <button class="icon-btn hud__menu" id="menu-open" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu" data-i18n-attr="aria-label:hud.menu">
-          <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
-        </button>
       </div>
-    </header>
+    </section>
 
-    <div class="menu" id="menu" hidden>
-      <div class="menu__head">
-        <span class="kicker" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
-        <button class="icon-btn" id="menu-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
-          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
-        </button>
+    <section class="plot-section" id="plot">
+      <div class="plot-hud" aria-hidden="true">
+        <span class="plot-hud__title" data-i18n="plot.title">TACTICAL PLOT</span>
+        <span class="plot-hud__count"><b id="plot-count">--</b> <span data-i18n="plot.contacts">CONTACTS</span></span>
+        <span class="plot-hud__lock" id="plot-lock" data-i18n="plot.none">NO CONTACT LOCKED</span>
+        <span class="plot-hud__readout" id="map-readout">Z 02 · 20.0N / 0.0E</span>
+        <a class="plot-hud__credit" href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">TILES © ESRI</a>
       </div>
-      <nav class="menu__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
-        <a href="#plot"><span>01</span><b data-i18n="nav.plot">PLOT</b></a>
-        <a href="#console"><span>02</span><b data-i18n="nav.console">CONSOLE</b></a>
-        <a href="#eras"><span>03</span><b data-i18n="nav.eras">ERAS</b></a>
-        <a href="#featured"><span>04</span><b data-i18n="nav.featured">FEATURED</b></a>
-        <a href="#origin"><span>05</span><b data-i18n="nav.origin">ORIGIN</b></a>
-        <a href="registro.html"><span>06</span><b data-i18n="nav.register">REGISTER</b></a>
-      </nav>
-      <div class="menu__foot">
-        <div class="lang lang--lg" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
-          <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
-          <span aria-hidden="true">/</span>
-          <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
-        </div>
-        <div class="social" id="social-menu"></div>
-      </div>
-    </div>
 
-    <main>
-      <section class="stage" id="plot">
-        <div class="stage__pin">
-          <div class="plot" id="map" role="region" aria-label="Plot of preserved submarines" data-i18n-attr="aria-label:map.aria"></div>
-          <div class="plot__chrome" aria-hidden="true">
-            <span class="plot__grid"></span>
-            <svg class="plot__rings" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
-              <g fill="none" stroke="rgba(232,241,245,.09)" stroke-width="1">
-                <circle cx="925" cy="430" r="140"/><circle cx="925" cy="430" r="280"/>
-                <circle cx="925" cy="430" r="420"/><circle cx="925" cy="430" r="560"/>
-                <circle cx="925" cy="430" r="700"/>
-              </g>
-              <g stroke="rgba(232,241,245,.06)" stroke-width="1">
-                <line x1="225" y1="430" x2="1440" y2="430"/><line x1="925" y1="0" x2="925" y2="900"/>
-                <line x1="430" y1="0" x2="1420" y2="900"/><line x1="1420" y1="0" x2="430" y2="900"/>
-              </g>
-            </svg>
-            <span class="plot__sweep"></span>
-            <span class="plot__corner tl"></span><span class="plot__corner tr"></span>
-            <span class="plot__corner bl"></span><span class="plot__corner br"></span>
-            <div class="plot__readout">
-              <span id="map-zoom">Z 02</span>
-              <span id="map-coords">20.0N / 0.0E</span>
+      <div class="plot-wrap">
+        <div class="plot" id="map" role="region" aria-label="Plot of preserved submarines" data-i18n-attr="aria-label:map.aria"></div>
+
+        <div class="plot-boot" id="boot" aria-live="polite">
+          <div class="plot-boot__head">
+            <span class="plot-boot__led" aria-hidden="true"></span>
+            <span data-i18n="plot.link">SECURE LINK</span>
+            <b id="boot-state" data-i18n="plot.connecting">CONNECTING</b>
+          </div>
+          <ol class="plot-boot__log" id="boot-log"></ol>
+          <div class="plot-boot__acquire">
+            <div class="plot-boot__top">
+              <span data-i18n="plot.acquiring">RECEIVING CONTACTS</span>
+              <b><span id="acquire-count">000</span><i>/</i><span id="acquire-total">160</span></b>
             </div>
-            <div class="plot__feed" id="plot-feed"></div>
+            <div class="plot-boot__bar"><i id="acquire-bar"></i></div>
           </div>
         </div>
 
-        <div class="stage__scroll">
-          <div class="cover" id="cover">
-            <div class="cover__inner">
-              <div class="cover__lead">
-                <h1 class="cover__title">
-                  <span data-i18n="cover.title1">SUBMARINE</span>
-                  <em data-i18n="cover.title2">MUSEUMS</em>
-                </h1>
-                <p class="cover__sub" data-i18n="cover.sub">Every preserved submarine on earth, plotted hull by hull: position, condition, file and film.</p>
-                <div class="cover__actions">
-                  <a class="btn btn--amber btn--lg" href="registro.html">
-                    <span data-i18n="cover.cta">OPEN THE REGISTER</span>
-                    <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
-                  </a>
-                  <button class="btn btn--line" id="briefing-open" type="button">
-                    <svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg>
-                    <span data-i18n="cover.cta2">WATCH THE BRIEFING</span>
-                  </button>
-                </div>
-              </div>
-
-              <aside class="cover__tele">
-                <dl class="cover__stats">
-                  <div><dt data-i18n="cover.stat1">CONTACTS</dt><dd id="cover-total">--</dd></div>
-                  <div><dt data-i18n="cover.stat2">WATERS</dt><dd id="cover-countries">--</dd></div>
-                  <div><dt data-i18n="cover.stat3">ON FILM</dt><dd id="cover-films">--</dd></div>
-                  <div><dt data-i18n="cover.stat4">PROPULSION</dt><dd id="cover-types">--</dd></div>
-                </dl>
-                <div class="acquire" id="acquire">
-                  <div class="acquire__top">
-                    <span data-i18n="cover.acquiring">ACQUIRING CONTACTS</span>
-                    <b><span id="acquire-count">000</span><i>/</i><span id="acquire-total">160</span></b>
-                  </div>
-                  <div class="acquire__bar"><i id="acquire-bar"></i></div>
-                </div>
-              </aside>
-            </div>
-
-            <div class="cover__rail">
-              <div class="cover__rail-head">
-                <span data-i18n="cover.watches">WATCHES // 06</span>
-                <span class="cover__scroll"><span data-i18n="cover.scroll">SCROLL TO CONSOLE</span><i aria-hidden="true"></i></span>
-              </div>
-              <div class="cover__eras" id="cover-eras"></div>
-            </div>
-          </div>
-
-          <div class="console" id="console">
-            <header class="console__head">
-              <h2 class="console__title" data-i18n="console.title">LOCK A CONTACT. READ THE FILE.</h2>
-              <p class="console__note"><b id="console-count">--</b> <span data-i18n="console.note">CONTACTS IN PLOT</span></p>
-            </header>
-
-            <div class="console__grid">
-              <aside class="panel panel--filters">
-                <div class="panel__head">
-                  <span class="kicker" data-i18n="console.filters">FILTERS</span>
-                  <button class="chip chip--reset" id="reset-filters" type="button" hidden data-i18n="filter.clear">CLEAR</button>
-                </div>
-                <label class="search" for="search">
-                  <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
-                  <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="SEARCH UNIT, MUSEUM OR CITY" data-i18n-attr="placeholder:filter.search">
-                </label>
-                <div class="filter-block">
-                  <span class="filter-block__label" data-i18n="filter.lblPropulsion">PROPULSION</span>
-                  <div class="chips" id="type-filters" role="group" aria-label="Filter by propulsion" data-i18n-attr="aria-label:filter.propulsion"></div>
-                </div>
-                <div class="filter-block">
-                  <span class="filter-block__label" data-i18n="filter.lblSituation">SITUATION</span>
-                  <div class="chips" id="situation-filters" role="group" aria-label="Filter by situation" data-i18n-attr="aria-label:filter.situation"></div>
-                </div>
-                <div class="filter-block">
-                  <span class="filter-block__label" data-i18n="filter.lblCountry">COUNTRY</span>
-                  <label class="select" for="country-filter">
-                    <select id="country-filter" aria-label="Country" data-i18n-attr="aria-label:filter.lblCountry">
-                      <option value="all" data-i18n="filter.allCountries">ALL COUNTRIES</option>
-                    </select>
-                    <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
-                  </label>
-                </div>
-                <div class="filter-block">
-                  <span class="filter-block__label" data-i18n="filter.lblEra">ERA</span>
-                  <label class="select" for="era-filter">
-                    <select id="era-filter" aria-label="Era" data-i18n-attr="aria-label:filter.lblEra">
-                      <option value="all" data-i18n="filter.allEras">ALL ERAS</option>
-                    </select>
-                    <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
-                  </label>
-                </div>
-                <div class="filter-block">
-                  <span class="filter-block__label" data-i18n="console.flags">FLAGS</span>
-                  <div class="chips">
-                    <button class="chip chip--toggle" id="video-filter" type="button" aria-pressed="false" data-i18n="filter.video">WITH FILM</button>
-                    <button class="chip chip--toggle" id="media-filter" type="button" aria-pressed="false" data-i18n="filter.media">WITH PHOTO</button>
-                    <button class="chip chip--toggle" id="coming-filter" type="button" aria-pressed="false" data-i18n="filter.coming">COMING SOON</button>
-                  </div>
-                </div>
-              </aside>
-
-              <div class="console__void" aria-hidden="true">
-                <span class="console__hint" data-i18n="console.plotHint">THE PLOT IS LIVE BEHIND THE PANELS</span>
-              </div>
-
-              <aside class="panel panel--dossier">
-                <div class="dossier" id="console-dossier">
-                  <div class="empty">
-                    <span class="empty__rings" aria-hidden="true"><i></i><i></i><i></i></span>
-                    <p class="kicker" data-i18n="dossier.emptyKicker">NO CONTACT LOCKED</p>
-                    <p data-i18n="dossier.emptyText">Select a contact on the plot or in the log to open its file.</p>
-                  </div>
-                </div>
-              </aside>
-
-              <div class="panel panel--log">
-                <div class="panel__head">
-                  <span class="kicker" data-i18n="console.log">CONTACT LOG</span>
-                  <b class="mono" id="log-count">--</b>
-                </div>
-                <ol class="log" id="log"></ol>
-                <a class="log__more" href="registro.html">
-                  <span data-i18n="console.logMore">OPEN FULL REGISTER</span>
-                  <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
-                </a>
-              </div>
-
-              <div class="panel panel--telemetry">
-                <div class="panel__head">
-                  <span class="kicker" data-i18n="console.telemetry">TELEMETRY</span>
-                  <span class="mono" id="telemetry-date">--</span>
-                </div>
-                <div class="telemetry" id="telemetry"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section section--eras" id="eras">
-        <header class="section__head">
-          <div>
-            <h2 class="section__title" data-i18n="eras.title">THE ARCHIVE BY ERA</h2>
-          </div>
-          <p class="section__note" data-i18n="eras.note">Six watches, from 1850 to the present. Open one to narrow the register.</p>
-        </header>
-        <div class="eras" id="eras-grid"></div>
-      </section>
-
-      <section class="section" id="featured">
-        <header class="section__head">
-          <div>
-            <h2 class="section__title" data-i18n="featured.title">FEATURED CONTACTS</h2>
-          </div>
-          <p class="section__note"><b id="featured-count">--</b> <span data-i18n="section.featured.many">UNITS</span></p>
-        </header>
-        <div class="billboard" id="featured-billboard" hidden></div>
-        <div class="rails" id="featured-rails"></div>
-      </section>
-
-      <section class="section section--briefing" id="briefing">
-        <div class="briefing">
-          <div class="briefing__copy">
-            <h2 class="section__title" data-i18n="briefing.title">THE FLEET IN MOTION</h2>
-            <p class="briefing__note" data-i18n="briefing.note">The elSnorkel film list, loaded only when you press play. Nothing is requested from YouTube before that.</p>
-            <a class="briefing__link" id="briefing-list" href="https://www.youtube.com/playlist?list=PL472EEE6B920640A5" target="_blank" rel="noopener noreferrer">
-              <span data-i18n="briefing.openList">OPEN THE PLAYLIST</span>
-              <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg>
-            </a>
-          </div>
-          <button class="briefing__facade" id="briefing-play" type="button">
-            <span class="briefing__grid" aria-hidden="true"></span>
-            <span class="briefing__play" aria-hidden="true"><svg class="icon"><use href="#i-play"></use></svg></span>
-            <span class="briefing__title" id="briefing-title" data-i18n="briefing.title">THE FLEET IN MOTION</span>
-            <span class="briefing__cta" data-i18n="briefing.play">PLAY THE PLAYLIST</span>
+        <div class="tactical" id="tactical">
+          <button class="tactical__bar" id="tactical-toggle" type="button" aria-expanded="false" aria-controls="tactical-board">
+            <svg class="icon" aria-hidden="true"><use href="#i-sliders"></use></svg>
+            <span data-i18n="filter.title">FILTERS</span>
+            <b id="tactical-count">--</b>
+            <svg class="icon tactical__chev" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </button>
-        </div>
-      </section>
 
-      <section class="section section--origin" id="origin">
-        <div class="origin">
-          <div class="origin__mark">
-            <img src="assets/img/logo.jpg" alt="elSnorkel" width="140" height="140">
-            <span class="origin__stamp" data-i18n="origin.stamp">OPEN RECORD</span>
-          </div>
-          <div class="origin__body">
-            <h2 class="section__title" data-i18n="origin.title">ABOUT THE ARCHIVE</h2>
-            <div class="origin__text" id="origin-text"></div>
-            <dl class="origin__meta">
-              <div><dt data-i18n="about.source">SOURCE</dt><dd>elSnorkel.com archive</dd></div>
-              <div><dt data-i18n="about.map">PLOT</dt><dd>Leaflet + Esri dark tiles</dd></div>
-              <div><dt data-i18n="about.data">DATA</dt><dd data-i18n="about.dataValue">Validated static snapshot</dd></div>
-              <div><dt data-i18n="about.license">LICENSE</dt><dd data-i18n="about.licenseValue">Project content</dd></div>
-            </dl>
+          <div class="tactical__board" id="tactical-board">
+            <div class="tactical__group">
+              <span class="tactical__label" data-i18n="filter.lblPropulsion">PROPULSION</span>
+              <div class="switches" id="type-filters" role="group" aria-label="Filter by propulsion" data-i18n-attr="aria-label:filter.propulsion"></div>
+            </div>
+
+            <div class="tactical__group">
+              <span class="tactical__label" data-i18n="filter.lblEra">ERA</span>
+              <div class="switches" id="era-filters" role="group" aria-label="Filter by era" data-i18n-attr="aria-label:filter.era"></div>
+            </div>
+
+            <div class="tactical__group">
+              <span class="tactical__label" data-i18n="filter.lblSituation">SITUATION</span>
+              <div class="switches" id="situation-filters" role="group" aria-label="Filter by situation" data-i18n-attr="aria-label:filter.situation"></div>
+            </div>
+
+            <div class="tactical__group tactical__group--tools">
+              <span class="tactical__label" data-i18n="filter.lblTools">SEARCH</span>
+              <label class="field field--search" for="search">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+                <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="UNIT, MUSEUM, CITY" data-i18n-attr="placeholder:filter.searchShort">
+              </label>
+              <div class="tactical__tools">
+                <label class="field field--select" for="country-filter">
+                  <select id="country-filter" aria-label="Country" data-i18n-attr="aria-label:filter.lblCountry">
+                    <option value="all" data-i18n="filter.allCountries">ALL WATERS</option>
+                  </select>
+                  <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+                </label>
+                <button class="switches__btn switches__btn--flag" id="video-filter" type="button" aria-pressed="false" data-i18n="filter.video">FILM</button>
+                <button class="switches__btn switches__btn--flag" id="media-filter" type="button" aria-pressed="false" data-i18n="filter.media">PHOTO</button>
+                <button class="switches__btn switches__btn--flag" id="coming-filter" type="button" aria-pressed="false" data-i18n="filter.coming">SOON</button>
+                <button class="switches__btn switches__btn--reset" id="reset-filters" type="button" hidden data-i18n="filter.clear">CLEAR</button>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
 
-    <footer class="foot">
-      <div class="foot__top">
-        <a href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
-          <img src="assets/img/logo.jpg" alt="" width="34" height="34">
-        </a>
-        <nav class="foot__nav" aria-label="Footer links" data-i18n-attr="aria-label:footer.navAria">
-          <a href="#plot" data-i18n="nav.plot">PLOT</a>
-          <a href="#console" data-i18n="nav.console">CONSOLE</a>
-          <a href="#eras" data-i18n="nav.eras">ERAS</a>
-          <a href="registro.html" data-i18n="nav.register">REGISTER</a>
-          <a href="#origin" data-i18n="nav.origin">ORIGIN</a>
-        </nav>
-        <div class="social" id="social-foot"></div>
-      </div>
-      <div class="foot__share">
-        <span data-i18n="share.siteLabel">SHARE THE ARCHIVE</span>
-        <div class="share" id="share-site"></div>
-      </div>
-      <div class="foot__bottom">
-        <p data-i18n="foot.rights">© 2026 elSnorkel.com</p>
-        <p class="foot__fine"><span data-i18n="footer.fine">ARCHIVE UPDATED</span> <span id="footer-date"></span></p>
-      </div>
-    </footer>
-  </div>
+    <section class="detail" id="detail">
+      <header class="detail__head">
+        <div class="detail__title">
+          <span class="mono-label" data-i18n="detail.title">MUSEUM FILE</span>
+          <span class="detail__state" id="detail-state" data-i18n="detail.suggest">SUGGESTED CONTACT</span>
+        </div>
+        <button class="btn btn--line btn--sm" id="detail-close" type="button" hidden data-i18n="detail.close">CLOSE FILE</button>
+      </header>
+      <div class="dossier detail__body" id="detail-dossier"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__top">
+      <a class="brand brand--foot" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+        <span class="brand__mark" aria-hidden="true"><i></i></span>
+        <span class="brand__text"><b>elSnorkel</b><i data-i18n="brand.sub">NAVAL ARCHIVE</i></span>
+      </a>
+      <nav class="foot__nav" aria-label="Footer links" data-i18n-attr="aria-label:footer.navAria">
+        <a href="#plot" data-i18n="nav.plot">PLOT</a>
+        <a href="epocas.html" data-i18n="nav.eras">ERAS</a>
+        <a href="destacados.html" data-i18n="nav.featured">FEATURED</a>
+        <a href="registro.html" data-i18n="nav.register">REGISTER</a>
+        <a href="archivo.html" data-i18n="nav.archive">ARCHIVE</a>
+      </nav>
+      <div class="social" id="social-foot"></div>
+    </div>
+    <div class="foot__share">
+      <span data-i18n="share.siteLabel">SHARE THE ARCHIVE</span>
+      <div class="share" id="share-site"></div>
+    </div>
+    <div class="foot__bottom">
+      <p data-i18n="foot.rights">© 2026 elSnorkel.com</p>
+      <p class="foot__fine"><span data-i18n="footer.fine">ARCHIVE UPDATED</span> <span id="footer-date"></span></p>
+    </div>
+  </footer>
 
   <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Film" data-i18n-attr="aria-label:modal.title">
     <button class="modal__backdrop" id="modal-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close"></button>
     <div class="modal__panel">
       <div class="modal__head">
-        <span class="kicker" data-i18n="modal.title">FILM</span>
+        <span class="mono-label" data-i18n="modal.title">FILM</span>
         <button class="icon-btn" id="modal-x" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
           <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
         </button>
@@ -423,6 +296,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-  <script type="module" src="assets/js/app.js?v=20261019b"></script>
+  <script type="module" src="assets/js/app.js?v=20261020c"></script>
 </body>
 </html>

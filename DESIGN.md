@@ -1,6 +1,6 @@
 ---
 name: Submarine Museums of the World
-description: A public naval archive of every preserved submarine, plotted as a live acoustic contact board.
+description: A confidential naval archive that assigns the reader a preserved submarine, plots every contact and opens the file.
 colors:
   ink: "#04070a"
   ink-1: "#060c11"
@@ -11,22 +11,26 @@ colors:
   text-muted: "#7d949e"
   amber: "#ffb648"
   alarm: "#ff4d3d"
+  paper: "#f2efe6"
+  paper-1: "#eae6da"
+  paper-ink: "#101a20"
+  paper-amber: "#a15a00"
   diesel: "#ffb648"
   nuclear: "#7dffb2"
   electric: "#5bc8ff"
   hand-crank: "#d8c9a3"
-  afloat: "#8ee2ff"
-  water: "#2f9bff"
-  land: "#d777ff"
-  enclosed: "#3fe85f"
-  monument: "#ff6a35"
+  afloat: "#8b90a3"
+  water: "#1a8cff"
+  land: "#da00da"
+  enclosed: "#00d933"
+  monument: "#b52000"
 typography:
   display:
     fontFamily: "Archivo, Helvetica Neue, Arial, sans-serif"
-    fontSize: "clamp(58px, 11.4vw, 172px)"
+    fontSize: "clamp(46px, 12.2vw, 138px)"
     fontWeight: 700
-    lineHeight: 0.8
-    letterSpacing: "-0.025em"
+    lineHeight: 0.82
+    letterSpacing: "-0.028em"
   headline:
     fontFamily: "Archivo, Helvetica Neue, Arial, sans-serif"
     fontSize: "clamp(34px, 5.6vw, 76px)"
@@ -43,7 +47,7 @@ typography:
     fontFamily: "Archivo, Helvetica Neue, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
-    lineHeight: 1.6
+    lineHeight: 1.55
     letterSpacing: "normal"
   label:
     fontFamily: "Azeret Mono, ui-monospace, SFMono-Regular, Consolas, monospace"
@@ -67,26 +71,29 @@ components:
     textColor: "{colors.ink}"
     padding: "15px 22px"
     rounded: "{rounded.none}"
-  button-primary-hover:
-    backgroundColor: "#ffc76a"
-    textColor: "{colors.ink}"
+  button-solid:
+    backgroundColor: "{colors.paper-ink}"
+    textColor: "{colors.paper}"
+    padding: "15px 22px"
+    rounded: "{rounded.none}"
   button-line:
-    backgroundColor: "rgba(6, 12, 17, 0.35)"
+    backgroundColor: "transparent"
     textColor: "{colors.text}"
     padding: "15px 22px"
     rounded: "{rounded.none}"
-  chip:
-    backgroundColor: "transparent"
+  switch:
+    backgroundColor: "rgb(4 7 10 / 0.38)"
     textColor: "{colors.text-dim}"
-    padding: "8px 11px"
+    padding: "0 9px"
+    height: "38px"
     rounded: "{rounded.none}"
-  chip-active:
-    backgroundColor: "rgba(255, 182, 72, 0.14)"
-    textColor: "{colors.amber}"
-    padding: "8px 11px"
+  mission:
+    backgroundColor: "rgb(4 7 10 / 0.45)"
+    textColor: "{colors.text}"
+    padding: "13px 14px 14px"
     rounded: "{rounded.none}"
   panel:
-    backgroundColor: "rgba(5, 10, 14, 0.9)"
+    backgroundColor: "rgb(5 10 14 / 0.9)"
     textColor: "{colors.text}"
     rounded: "{rounded.none}"
   tag:
@@ -95,9 +102,9 @@ components:
     padding: "5px 8px"
     rounded: "{rounded.none}"
   input-search:
-    backgroundColor: "rgba(4, 7, 10, 0.6)"
+    backgroundColor: "rgb(4 7 10 / 0.6)"
     textColor: "{colors.text}"
-    height: "40px"
+    height: "38px"
     rounded: "{rounded.none}"
 ---
 
@@ -105,143 +112,174 @@ components:
 
 ## Overview
 
-**Creative North Star: "Acoustic Plot"**
+**Creative North Star: "The Assignment"**
 
-The archive behaves like the plot in a submarine's control room at night: a dark sea, a handful of cool instrument readouts, and amber reserved for whatever is live. Map tiles are literally the floor of the page — the sticky plot stays behind the cover, the operations console and the register while the archive scrolls over it. Nothing is decorated to look technical; the technical objects (coordinates, hull codes, years, counts) *are* the ornament.
+The archive is framed as a confidential briefing. On arrival the interface does not ask the reader to browse: it hands them a destination — one preserved submarine, its museum, its coordinates — and treats the rest of the register as the evidence behind that order. The tone is mission/game, but the content is a real naval record. Nothing is invented; the fiction is only the frame.
 
-The voice is a working naval record, not a war game. Headlines are heavy, condensed and uppercase; everything the instrument would measure — codes, counts, ranges, bearings, labels — is set in mono at small size with wide tracking. Colour carries meaning and nothing else: amber is live data and selection, red is a locked contact, and the five situation hues and four propulsion hues are the only other colours in the system.
+The visual language underneath is still the **Acoustic Plot**: near-black sea, cool instrument readouts, amber for whatever is live. That language now lives in a bounded map section instead of a fixed backdrop, so the home reads as three decisive blocks — **Hero · Map · Detail** — and the rest of the archive moves to its own pages. On mobile the map is the stage: the tactical filter panel rises from its bottom edge, and the assigned file sits directly beneath it.
 
-Density is deliberate. Panels sit on hairline rules, corners are square, and the only curves are the contact dots, the sonar rings and the sweep. Space is generous above a heading and tight inside a readout, so the eye reads hierarchy without borders doing the work.
+Headlines are heavy, condensed and uppercase. Everything the instrument would measure — codes, counts, ranges, bearings, labels — is set in mono at small size with wide tracking. Colour carries meaning and nothing else: amber is live data and selection, red is a locked contact, and the propulsion/situation hues are the only other colours.
 
 **Key Characteristics:**
-- Full-bleed Esri dark plot, fixed behind every surface, with live contacts acquired on load.
-- One dark ink field, one text colour, one live accent (amber), one alarm (red).
-- Archivo condensed display + Azeret Mono data labels; no third face.
+- **Three-block home**: hero with the assigned mission, the plot with its tactical panel, the dossier of the assigned contact.
+- **One assignment per visit**: a mission ticket names a submarine, its museum and the distance; the detail block becomes `MISSION TARGET`.
+- **Map as the only control surface**: propulsion, era, situation, country, search and media filters live in a bottom panel shaped like a submarine tactical board.
+- **Two printed states**: night plot (default) and `DECLASSIFIED PAPER` (light), both using the same tokens and the same data encoding.
+- **Pages, not an endless scroll**: eras, featured contacts, register and archive notes each have a single job.
 - Zero radius, one-pixel hairlines, tonal elevation instead of shadows.
-- Sequential reveal: gate → boot telemetry → cover → console → watches → featured → briefing → origin.
+- Archivo condensed display + Azeret Mono data labels; no third face.
 
 ## Colors
 
-A night-water palette: near-black blue-green ink, cool off-white text, and a single warm amber that means "live".
-
-### Primary
-- **Signal Amber** (#ffb648): live data and interaction. Acquisition counter, live HUD dot, active filter chips, locked-contact rules, focus outlines, era sparklines, primary buttons. It is the only warm colour in the interface.
-
-### Secondary
-- **Lock Alarm** (#ff4d3d): one job only — the currently locked contact (marker ring, log row, register row) and the destructive "clear filters" affordance. Never used for emphasis or decoration.
-
-### Tertiary
-- **Propulsion hues** — Diesel (#ffb648), Nuclear (#7dffb2), Electric (#5bc8ff), Hand-crank (#d8c9a3) — and **situation hues** — Afloat (#8b90a3), In water (#1a8cff), On land (#da00da), Enclosed (#00d933), Monument (#b52000). Propulsion appears as 6–7px dots, tag text and telemetry bars; situation carries a badge glyph (a white disc with a coloured ring and a pictogram) at 13–16px in filter chips, dossier tags and register rows. These are data encoding, not palette decoration, and the badge ring colour is the situation's colour token.
-
-### Neutral
-- **Deep Plot Ink** (#04070a): page ground, gate, footer.
-- **Ink 1–3** (#060c11, #0a141b, #0e1c25): tonal steps for panel grounds, media wells and hover surfaces.
+### Night plot (default)
+- **Deep Plot Ink** (#04070a): page ground, map bed, footer.
+- **Ink 1–3** (#060c11, #0a141b, #0e1c25): tonal steps for panels, media wells, hover surfaces.
 - **Readout White** (#e8f1f5): primary text, headings, values.
-- **Instrument Grey** (#93a9b2): secondary copy, labels, inactive navigation.
-- **Muted Grey** (#7d949e): tertiary metadata; the floor for text contrast on ink (≥4.5:1 at body sizes).
-- **Hairlines** — `rgba(232,241,245,0.13)` and `rgba(232,241,245,0.07)` — are the only borders in the system.
+- **Instrument Grey** (#93a9b2): secondary copy and labels.
+- **Muted Grey** (#7d949e): tertiary metadata; the contrast floor for small text on ink.
+- **Signal Amber** (#ffb648): live data, the assigned mission, selected filters, primary actions, sparklines.
+- **Lock Alarm** (#ff4d3d): the currently locked contact and the clear-filters affordance. Nothing else.
+
+### Declassified paper (light)
+`html[data-theme="light"]` swaps the polarity of the same instrument:
+- **Warm stock** (#f2efe6) page, with #eae6da / #e1dccd / #d6d0bf as tonal steps.
+- **Ink text** (#101a20), **grey** (#465861 / #6a7a83) for secondary copy.
+- **Ochre** (#a15a00) replaces signal amber so contrast survives on paper; **brick** (#b3261e) replaces alarm red.
+- **Solid actions invert**: the primary button becomes ink on paper, with cream text.
+- Map tiles switch to Esri `World_Light_Gray_Base` with a warm, desaturated filter; the dark theme uses `World_Dark_Gray_Base`.
+
+### Data hues
+Propulsion: Diesel (#ffb648), Nuclear (#7dffb2), Electric (#5bc8ff), Hand-crank (#d8c9a3). Situation: Afloat (#8b90a3), In water (#1a8cff), On land (#da00da), Enclosed (#00d933), Monument (#b52000). Situation also carries a badge glyph (coloured ring, light face, dark pictogram); the ring colour is the situation token.
 
 ### Named Rules
-**The One Voice Rule.** Amber appears on ≤10% of any screen and always marks something alive or selected. If a surface needs emphasis and amber is already spent, use type weight or a hairline, not another colour.
+**The One Voice Rule.** Amber appears on ≤10% of any screen and always marks something alive or selected. If amber is already spent, use type weight or a hairline.
 
-**The Encoding Rule.** A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a badge, a border tint, a bar or text — never as a panel background.
+**The Encoding Rule.** A colour that encodes data never becomes a surface colour. It may appear as a dot, a badge, a border tint, a bar or text.
+
+**The Paper Rule.** Light mode is a print of the same instrument, not a different brand. Every surface, hairline and data hue must remain legible in both themes; never hard-code a dark colour on a themed surface.
 
 ## Typography
 
-**Display Font:** Archivo (with Helvetica Neue, Arial)
-**Body Font:** Archivo (with Helvetica Neue, Arial)
-**Label/Mono Font:** Azeret Mono (with ui-monospace, SFMono-Regular, Consolas)
+**Display / Body:** Archivo (Helvetica Neue, Arial)
+**Labels / Data:** Azeret Mono (ui-monospace, SFMono-Regular, Consolas)
 
-**Character:** A grotesque condensed to 76–85% width for headlines gives the archive its stencilled, official weight; Azeret Mono at 9–11px with 0.12–0.26em tracking makes every count, code and range read as an instrument label. The pairing is one family for voice, one for measurement.
+**Character:** Archivo condensed to 76–85% width gives the archive its stencilled, official weight. Azeret Mono at 7–11px with 0.10–0.26em tracking makes every count, code and range read as an instrument label. One family for voice, one for measurement.
 
 ### Hierarchy
-- **Display** (700, `clamp(58px, 11.4vw, 172px)`, 0.8, -0.025em, uppercase): the cover title only. The second line is outlined (`-webkit-text-stroke: 1.5px rgba(232,241,245,0.55)`) instead of filled.
-- **Headline** (700, `clamp(34px, 5.6vw, 76px)`, 0.9, -0.02em, uppercase): section titles and the console title.
-- **Title** (700, `clamp(24px, 2.6vw, 34px)`, 0.95, -0.015em, uppercase): dossier names, rail titles, era names.
-- **Body** (400, 16px, 1.6): running copy, measure capped at 40–52ch; secondary copy is Instrument Grey.
-- **Label** (500, 9–11px, 0.12–0.26em, uppercase, mono): field labels, panel heads, tags, counts, coordinates, table headers.
+- **Display** (700, `clamp(46px, 12.2vw, 138px)`, 0.82, -0.028em): the home title only. The second line is outlined (`-webkit-text-stroke: 1.2px`) instead of filled.
+- **Headline** (700, `clamp(34px, 5.6vw, 76px)`, 0.9): inner page titles and section titles.
+- **Title** (700, `clamp(24px, 2.6vw, 34px)`, 0.95): dossier names, rail titles, era names.
+- **Body** (400, 16px, 1.55): running copy, measure capped at 40–52ch; secondary copy is Instrument Grey.
+- **Label** (500, 7–11px, 0.10–0.26em, uppercase, mono): field labels, panel heads, tags, counts, coordinates, table headers.
 
 ### Named Rules
-**The Measurement Rule.** Mono is for anything the instrument would measure or name: codes, years, counts, ranges, coordinates, labels, table cells. Running prose and headings are always Archivo.
+**The Measurement Rule.** Mono is for anything the instrument would measure or name. Running prose and headings are always Archivo.
 
-**The Tracking Rule.** Letterspacing is a function of size: 0.18–0.26em at 9–10px, 0.12–0.16em at 11px, and negative tracking only on display and headline sizes (-0.015em to -0.025em).
+**The Tracking Rule.** Letterspacing is a function of size: 0.18–0.26em at 7–10px, 0.10–0.16em at 11px, negative tracking only on display/headline sizes.
 
 ## Layout
 
-A fixed 58px instrument rail across the top (54px below 720px) carries identity, navigation, sound and language. Content uses `--gutter: clamp(20px, 4vw, 64px)` on every surface.
+A 58px instrument rail across the top (54px below 720px) carries identity, navigation, theme, sound and language. Content uses `--gutter: clamp(20px, 4vw, 64px)` on every surface.
 
-The home is one continuous scroll over a sticky plot: `.stage` pins the Leaflet map at `calc(100svh - 58px)` while `.stage__scroll` pulls the content up over it with a negative margin. The cover fills exactly one viewport minus the rail and is a two-column instrument layout — lead column (title, standfirst, actions) and a 196–228px telemetry column with hairline-separated stats and the acquisition bar — over a six-plate era rack pinned to the bottom edge. Below 720px the stage becomes a static 82svh map with an ink fade at its base, the cover collapses to one column, and the stats become a 2×2 grid.
+### Home (three blocks)
+1. **Hero** — classified stamp and revision line, the two-line title, standfirst, stats (contacts, waters, films, propulsion types), the two entry actions, and the **mission ticket** in the right column on desktop. On mobile the mission ticket sits between the standfirst and the stats.
+2. **Map** — a bounded `.plot-section`: a one-line HUD (title, count, lock state, readout, tiles credit), the Esri plot (`clamp(430px, 66svh, 720px)`), the boot terminal at its top-left, and the tactical panel pinned to its bottom edge.
+3. **Detail** — the assigned dossier: code, name, type/situation tags, fact grid, description, media (photo, inline film or blueprint placeholder) and the three actions (locate, route, copy link). On desktop it is a two-column dossier inside a 1180px measure; on mobile the media moves above the name and the whole block stacks.
 
-The operations console is a three-column grid `minmax(250px,300px) · 1fr · minmax(300px,380px)` — filters, a deliberate empty void of live map, and a sticky dossier — with the contact log and telemetry beneath. Below 980px it becomes two equal columns and the void is removed; below 720px every panel stacks full width.
+The home URL is deliberately not synchronised with the random mission, so a reload can assign a different target. Deep links (`?unit=<slug>`) still open a specific file.
 
-Sections are separated by a single hairline and `clamp(64px, 9vw, 132px)` of vertical padding. Interior rhythm is 8/16/28px. The register is a two-column layout (list + sticky dossier) that collapses to one column at 980px, with the dossier becoming a bottom sheet on demand.
+### Tactical panel (the only filter surface)
+- **Groups**: PROPULSION (4 switches, count each), ERA (6 switches), SITUATION (5 switches), SEARCH (query field, country select, media toggles), and a red CLEAR chip that only appears with active filters.
+- **Desktop (≥861px)**: the panel is always open, four columns — `repeat(3, 1fr) minmax(250px, .95fr)` — across the bottom of the map.
+- **Mobile (≤860px)**: it collapses to a 52px bar (`data-open`) showing the filter icon and the live count; opening reveals a board that grows upward from the bottom edge, capped at 58svh and scrollable.
+- Every switch is a submarine board button: square, hairline, a small glowing propulsion dot or situation badge, and the count in mono.
+
+### Inner pages
+- **Eras** (`epocas.html`): a page head plus six era cards with sparkline, range and count; each opens the filtered register.
+- **Featured** (`destacados.html`): a billboard contact with photograph and actions, then five rails (video, diesel, nuclear, electric, hand-crank) of five cards each. The billboard and rail order rotate on every visit.
+- **Register** (`registro.html`): a full table (code, unit/museum, type, country, year) with a sticky dossier on desktop and a bottom sheet on mobile; filters, search and sort are in a single bar.
+- **Archive** (`archivo.html`): briefing facade, telemetry bars, the numbers panel and the origin note.
+
+## Two Themes
+
+The theme is chosen before first paint from `localStorage` (`snk-theme`) with `prefers-color-scheme: light` as the fallback; the toggle updates `html[data-theme]`, the Esri tile layer, `<meta name="theme-color">` and the aria-label, and persists. The default is the night plot.
+
+Theme changes are a **state change**, not a page reload: the map tiles swap, the paper tokens resolve, and the tactical panel, dossier and footer re-paint from the same variables. No component may assume a dark ground.
 
 ## Elevation & Depth
 
-The system is flat by design: **there are no drop shadows on surfaces.** Depth comes from three devices only — tonal ground steps (ink → ink-1 → ink-2 → ink-3), one-pixel hairlines that separate but do not lift, and `backdrop-filter: blur(10–14px)` on panels that float over the live map, so the plot is felt behind them without being readable.
+The system is flat by design: **there are no drop shadows on surfaces.** Depth comes from tonal ground steps, one-pixel hairlines, and `backdrop-filter: blur(10–14px)` on surfaces that float over the live map (tactical panel, boot terminal, mobile sheets).
 
-Glow is reserved for live instrumentation: contact dots (`0 0 12px` of their own colour), the locked-contact ring (`0 0 22px rgba(255,77,61,0.8)`), the HUD live dot, and a 2px inset amber rule on the selected log/register row. These are signal, not elevation.
+Glow is reserved for live instrumentation: contact dots, the locked-contact ring, the HUD live dot, and the amber focus outline. These are signal, not elevation.
 
 ### Named Rules
-**The Flat-By-Default Rule.** A surface never gains a shadow to look important. If it must separate from the plot, it gains a hairline, a tonal step, or blur — never a cast shadow.
+**The Flat-By-Default Rule.** A surface never gains a shadow to look important. If it must separate, it gains a hairline, a tonal step or blur.
 
-**The Glow-Is-Data Rule.** Halos exist only where something is transmitting: contacts, locks, the live indicator. A halo on a button or a card is a bug.
+**The Glow-Is-Data Rule.** Halos exist only where something is transmitting.
 
 ## Shapes
 
-Square by default: every panel, button, chip, tag, field, row and media well is `border-radius: 0`. The form language is the instrument face — rectangles divided by hairlines, with corner brackets on the plot frame (16px from each corner) and a 72px grid on the gate.
+Square by default: every panel, button, switch, tag, field, row and media well is `border-radius: 0`. The form language is the instrument face — rectangles divided by hairlines.
 
-The only circles in the system are data: 6–7px contact and legend dots, 13–16px situation badges, 34px cluster discs, the sonar rings and the sweep, and the 1px focus outline (offset 3px). The occupied-contact ping is a 1px expanding ring, never a filled badge.
+The only circles are data and controls: contact dots, situation badges, cluster discs, the recorded-video play disc, the theme toggle's sun/moon, and the focus outline.
+
+## Motion
+
+- **Instrument ease** `cubic-bezier(.2,.7,.2,1)` for colour/border/transform, 140–200ms.
+- **Settle ease** `cubic-bezier(.16,1,.3,1)` for sheets, modal entry and reveals, 400–700ms.
+- **Acquisition** — on first load the boot terminal reports the secure link and contact count while contacts are added to the map; it fades out and leaves the map interactive.
+- **Lock ping** — 2.2s expanding ring on the assigned/locked contact only.
+- **Video** — the modal opens full-screen on mobile (`100dvh`) with a 43px hint bar; `GIRAR` rotates a 16:9 player 90° in CSS and resets on close.
+- `prefers-reduced-motion: reduce` removes the ping, boot sequence, reveals and sheet/panel transitions.
 
 ## Components
 
 ### Buttons
-- **Shape:** square, 1px transparent or hairline border, uppercase mono label at 11px/0.22em.
-- **Primary:** Signal Amber ground, Deep Plot Ink text, `15px 22px` (large: `19px 28px`). Hover lightens to #ffc76a and lifts 1px; active returns to 0.
-- **Secondary / Ghost:** transparent ground with a hairline border and Readout White text; hover swaps border and text to amber. Small variant: `11px 15px`, 10px label.
-- **Focus:** 2px amber outline, 3px offset, everywhere.
+- Square, 1px hairline or transparent border, uppercase mono label.
+- **Primary (amber)**: Signal Amber ground, ink text, `15px 22px`. Hover lightens, lifts 1px.
+- **Solid (ink)**: ink ground, cream text — the light-theme primary and the mission's "open file".
+- **Line**: transparent ground, hairline border; hover swaps to amber.
+- Focus: 2px amber outline, 3px offset, everywhere.
 
-### Chips (filters)
-- **Style:** 1px hairline, transparent ground, Instrument Grey uppercase mono at 10px; a 7px dot in the propulsion colour, a 16px situation badge, and a 9px count.
-- **State:** pressed turns text and border amber on `rgba(255,182,72,0.14)`; the reset chip is the only red chip.
+### Tactical switches
+38px tall, square, transparent ink ground with a hairline; a 5px propulsion dot (or 14px situation badge) and a 7px count. Pressed: border and text take the data hue at 60% / 13% mix, dot at full glow. The CLEAR chip is the only red control.
 
-### Cards / Containers
-- **Corner Style:** square (0).
-- **Background:** panels `rgba(5,10,14,0.9)` with 14px blur; plotted panels carry a top-to-bottom ink gradient so the map reads through the edges.
-- **Border:** 1px hairline; hover raises the border to `rgba(255,182,72,0.4)` on unit cards and era plates.
-- **Internal Padding:** 18–24px panels, 12–14px media cards.
+### Mission ticket (signature)
+A bordered ticket with a 2px amber left rule, `MISIÓN ASIGNADA` and the dossier code on one line, the target name in condensed uppercase, the museum · city · country line in mono, and three actions: **open file**, **route** (Google Maps directions) and **another** (re-roll the assignment). It appears in the hero and is echoed by the `MISSION TARGET` state in the detail block.
 
-### Inputs / Fields
-- **Style:** 40px tall, hairline border, `rgba(4,7,10,0.6)` ground, mono 10–11px uppercase; selects hide the native arrow and use a rotated chevron.
-- **Focus:** the wrapper border turns amber on `:focus-within`; the field itself has no outline.
+### Dossier
+Two-column on desktop: identity, facts and copy on the left; media and actions on the right. Media is a photograph if the sheet has one, an inline film on desktop, or a blueprint placeholder (`PLANO TÉCNICO // DIGITALIZACIÓN PENDIENTE`) otherwise. Tags carry propulsion and situation; the code stays amber.
+
+### Video player (signature)
+On mobile every film opens a fixed full-screen modal: title bar, the player filling the remaining height, and a bottom hint bar reading `GIRA EL MÓVIL O PULSA GIRAR` with a `GIRAR` button. Rotating swaps the player to `100dvh × 100vw` and 90°; the button becomes `VOLVER`. Closing restores the page and stops the player. Vertical-native films skip the rotate control.
 
 ### Navigation
-- **HUD:** fixed rail with logo (greyscale, screen blend), archive code, blinking live dot, anchor links in 10px mono with a 1px amber underline that wipes in from the left on hover; sound toggle and EN/ES language switch at the right.
-- **Mobile:** the rail collapses to logo, sound, language and a menu button; navigation moves to a full-height overlay with 01–05 numbered entries.
-- **Active state:** amber text plus the amber underline.
+- **HUD:** logo placeholder (typographic `elSnorkel / NAVAL ARCHIVE`), archive code, live dot, 10px mono links with a 1px amber underline, theme, sound, language, menu.
+- **Mobile:** logo, theme, sound, menu; navigation moves to a full-height overlay with 01–05 entries.
+- **Active state:** amber text plus the underline.
 
-### Era Plate (signature)
-The six chronological watches appear twice: as a bottom rack of six hairline-separated columns on the cover (index, name, range, amber acquisition bar), and as 3-up cards in the archive body with a generated sparkline, the unit count and an "open watch" affordance. Both link straight into the filtered register.
+### Era Plate
+Six chronological watches, as cards with a generated sparkline, the unit count and an "open watch" affordance; they link straight into the filtered register.
 
-### Contact & Dossier (signature)
-Contacts are 7px dots in their propulsion colour on a 30px hit area. Locking one turns it red, expands its ping ring, opens the dossier (code, name, status tags, 16:9 media, six-row fact table) and re-renders the console log with the selected row marked by a 2px inset amber rule.
+### Contact & Dossier
+Contacts are 7px dots in their propulsion colour on a 30px hit area. Locking one turns it red, expands its ping, opens the dossier and updates the HUD/lock readout.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep the plot full-bleed and visible behind the cover, console and register; it is the page's ground, not an illustration.
+- **Do** assign a destination on arrival and let the detail block answer it.
+- **Do** keep the map as the only filter surface; every control is reachable from the tactical panel.
 - **Do** reserve amber for live data and selection, and red for the single locked contact.
-- **Do** set every code, count, year and range in mono with 0.12em+ tracking.
+- **Do** test both themes on every surface, especially sheets and media wells.
+- **Do** set every code, count, year and range in mono with 0.10em+ tracking.
 - **Do** use a hairline, a tonal step or blur to separate surfaces; keep corners at 0.
-- **Do** let headings sit directly on the section — the title carries the section, and a mono note beside it carries the count.
-- **Do** generate every number from the JSON snapshot at runtime; never hard-code counts into copy.
-- **Do** honour `prefers-reduced-motion` by removing the sweep, the reveals and the boot sequence.
+- **Do** generate every number from the JSON snapshot at runtime.
+- **Do** honour `prefers-reduced-motion` by removing the ping, boot and reveals.
 
 ### Don't:
 - **Don't** add border-radius to surfaces or buttons; only data marks are round.
 - **Don't** add drop shadows to cards, panels or buttons.
 - **Don't** use amber or red as a surface fill beyond the primary button and the lock tint.
-- **Don't** place a kicker, eyebrow or numbered label above a heading; section identity comes from the headline itself.
+- **Don't** hard-code dark colours inside themed components; use `--panel`, `--ink-*`, `--line`, `--txt`.
 - **Don't** use mono for running prose, or Archivo for measurements.
-- **Don't** put a coloured left/right border thicker than 1px on cards or callouts.
-- **Don't** animate layout properties, or animate anything that is not a state change or the boot/plot sequence.
+- **Don't** animate layout properties, or animate anything that is not a state change, the acquisition sequence or the plot.

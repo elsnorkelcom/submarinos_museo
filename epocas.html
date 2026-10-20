@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#04070a">
+  <title data-i18n="eras.title">The Archive by Era // Naval Archive</title>
+  <meta name="description" content="Six watches, from 1850 to the present. Open an era to narrow the register of preserved submarines." data-i18n-attr="content:eras.note">
+  <link rel="canonical" href="https://submarinos-museo-del-mundo.elsnorkel.com/epocas.html">
+  <meta property="og:title" content="The Archive by Era // Naval Archive" data-i18n-attr="content:eras.title">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://submarinos-museo-del-mundo.elsnorkel.com/epocas.html">
+  <meta property="og:site_name" content="Submarine Museums of the World">
+  <meta property="og:image" content="https://submarinos-museo-del-mundo.elsnorkel.com/assets/img/cobia.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261020c">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("snk-theme");
+        var theme = stored === "light" || stored === "dark"
+          ? stored
+          : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f2efe6" : "#04070a");
+      } catch (e) { /* private mode */ }
+    })();
+  </script>
+</head>
+<body data-page="eras">
+  <a class="skip" href="#eras-grid" data-i18n="eras.title">Skip to the eras</a>
+
+  <svg class="sprite" aria-hidden="true" width="0" height="0">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.4A8.6 8.6 0 0 1 9.6 4 8.6 8.6 0 1 0 20 14.4z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="1.2"/><path d="M15 9V4.2A1.2 1.2 0 0 0 13.8 3H4.2A1.2 1.2 0 0 0 3 4.2v9.6A1.2 1.2 0 0 0 4.2 15H9"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.4 8.4M18.5 14v5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  </svg>
+
+  <header class="hud">
+    <a class="brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+      <span class="brand__mark" aria-hidden="true"><i></i></span>
+      <span class="brand__text"><b>elSnorkel</b><i data-i18n="brand.sub">NAVAL ARCHIVE</i></span>
+    </a>
+    <div class="hud__id">
+      <b data-i18n="hud.id">NMMA // NAVAL ARCHIVE</b>
+      <span class="hud__live"><i aria-hidden="true"></i><span data-i18n="hud.live">PLOT LIVE</span></span>
+    </div>
+    <nav class="hud__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+      <a href="index.html#plot" data-i18n="nav.plot">PLOT</a>
+      <a href="epocas.html" class="is-active" data-i18n="nav.eras">ERAS</a>
+      <a href="destacados.html" data-i18n="nav.featured">FEATURED</a>
+      <a href="registro.html" data-i18n="nav.register">REGISTER</a>
+      <a href="archivo.html" data-i18n="nav.archive">ARCHIVE</a>
+    </nav>
+    <div class="hud__tools">
+      <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Dark mode" data-i18n-attr="aria-label:theme.toggle">
+        <svg class="icon theme-toggle__sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+        <svg class="icon theme-toggle__moon" aria-hidden="true"><use href="#i-moon"></use></svg>
+      </button>
+      <button class="icon-btn" id="sound-toggle" type="button" aria-pressed="false" aria-label="Sound" data-i18n-attr="aria-label:hud.sound">
+        <svg class="icon icon--on" aria-hidden="true"><use href="#i-sound"></use></svg>
+        <svg class="icon icon--off" aria-hidden="true"><use href="#i-mute"></use></svg>
+      </button>
+      <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+        <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+        <span aria-hidden="true">/</span>
+        <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+      </div>
+      <button class="icon-btn hud__menu" id="menu-open" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu" data-i18n-attr="aria-label:hud.menu">
+        <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="menu" id="menu" hidden>
+    <div class="menu__head">
+      <span class="mono-label" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
+      <button class="icon-btn" id="menu-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
+        <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+      </button>
+    </div>
+    <nav class="menu__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
+      <a href="index.html#plot"><span>01</span><b data-i18n="nav.plot">PLOT</b></a>
+      <a href="epocas.html"><span>02</span><b data-i18n="nav.eras">ERAS</b></a>
+      <a href="destacados.html"><span>03</span><b data-i18n="nav.featured">FEATURED</b></a>
+      <a href="registro.html"><span>04</span><b data-i18n="nav.register">REGISTER</b></a>
+      <a href="archivo.html"><span>05</span><b data-i18n="nav.archive">ARCHIVE</b></a>
+    </nav>
+    <div class="menu__foot">
+      <div class="lang lang--lg" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
+        <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
+        <span aria-hidden="true">/</span>
+        <button type="button" class="lang__btn" data-lang="es" aria-pressed="false">ES</button>
+      </div>
+      <div class="social" id="social-menu"></div>
+    </div>
+  </div>
+
+  <main class="page">
+    <header class="page-head">
+      <div class="page-head__meta">
+        <span class="stamp" data-i18n="hero.stamp">CLASSIFIED // LEVEL 03</span>
+        <span class="mono-label">NMMA-26 · <span data-i18n="hero.rev">REV 2026</span></span>
+      </div>
+      <p class="kicker"><i aria-hidden="true"></i><span data-i18n="eras.kicker">// 02 — WATCHES</span></p>
+      <h1 class="page-head__title" data-i18n="eras.title">THE ARCHIVE BY ERA</h1>
+      <p class="page-head__note" data-i18n="eras.note">Six watches, from 1850 to the present. Open one to narrow the register.</p>
+    </header>
+
+    <section class="section section--flush">
+      <div class="eras" id="eras-grid"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__top">
+      <a class="brand brand--foot" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+        <span class="brand__mark" aria-hidden="true"><i></i></span>
+        <span class="brand__text"><b>elSnorkel</b><i data-i18n="brand.sub">NAVAL ARCHIVE</i></span>
+      </a>
+      <nav class="foot__nav" aria-label="Footer links" data-i18n-attr="aria-label:footer.navAria">
+        <a href="index.html#plot" data-i18n="nav.plot">PLOT</a>
+        <a href="epocas.html" data-i18n="nav.eras">ERAS</a>
+        <a href="destacados.html" data-i18n="nav.featured">FEATURED</a>
+        <a href="registro.html" data-i18n="nav.register">REGISTER</a>
+        <a href="archivo.html" data-i18n="nav.archive">ARCHIVE</a>
+      </nav>
+      <div class="social" id="social-foot"></div>
+    </div>
+    <div class="foot__share">
+      <span data-i18n="share.siteLabel">SHARE THE ARCHIVE</span>
+      <div class="share" id="share-site"></div>
+    </div>
+    <div class="foot__bottom">
+      <p data-i18n="foot.rights">© 2026 elSnorkel.com</p>
+      <p class="foot__fine"><span data-i18n="footer.fine">ARCHIVE UPDATED</span> <span id="footer-date"></span></p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="assets/js/app.js?v=20261020c"></script>
+</body>
+</html>

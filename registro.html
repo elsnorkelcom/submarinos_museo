@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -11,7 +11,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/app.css?v=20261019b">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261020c">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("snk-theme");
+        var theme = stored === "light" || stored === "dark"
+          ? stored
+          : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f2efe6" : "#04070a");
+      } catch (e) { /* private mode */ }
+    })();
+  </script>
 </head>
 <body data-page="register">
   <a class="skip" href="#register-list" data-i18n="register.skip">Skip to the register</a>
@@ -24,6 +36,8 @@
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
     <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
     <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.4A8.6 8.6 0 0 1 9.6 4 8.6 8.6 0 1 0 20 14.4z"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="1.2"/><path d="M15 9V4.2A1.2 1.2 0 0 0 13.8 3H4.2A1.2 1.2 0 0 0 3 4.2v9.6A1.2 1.2 0 0 0 4.2 15H9"/></symbol>
     <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.4 8.4M18.5 14v5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.5s7-6.4 7-11.2a7 7 0 1 0-14 0c0 4.8 7 11.2 7 11.2z"/><circle cx="12" cy="10.2" r="2.4"/></symbol>
@@ -54,15 +68,11 @@
     </symbol>
   </svg>
 
-  <div class="boot boot--page" id="boot" aria-live="polite">
-    <div class="boot__log" id="boot-log"><p><span data-i18n="boot.l2">LOADING CONTACTS</span><b>···</b></p></div>
-    <div class="boot__bar"><i id="boot-bar"></i></div>
-  </div>
-
-  <div class="app app--register" id="app" hidden>
+  <div class="app app--register" id="app">
     <header class="hud" id="hud">
-      <a class="hud__brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
-        <img src="assets/img/logo.jpg" alt="" width="38" height="38">
+      <a class="brand" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+        <span class="brand__mark" aria-hidden="true"><i></i></span>
+        <span class="brand__text"><b>elSnorkel</b><i data-i18n="brand.sub">NAVAL ARCHIVE</i></span>
       </a>
       <div class="hud__id">
         <b data-i18n="hud.id">NMMA // NAVAL ARCHIVE</b>
@@ -70,11 +80,16 @@
       </div>
       <nav class="hud__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
         <a href="index.html#plot" data-i18n="nav.plot">PLOT</a>
-        <a href="index.html#console" data-i18n="nav.console">CONSOLE</a>
-        <a href="index.html#eras" data-i18n="nav.eras">ERAS</a>
-        <a href="index.html#featured" data-i18n="nav.featured">FEATURED</a>
+        <a href="epocas.html" data-i18n="nav.eras">ERAS</a>
+        <a href="destacados.html" data-i18n="nav.featured">FEATURED</a>
+        <a href="registro.html" class="is-active" data-i18n="nav.register">REGISTER</a>
+        <a href="archivo.html" data-i18n="nav.archive">ARCHIVE</a>
       </nav>
       <div class="hud__tools">
+        <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Dark mode" data-i18n-attr="aria-label:theme.toggle">
+          <svg class="icon theme-toggle__sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+          <svg class="icon theme-toggle__moon" aria-hidden="true"><use href="#i-moon"></use></svg>
+        </button>
         <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
           <button type="button" class="lang__btn" data-lang="en" aria-pressed="true">EN</button>
           <span aria-hidden="true">/</span>
@@ -89,18 +104,17 @@
 
     <div class="menu" id="menu" hidden>
       <div class="menu__head">
-        <span class="kicker" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
+        <span class="mono-label" data-i18n="hud.id">NMMA // NAVAL ARCHIVE</span>
         <button class="icon-btn" id="menu-close" type="button" aria-label="Close" data-i18n-attr="aria-label:dossier.close">
           <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
         </button>
       </div>
       <nav class="menu__nav" aria-label="Sections" data-i18n-attr="aria-label:nav.aria">
         <a href="index.html#plot"><span>01</span><b data-i18n="nav.plot">PLOT</b></a>
-        <a href="index.html#console"><span>02</span><b data-i18n="nav.console">CONSOLE</b></a>
-        <a href="index.html#eras"><span>03</span><b data-i18n="nav.eras">ERAS</b></a>
-        <a href="index.html#featured"><span>04</span><b data-i18n="nav.featured">FEATURED</b></a>
-        <a href="index.html#origin"><span>05</span><b data-i18n="nav.origin">ORIGIN</b></a>
-        <a href="registro.html"><span>06</span><b data-i18n="nav.register">REGISTER</b></a>
+        <a href="epocas.html"><span>02</span><b data-i18n="nav.eras">ERAS</b></a>
+        <a href="destacados.html"><span>03</span><b data-i18n="nav.featured">FEATURED</b></a>
+        <a href="registro.html"><span>04</span><b data-i18n="nav.register">REGISTER</b></a>
+        <a href="archivo.html"><span>05</span><b data-i18n="nav.archive">ARCHIVE</b></a>
       </nav>
       <div class="menu__foot">
         <div class="lang lang--lg" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.switch">
@@ -197,15 +211,16 @@
 
     <footer class="foot">
       <div class="foot__top">
-        <a href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
-          <img src="assets/img/logo.jpg" alt="" width="34" height="34">
+        <a class="brand brand--foot" href="index.html" aria-label="elSnorkel — home" data-i18n-attr="aria-label:brand.home">
+          <span class="brand__mark" aria-hidden="true"><i></i></span>
+          <span class="brand__text"><b>elSnorkel</b><i data-i18n="brand.sub">NAVAL ARCHIVE</i></span>
         </a>
         <nav class="foot__nav" aria-label="Footer links" data-i18n-attr="aria-label:footer.navAria">
           <a href="index.html#plot" data-i18n="nav.plot">PLOT</a>
-          <a href="index.html#console" data-i18n="nav.console">CONSOLE</a>
-          <a href="index.html#eras" data-i18n="nav.eras">ERAS</a>
+          <a href="epocas.html" data-i18n="nav.eras">ERAS</a>
+          <a href="destacados.html" data-i18n="nav.featured">FEATURED</a>
           <a href="registro.html" data-i18n="nav.register">REGISTER</a>
-          <a href="index.html#origin" data-i18n="nav.origin">ORIGIN</a>
+          <a href="archivo.html" data-i18n="nav.archive">ARCHIVE</a>
         </nav>
         <div class="social" id="social-foot"></div>
       </div>
@@ -219,6 +234,6 @@
   <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script type="module" src="assets/js/app.js?v=20261019b"></script>
+  <script type="module" src="assets/js/app.js?v=20261020c"></script>
 </body>
 </html>

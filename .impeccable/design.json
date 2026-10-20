@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-19T00:00:00.000Z",
+  "generatedAt": "2026-10-20T00:00:00.000Z",
   "title": "Design System: Submarine Museums of the World",
   "extensions": {
     "colorMeta": {
@@ -8,118 +8,375 @@
         "role": "neutral",
         "displayName": "Deep Plot Ink",
         "canonical": "#04070a",
-        "tonalRamp": ["#04070a", "#060c11", "#0a141b", "#0e1c25", "#142832", "#1d3541", "#2a4756", "#3c5f70"]
+        "tonalRamp": [
+          "#04070a",
+          "#060c11",
+          "#0a141b",
+          "#0e1c25",
+          "#142832",
+          "#1d3541",
+          "#2a4756",
+          "#3c5f70"
+        ]
       },
       "text": {
         "role": "neutral",
         "displayName": "Readout White",
         "canonical": "#e8f1f5",
-        "tonalRamp": ["#0b1215", "#1a2529", "#2c3a40", "#46565d", "#647780", "#8da1aa", "#e8f1f5", "#f5fafc"]
+        "tonalRamp": [
+          "#0b1215",
+          "#1a2529",
+          "#2c3a40",
+          "#46565d",
+          "#647780",
+          "#8da1aa",
+          "#e8f1f5",
+          "#f5fafc"
+        ]
       },
       "text-dim": {
         "role": "neutral",
         "displayName": "Instrument Grey",
         "canonical": "#93a9b2",
-        "tonalRamp": ["#0c1418", "#1b272d", "#2d3c44", "#435660", "#5d7480", "#78909b", "#93a9b2", "#c2d2d9"]
+        "tonalRamp": [
+          "#0c1418",
+          "#1b272d",
+          "#2d3c44",
+          "#435660",
+          "#5d7480",
+          "#78909b",
+          "#93a9b2",
+          "#c2d2d9"
+        ]
       },
       "text-muted": {
         "role": "neutral",
         "displayName": "Muted Grey",
         "canonical": "#7d949e",
-        "tonalRamp": ["#0b1215", "#19242a", "#2a373f", "#3d4e58", "#556873", "#6a818c", "#7d949e", "#b0c1c9"]
+        "tonalRamp": [
+          "#0b1215",
+          "#19242a",
+          "#2a373f",
+          "#3d4e58",
+          "#556873",
+          "#6a818c",
+          "#7d949e",
+          "#b0c1c9"
+        ]
       },
       "amber": {
         "role": "primary",
         "displayName": "Signal Amber",
         "canonical": "#ffb648",
-        "tonalRamp": ["#2a1a06", "#4a2c09", "#6d410c", "#8f5610", "#b26c14", "#d48622", "#ffb648", "#ffd79a"]
+        "tonalRamp": [
+          "#2a1a06",
+          "#4a2c09",
+          "#6d410c",
+          "#8f5610",
+          "#b26c14",
+          "#d48622",
+          "#ffb648",
+          "#ffd79a"
+        ]
       },
       "alarm": {
         "role": "secondary",
         "displayName": "Lock Alarm",
         "canonical": "#ff4d3d",
-        "tonalRamp": ["#2a0a08", "#4d100c", "#731812", "#992019", "#bf2a20", "#e63a2d", "#ff4d3d", "#ff9a90"]
+        "tonalRamp": [
+          "#2a0a08",
+          "#4d100c",
+          "#731812",
+          "#992019",
+          "#bf2a20",
+          "#e63a2d",
+          "#ff4d3d",
+          "#ff9a90"
+        ]
       },
       "nuclear": {
         "role": "tertiary",
         "displayName": "Nuclear Green",
         "canonical": "#7dffb2",
-        "tonalRamp": ["#06251a", "#0a3d2b", "#0f553c", "#14704e", "#1a8c61", "#33a97b", "#7dffb2", "#c4ffda"]
+        "tonalRamp": [
+          "#06251a",
+          "#0a3d2b",
+          "#0f553c",
+          "#14704e",
+          "#1a8c61",
+          "#33a97b",
+          "#7dffb2",
+          "#c4ffda"
+        ]
       },
       "electric": {
         "role": "tertiary",
         "displayName": "Electric Blue",
         "canonical": "#5bc8ff",
-        "tonalRamp": ["#06202b", "#0a3345", "#0e475f", "#125d7a", "#167696", "#2c93b8", "#5bc8ff", "#b3e8ff"]
+        "tonalRamp": [
+          "#06202b",
+          "#0a3345",
+          "#0e475f",
+          "#125d7a",
+          "#167696",
+          "#2c93b8",
+          "#5bc8ff",
+          "#b3e8ff"
+        ]
       },
       "diesel": {
         "role": "tertiary",
         "displayName": "Diesel Amber",
         "canonical": "#ffb648",
-        "tonalRamp": ["#2a1a06", "#4a2c09", "#6d410c", "#8f5610", "#b26c14", "#d48622", "#ffb648", "#ffd79a"]
+        "tonalRamp": [
+          "#2a1a06",
+          "#4a2c09",
+          "#6d410c",
+          "#8f5610",
+          "#b26c14",
+          "#d48622",
+          "#ffb648",
+          "#ffd79a"
+        ]
       },
       "hand-crank": {
         "role": "tertiary",
         "displayName": "Hand-crank Sand",
         "canonical": "#d8c9a3",
-        "tonalRamp": ["#241f16", "#3d3527", "#574c39", "#71634c", "#8b7a5f", "#a89475", "#d8c9a3", "#f0e8d4"]
+        "tonalRamp": [
+          "#241f16",
+          "#3d3527",
+          "#574c39",
+          "#71634c",
+          "#8b7a5f",
+          "#a89475",
+          "#d8c9a3",
+          "#f0e8d4"
+        ]
       },
       "situation-afloat": {
         "role": "tertiary",
         "displayName": "Afloat Slate",
         "canonical": "#8b90a3",
-        "tonalRamp": ["#14181c", "#262930", "#3a3e47", "#4e525e", "#636775", "#777b8c", "#8b90a3", "#b4b7c3"]
+        "tonalRamp": [
+          "#14181c",
+          "#262930",
+          "#3a3e47",
+          "#4e525e",
+          "#636775",
+          "#777b8c",
+          "#8b90a3",
+          "#b4b7c3"
+        ]
       },
       "situation-water": {
         "role": "tertiary",
         "displayName": "In Water Blue",
         "canonical": "#1a8cff",
-        "tonalRamp": ["#071727", "#0b2f54", "#0e4374", "#115795", "#146bb5", "#177fe2", "#1a8cff", "#76baff"]
+        "tonalRamp": [
+          "#071727",
+          "#0b2f54",
+          "#0e4374",
+          "#115795",
+          "#146bb5",
+          "#177fe2",
+          "#1a8cff",
+          "#76baff"
+        ]
       },
       "situation-land": {
         "role": "tertiary",
         "displayName": "On Land Magenta",
         "canonical": "#da00da",
-        "tonalRamp": ["#1a071a", "#440544", "#620462", "#840384", "#a302a3", "#c001c0", "#da00da", "#e966e9"]
+        "tonalRamp": [
+          "#1a071a",
+          "#440544",
+          "#620462",
+          "#840384",
+          "#a302a3",
+          "#c001c0",
+          "#da00da",
+          "#e966e9"
+        ]
       },
       "situation-enclosed": {
         "role": "tertiary",
         "displayName": "Enclosed Green",
         "canonical": "#00d933",
-        "tonalRamp": ["#041d0c", "#034213", "#025f19", "#028020", "#039e28", "#01be2d", "#00d933", "#66e785"]
+        "tonalRamp": [
+          "#041d0c",
+          "#034213",
+          "#025f19",
+          "#028020",
+          "#039e28",
+          "#01be2d",
+          "#00d933",
+          "#66e785"
+        ]
       },
       "situation-monument": {
         "role": "tertiary",
         "displayName": "Monument Red",
         "canonical": "#b52000",
-        "tonalRamp": ["#180a05", "#390d04", "#540f04", "#6f1104", "#891203", "#a01b03", "#b52000", "#d2674d"]
+        "tonalRamp": [
+          "#180a05",
+          "#390d04",
+          "#540f04",
+          "#6f1104",
+          "#891203",
+          "#a01b03",
+          "#b52000",
+          "#d2674d"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Declassified Stock",
+        "canonical": "#f2efe6",
+        "tonalRamp": [
+          "#d6d0bf",
+          "#e1dccd",
+          "#eae6da",
+          "#f2efe6",
+          "#f7f5ee",
+          "#faf8f2",
+          "#fdfcf8",
+          "#ffffff"
+        ]
+      },
+      "paper-ink": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "canonical": "#101a20",
+        "tonalRamp": [
+          "#101a20",
+          "#1b272e",
+          "#2a3840",
+          "#3b4c56",
+          "#4e626c",
+          "#657a84",
+          "#8fa3ac",
+          "#c3d0d5"
+        ]
+      },
+      "paper-amber": {
+        "role": "primary",
+        "displayName": "Ochre",
+        "canonical": "#a15a00",
+        "tonalRamp": [
+          "#3a1f00",
+          "#5a3000",
+          "#773f00",
+          "#8f5000",
+          "#a15a00",
+          "#bd6d0a",
+          "#d98a2e",
+          "#f0c58a"
+        ]
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Plot Display", "purpose": "Cover title only; second line outlined, never filled." },
-      "headline": { "displayName": "Section Headline", "purpose": "Section titles and the operations console title." },
-      "title": { "displayName": "Record Title", "purpose": "Dossier names, rail titles, era plate names." },
-      "body": { "displayName": "Archive Copy", "purpose": "Running prose, measure capped at 40–52ch." },
-      "label": { "displayName": "Instrument Label", "purpose": "Codes, counts, years, ranges, field labels and table cells." }
+      "display": {
+        "displayName": "Plot Display",
+        "purpose": "Home title only; second line outlined, never filled."
+      },
+      "headline": {
+        "displayName": "Section Headline",
+        "purpose": "Inner page titles and section headlines."
+      },
+      "title": {
+        "displayName": "Record Title",
+        "purpose": "Dossier names, rail titles, era plate names."
+      },
+      "body": {
+        "displayName": "Archive Copy",
+        "purpose": "Running prose, measure capped at 40–52ch."
+      },
+      "label": {
+        "displayName": "Instrument Label",
+        "purpose": "Codes, counts, years, ranges, field labels and table cells."
+      }
     },
     "shadows": [
-      { "name": "contact-glow", "value": "0 0 12px var(--c, rgba(232, 241, 245, 0.4))", "purpose": "Live contact dot transmitting in its propulsion colour." },
-      { "name": "contact-ring", "value": "0 0 0 3px rgba(232, 241, 245, 0.08)", "purpose": "Quiet separation halo under a contact dot." },
-      { "name": "lock-glow", "value": "0 0 0 4px rgba(255, 77, 61, 0.18), 0 0 22px rgba(255, 77, 61, 0.8)", "purpose": "The single locked contact; alarm colour only." },
-      { "name": "live-dot", "value": "0 0 10px var(--amber)", "purpose": "HUD live indicator." },
-      { "name": "selected-rule", "value": "inset 2px 0 0 var(--amber)", "purpose": "Selected row in the contact log and register." },
-      { "name": "cluster-halo", "value": "0 0 22px rgba(255, 182, 72, 0.15)", "purpose": "Cluster disc over the plot." }
+      {
+        "name": "contact-glow",
+        "value": "0 0 12px var(--c, rgba(232, 241, 245, 0.4))",
+        "purpose": "Live contact dot transmitting in its propulsion colour."
+      },
+      {
+        "name": "contact-ring",
+        "value": "0 0 0 3px rgba(232, 241, 245, 0.08)",
+        "purpose": "Quiet separation halo under a contact dot."
+      },
+      {
+        "name": "lock-glow",
+        "value": "0 0 0 4px rgba(255, 77, 61, 0.18), 0 0 22px rgba(255, 77, 61, 0.8)",
+        "purpose": "The single locked contact; alarm colour only."
+      },
+      {
+        "name": "live-dot",
+        "value": "0 0 10px var(--amber)",
+        "purpose": "HUD live indicator."
+      },
+      {
+        "name": "selected-rule",
+        "value": "inset 2px 0 0 var(--amber)",
+        "purpose": "Selected row in the contact log and register."
+      },
+      {
+        "name": "cluster-halo",
+        "value": "0 0 22px rgba(255, 182, 72, 0.15)",
+        "purpose": "Cluster disc over the plot."
+      }
     ],
     "motion": [
-      { "name": "ease-instrument", "value": "cubic-bezier(0.2, 0.7, 0.2, 1)", "purpose": "Default state transition: colour, border, transform. 140–200ms." },
-      { "name": "ease-settle", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Reveals, modal entry, sheet movement. 400–700ms." },
-      { "name": "gate-fade", "value": "520ms ease-instrument", "purpose": "Clearance gate out; the only long transition at entry." },
-      { "name": "lock-ping", "value": "2.2s infinite", "purpose": "Expanding ring on the locked contact." },
-      { "name": "sweep", "value": "72s linear infinite", "purpose": "Sonar sweep over the plot; removed under prefers-reduced-motion." }
+      {
+        "name": "ease-instrument",
+        "value": "cubic-bezier(0.2, 0.7, 0.2, 1)",
+        "purpose": "Default state transition: colour, border, transform. 140–200ms."
+      },
+      {
+        "name": "ease-settle",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Reveals, modal entry, sheet movement. 400–700ms."
+      },
+      {
+        "name": "acquisition",
+        "value": "staggered contact adds + 120ms bar",
+        "purpose": "Boot terminal on the plot reports the link and acquires contacts; fades once the count is complete."
+      },
+      {
+        "name": "tactical-sheet",
+        "value": "320ms ease-settle",
+        "purpose": "Mobile filter board grows upward from the bottom bar."
+      },
+      {
+        "name": "lock-ping",
+        "value": "2.2s infinite",
+        "purpose": "Expanding ring on the locked contact."
+      },
+      {
+        "name": "video-rotate",
+        "value": "220ms ease-instrument",
+        "purpose": "Mobile player rotates 16:9 to fill the portrait screen; reset on close."
+      }
     ],
     "breakpoints": [
-      { "name": "wide", "value": "980px", "purpose": "Console drops to two columns, nav collapses, register dossier moves below the list." },
-      { "name": "mobile", "value": "720px", "purpose": "Rail to 54px, static 82svh plot with ink fade, single-column cover, stacked console." }
+      {
+        "name": "register",
+        "value": "980px",
+        "purpose": "Register loses its sticky dossier and moves the file into a bottom sheet."
+      },
+      {
+        "name": "tactical",
+        "value": "861px",
+        "purpose": "Tactical panel switches from bottom bar + sheet to an always-open four-column board."
+      },
+      {
+        "name": "mobile",
+        "value": "720px",
+        "purpose": "Rail to 54px, single-column hero and dossier, full-screen video modal."
+      }
     ]
   },
   "components": [
@@ -127,7 +384,7 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The single amber action: enter the archive, open a file, open the register.",
+      "description": "The single amber action: open the assigned file, open the register, apply the mission.",
       "html": "<button class=\"ds-btn-amber\"><span>ENTER THE ARCHIVE</span><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></button>",
       "css": ".ds-btn-amber { display:inline-flex; align-items:center; justify-content:center; gap:14px; padding:19px 28px; border:1px solid transparent; background:var(--amber,#ffb648); color:var(--ink,#04070a); font-family:var(--mono,monospace); font-size:12px; font-weight:600; letter-spacing:.22em; line-height:1; text-transform:uppercase; border-radius:0; cursor:pointer; transition:background 160ms cubic-bezier(.2,.7,.2,1), transform 160ms cubic-bezier(.2,.7,.2,1); } .ds-btn-amber:hover { background:#ffc76a; transform:translateY(-1px); } .ds-btn-amber:active { transform:translateY(0); } .ds-btn-amber:focus-visible { outline:2px solid var(--amber,#ffb648); outline-offset:3px; }"
     },
@@ -168,7 +425,7 @@
       "kind": "input",
       "refersTo": "input-search",
       "description": "Mono query field; the wrapper takes the amber focus border, not the input.",
-      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M16.5 16.5 21 21\"/></svg><input type=\"search\" placeholder=\"SEARCH UNIT, MUSEUM OR CITY\"><\/label>",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M16.5 16.5 21 21\"/></svg><input type=\"search\" placeholder=\"SEARCH UNIT, MUSEUM OR CITY\"></label>",
       "css": ".ds-search { display:flex; align-items:center; gap:10px; height:40px; padding:0 12px; border:1px solid rgba(232,241,245,.13); background:rgba(4,7,10,.6); border-radius:0; transition:border-color 160ms cubic-bezier(.2,.7,.2,1); } .ds-search:focus-within { border-color:rgba(255,182,72,.55); } .ds-search svg { flex:none; stroke:var(--mut,#7d949e); } .ds-search input { width:100%; min-width:0; border:0; outline:0; background:none; color:var(--txt,#e8f1f5); font-family:var(--mono,monospace); font-size:11px; letter-spacing:.1em; text-transform:uppercase; } .ds-search input::placeholder { color:var(--mut,#7d949e); text-transform:uppercase; }"
     },
     {
@@ -186,43 +443,93 @@
       "description": "A plotted submarine: 7px dot in its propulsion colour on a 30px hit area; red and pinged when locked.",
       "html": "<div style=\"display:flex;gap:28px;align-items:center;padding:18px\"><span class=\"ds-contact\" style=\"--c:#ffb648\"><i></i></span><span class=\"ds-contact is-locked\" style=\"--c:#ff4d3d\"><i></i></span></div>",
       "css": ".ds-contact { position:relative; display:grid; place-items:center; width:30px; height:30px; } .ds-contact i { width:7px; height:7px; border-radius:50%; background:var(--c,#e8f1f5); box-shadow:0 0 0 3px rgba(232,241,245,.08), 0 0 12px var(--c,#e8f1f5); transition:transform 180ms cubic-bezier(.2,.7,.2,1); } .ds-contact:hover i { transform:scale(1.5); } .ds-contact.is-locked i { width:11px; height:11px; background:var(--alarm,#ff4d3d); box-shadow:0 0 0 4px rgba(255,77,61,.18), 0 0 22px rgba(255,77,61,.8); } .ds-contact.is-locked::after { content:''; position:absolute; inset:-12px; border:1px solid rgba(255,77,61,.5); border-radius:50%; }"
+    },
+    {
+      "name": "Mission Ticket",
+      "kind": "card",
+      "refersTo": "mission",
+      "description": "The assignment handed to the reader on arrival: dossier code, target name, museum · city · country and three actions. A 2px amber rule marks it as live.",
+      "html": "<aside class=\"ds-mission\"><div class=\"ds-mission-head\"><span>MISSION ASSIGNED</span><b>SNK-072</b></div><p class=\"ds-mission-kicker\">YOUR TARGET</p><h3 class=\"ds-mission-name\">B-413</h3><p class=\"ds-mission-place\">Museum of the World Oceans · Kaliningrad · Russia</p><div class=\"ds-mission-actions\"><button class=\"ds-mission-go\">OPEN FILE</button><button class=\"ds-mission-line\">ROUTE</button><button class=\"ds-mission-line\">ANOTHER</button></div></aside>",
+      "css": ".ds-mission { position:relative; padding:13px 14px 14px; border:1px solid rgba(232,241,245,.13); background:rgba(4,7,10,.45); color:var(--txt,#e8f1f5); border-radius:0; font-family:var(--sans,'Archivo',sans-serif); } .ds-mission::before { content:''; position:absolute; left:-1px; top:-1px; bottom:-1px; width:2px; background:var(--amber,#ffb648); } .ds-mission-head { display:flex; align-items:center; justify-content:space-between; gap:10px; font-family:var(--mono,monospace); font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:var(--mut,#7d949e); } .ds-mission-head b { color:var(--amber,#ffb648); font-weight:600; letter-spacing:.14em; } .ds-mission-kicker { margin:10px 0 4px; font-family:var(--mono,monospace); font-size:7px; letter-spacing:.22em; text-transform:uppercase; color:var(--mut,#7d949e); } .ds-mission-name { margin:0; font-size:clamp(20px,3.2vw,28px); font-weight:700; line-height:1; letter-spacing:-.01em; text-transform:uppercase; } .ds-mission-place { margin:5px 0 0; font-family:var(--mono,monospace); font-size:9px; line-height:1.4; letter-spacing:.08em; text-transform:uppercase; color:var(--dim,#93a9b2); } .ds-mission-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; } .ds-mission-go, .ds-mission-line { min-height:34px; padding:0 11px; border:1px solid transparent; font-family:var(--mono,monospace); font-size:9px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; border-radius:0; } .ds-mission-go { background:var(--amber,#ffb648); color:var(--ink,#04070a); } .ds-mission-line { background:transparent; border-color:rgba(232,241,245,.2); color:var(--txt,#e8f1f5); } .ds-mission-line:hover { border-color:var(--amber,#ffb648); color:var(--amber,#ffb648); }"
+    },
+    {
+      "name": "Tactical Switch",
+      "kind": "chip",
+      "refersTo": "switch",
+      "description": "A filter on the submarine board: square, hairline, a glowing data dot and a mono count. Pressed takes 13% of the data hue as ground and 60% as border.",
+      "html": "<div style=\"display:flex;gap:5px\"><button class=\"ds-switch\" style=\"--c:#ffb648\" aria-pressed=\"true\"><i></i>Diesel <b>119</b></button><button class=\"ds-switch\" style=\"--c:#7dffb2\" aria-pressed=\"false\"><i></i>Nuclear <b>24</b></button></div>",
+      "css": ".ds-switch { --c:var(--mut,#7d949e); display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:0 9px; border:1px solid rgba(232,241,245,.13); background:rgba(4,7,10,.38); color:var(--dim,#93a9b2); font-family:var(--mono,monospace); font-size:8px; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; border-radius:0; cursor:pointer; transition:color 150ms cubic-bezier(.2,.7,.2,1), border-color 150ms cubic-bezier(.2,.7,.2,1), background 150ms cubic-bezier(.2,.7,.2,1); } .ds-switch i { width:5px; height:5px; flex:none; border-radius:50%; background:var(--c); box-shadow:0 0 6px var(--c); opacity:.4; } .ds-switch b { font-weight:400; font-size:7px; color:var(--mut,#7d949e); } .ds-switch:hover { color:var(--txt,#e8f1f5); border-color:rgba(232,241,245,.32); } .ds-switch[aria-pressed=\"true\"] { color:var(--txt,#e8f1f5); border-color:color-mix(in srgb, var(--c) 60%, transparent); background:color-mix(in srgb, var(--c) 13%, transparent); } .ds-switch[aria-pressed=\"true\"] i { opacity:1; } .ds-switch[aria-pressed=\"true\"] b { color:var(--txt,#e8f1f5); }"
+    },
+    {
+      "name": "Boot Terminal",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "The acquisition panel that overlays the top-left of the plot on first load: secure link, sheet snapshot and a live contact count. Fades out when the count completes.",
+      "html": "<div class=\"ds-boot\"><div class=\"ds-boot-head\"><i class=\"ds-boot-led\"></i><span>SECURE LINK</span><b>CONNECTING</b></div><ul class=\"ds-boot-log\"><li><span>Acoustic plot</span><b class=\"is-ok\">OK</b></li><li><span>Sheet snapshot</span><b class=\"is-ok\">160</b></li></ul><div class=\"ds-boot-acquire\"><div class=\"ds-boot-top\"><span>RECEIVING CONTACTS</span><b>160 / 160</b></div><div class=\"ds-boot-bar\"><i style=\"width:100%\"></i></div></div></div>",
+      "css": ".ds-boot { width:360px; max-width:100%; padding:12px 13px 13px; border:1px solid rgba(232,241,245,.13); background:rgba(5,10,14,.9); backdrop-filter:blur(12px); color:var(--txt,#e8f1f5); font-family:var(--mono,monospace); font-size:8px; letter-spacing:.12em; text-transform:uppercase; border-radius:0; } .ds-boot-head { display:flex; align-items:center; gap:8px; padding-bottom:9px; border-bottom:1px solid rgba(232,241,245,.07); color:var(--dim,#93a9b2); } .ds-boot-head b { margin-left:auto; color:var(--amber,#ffb648); font-weight:600; } .ds-boot-led { width:6px; height:6px; border-radius:50%; background:var(--alarm,#ff4d3d); box-shadow:0 0 8px var(--alarm,#ff4d3d); } .ds-boot-log { list-style:none; margin:9px 0 10px; padding:0; display:grid; gap:3px; } .ds-boot-log li { display:flex; justify-content:space-between; gap:8px; } .ds-boot-log b { color:var(--amber,#ffb648); font-weight:500; } .ds-boot-acquire { border-top:1px solid rgba(232,241,245,.07); padding-top:9px; } .ds-boot-top { display:flex; justify-content:space-between; gap:10px; color:var(--dim,#93a9b2); } .ds-boot-top b { color:var(--txt,#e8f1f5); font-weight:600; } .ds-boot-bar { margin-top:7px; height:3px; background:rgba(232,241,245,.12); overflow:hidden; } .ds-boot-bar i { display:block; height:100%; background:var(--amber,#ffb648); box-shadow:0 0 10px rgba(255,182,72,.7); }"
     }
   ],
   "narrative": {
-    "northStar": "Acoustic Plot",
-    "overview": "The archive behaves like the plot in a submarine's control room at night: a dark sea, a handful of cool instrument readouts, and amber reserved for whatever is live. Map tiles are literally the floor of the page — the sticky plot stays behind the cover, the operations console and the register while the archive scrolls over it. Nothing is decorated to look technical; the technical objects — coordinates, hull codes, years, counts — are the ornament. The voice is a working naval record, not a war game: heavy condensed uppercase headlines, mono labels at small size with wide tracking, and colour used only to encode data. Density is deliberate: panels sit on hairline rules, corners are square, and the only curves are contact dots, sonar rings and the sweep.",
+    "northStar": "The Assignment",
+    "overview": "The archive behaves like a confidential briefing built on a submarine plot: on arrival it assigns one preserved submarine, then opens its file. The map is the only control surface, framed by a tactical board of square switches with glowing data dots; amber marks whatever is live, red marks the locked contact. The visual language is still the Acoustic Plot — near-black sea, cool readouts, heavy condensed uppercase, mono measurements — but it now lives in a bounded map section instead of a fixed backdrop, so the home reads as three decisive blocks: hero, map, detail. Light mode is a print of the same instrument on warm declassified stock, not a different brand. Nothing is decorated to look technical: the technical objects (codes, coordinates, years, counts) are the ornament.",
     "keyCharacteristics": [
-      "Full-bleed Esri dark plot behind every surface, with contacts acquired on load.",
-      "One ink field, one text colour, one live accent (amber), one alarm (red).",
+      "Three-block home: assigned mission, tactical plot, dossier of the target.",
+      "One assignment per visit, echoed as MISSION TARGET in the detail block.",
+      "Map as the only filter surface: bottom tactical panel on mobile, four-column board on desktop.",
+      "Two printed states from the same tokens: night plot (default) and DECLASSIFIED PAPER.",
       "Archivo condensed display plus Azeret Mono data labels; no third face.",
       "Zero radius, one-pixel hairlines, tonal elevation instead of shadows.",
-      "Sequential entry: gate → boot telemetry → cover → console → watches → featured → briefing → origin.",
       "Every count is generated from the JSON snapshot at runtime."
     ],
     "rules": [
-      { "name": "The One Voice Rule", "body": "Amber appears on ≤10% of any screen and always marks something alive or selected. If a surface needs emphasis and amber is already spent, use type weight or a hairline, not another colour.", "section": "colors" },
-      { "name": "The Encoding Rule", "body": "A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a badge, a border tint, a bar or text — never as a panel background.", "section": "colors" },
-      { "name": "The Measurement Rule", "body": "Mono is for anything the instrument would measure or name: codes, years, counts, ranges, coordinates, labels, table cells. Running prose and headings are always Archivo.", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "A surface never gains a shadow to look important. If it must separate from the plot, it gains a hairline, a tonal step, or blur — never a cast shadow.", "section": "elevation" },
-      { "name": "The Glow-Is-Data Rule", "body": "Halos exist only where something is transmitting: contacts, locks, the live indicator. A halo on a button or a card is a bug.", "section": "elevation" }
+      {
+        "name": "The One Voice Rule",
+        "body": "Amber appears on ≤10% of any screen and always marks something alive or selected. If amber is already spent, use type weight or a hairline.",
+        "section": "colors"
+      },
+      {
+        "name": "The Encoding Rule",
+        "body": "A colour that encodes data (propulsion, situation) never becomes a surface colour. It may appear as a dot, a badge, a border tint, a bar or text — never as a panel background.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "Light mode is a print of the same instrument, not a different brand. Every surface, hairline and data hue must remain legible in both themes; never hard-code a dark colour on a themed surface.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measurement Rule",
+        "body": "Mono is for anything the instrument would measure or name: codes, years, counts, ranges, coordinates, labels, table cells. Running prose and headings are always Archivo.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "A surface never gains a shadow to look important. If it must separate from the plot, it gains a hairline, a tonal step, or blur — never a cast shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Glow-Is-Data Rule",
+        "body": "Halos exist only where something is transmitting: contacts, locks, the live indicator. A halo on a button or a card is a bug.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do keep the plot full-bleed and visible behind the cover, console and register.",
+      "Do assign a destination on arrival and let the detail block answer it.",
+      "Do keep the map as the only filter surface; every control is reachable from the tactical panel.",
       "Do reserve amber for live data and selection, and red for the single locked contact.",
-      "Do set every code, count, year and range in mono with 0.12em+ tracking.",
-      "Do use a hairline, a tonal step or blur to separate surfaces; keep corners at 0.",
-      "Do let the headline carry the section, with a mono note beside it for the count.",
+      "Do test both themes on every surface, especially sheets and media wells.",
+      "Do set every code, count, year and range in mono with 0.10em+ tracking.",
       "Do generate every number from the JSON snapshot at runtime.",
-      "Do honour prefers-reduced-motion by removing the sweep, the reveals and the boot sequence."
+      "Do honour prefers-reduced-motion by removing the ping, the acquisition sequence and the reveals."
     ],
     "donts": [
       "Don't add border-radius to surfaces or buttons; only data marks are round.",
       "Don't add drop shadows to cards, panels or buttons.",
       "Don't use amber or red as a surface fill beyond the primary button and the lock tint.",
-      "Don't place a kicker, eyebrow or numbered label above a heading.",
+      "Don't hard-code dark colours inside themed components; use --panel, --ink-*, --line and --txt.",
       "Don't use mono for running prose, or Archivo for measurements.",
       "Don't put a coloured left/right border thicker than 1px on cards or callouts.",
-      "Don't animate layout properties, or animate anything that is not a state change or the boot/plot sequence."
+      "Don't animate layout properties, or animate anything that is not a state change, the acquisition sequence or the plot."
     ]
   }
 }
