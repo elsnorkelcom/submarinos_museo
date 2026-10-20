@@ -429,6 +429,8 @@ function cacheDom() {
     bootLog: byId("boot-log"),
     bootBar: byId("boot-bar"),
     bootState: byId("boot-state"),
+    loadbar: byId("loadbar"),
+    loadbarFill: byId("loadbar-fill"),
     menu: byId("menu"),
     menuOpen: byId("menu-open"),
     menuClose: byId("menu-close"),
@@ -666,6 +668,12 @@ function startAcquisition() {
   let index = 0;
 
   if (dom.acquireTotal) dom.acquireTotal.textContent = String(total);
+  if (dom.loadbar) {
+    dom.loadbar.classList.remove("is-done");
+    dom.loadbar.removeAttribute("aria-hidden");
+    dom.loadbar.setAttribute("aria-valuenow", "0");
+  }
+  if (dom.loadbarFill) dom.loadbarFill.style.width = "0%";
 
   if (reduceMotion()) {
     state.units.forEach((unit) => {
@@ -699,16 +707,15 @@ function startAcquisition() {
 function updateAcquireCounter() {
   const count = state.added.size;
   if (dom.acquireCount) dom.acquireCount.textContent = pad3(count);
-  if (dom.acquireBar) {
-    const pct = state.units.length ? (count / state.units.length) * 100 : 0;
-    dom.acquireBar.style.width = `${pct.toFixed(1)}%`;
-  }
+  const pct = state.units.length ? (count / state.units.length) * 100 : 0;
+  if (dom.acquireBar) dom.acquireBar.style.width = `${pct.toFixed(1)}%`;
+  if (dom.loadbarFill) dom.loadbarFill.style.width = `${pct.toFixed(1)}%`;
+  if (dom.loadbar) dom.loadbar.setAttribute("aria-valuenow", String(Math.round(pct)));
 }
 
 function finishAcquisition() {
   state.acquiring = false;
   updateAcquireCounter();
-  bootDone();
   sfxPing();
   applyFilters();
 }
@@ -736,12 +743,24 @@ async function runPlotBoot() {
     dom.bootLog.append(row);
     await wait(300);
   }
-  await wait(420);
+  const started = Date.now();
+  while (state.acquiring && Date.now() - started < 4500) await wait(80);
+  await wait(300);
   bootDone();
 }
 
 function bootDone() {
-  if (!dom.boot) return;
+  if (!dom.boot || state.booted) return;
+  state.booted = true;
+  if (dom.loadbarFill) dom.loadbarFill.style.width = "100%";
+  if (dom.loadbar) {
+    dom.loadbar.setAttribute("aria-valuenow", "100");
+    window.setTimeout(() => {
+      if (!dom.loadbar) return;
+      dom.loadbar.classList.add("is-done");
+      dom.loadbar.setAttribute("aria-hidden", "true");
+    }, 650);
+  }
   dom.boot.classList.add("is-done");
   dom.boot.setAttribute("aria-hidden", "true");
   if (dom.bootState) dom.bootState.textContent = t("plot.online");

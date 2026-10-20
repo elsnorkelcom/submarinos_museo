@@ -1528,6 +1528,24 @@ html[data-theme="light"] .theme-toggle__moon { display: block; }
 .plot-boot__bar { margin-top: 7px; height: 3px; background: rgb(var(--edge) / 0.12); overflow: hidden; }
 .plot-boot__bar i { display: block; height: 100%; width: 0; background: var(--amber); box-shadow: 0 0 10px rgb(255 182 72 / 0.7); transition: width 120ms linear; }
 
+/* entry loading bar — under the rail, over the hero, gone once the plot is acquired */
+.loadbar {
+  position: fixed; left: 0; right: 0; top: var(--rail); height: 3px;
+  z-index: 89; pointer-events: none;
+  background: rgb(var(--edge) / 0.08);
+  opacity: 1; transition: opacity 420ms var(--ease);
+}
+.loadbar i {
+  display: block; height: 100%; width: 0;
+  background: var(--amber);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--amber) 55%, transparent);
+  transition: width 120ms linear;
+}
+.loadbar.is-done { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .loadbar, .loadbar i { transition: none; }
+}
+
 /* ---------- tactical console ---------- */
 .tactical {
   position: absolute; z-index: 30; left: 0; right: 0; bottom: 0;

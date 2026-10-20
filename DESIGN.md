@@ -227,10 +227,10 @@ The only circles are data and controls: contact dots, situation badges, cluster 
 
 - **Instrument ease** `cubic-bezier(.2,.7,.2,1)` for colour/border/transform, 140–200ms.
 - **Settle ease** `cubic-bezier(.16,1,.3,1)` for sheets, modal entry and reveals, 400–700ms.
-- **Acquisition** — on first load the boot terminal reports the secure link and contact count while contacts are added to the map; it fades out and leaves the map interactive.
+- **Acquisition** — on every home load a 3px entry bar under the rail fills with the contact count while the boot terminal reports the secure link; once the plot is complete both fade out and leave the map interactive.
 - **Lock ping** — 2.2s expanding ring on the assigned/locked contact only.
 - **Video** — the modal opens full-screen on mobile (`100dvh`) with a 43px hint bar; `GIRAR` rotates a 16:9 player 90° in CSS and resets on close.
-- `prefers-reduced-motion: reduce` removes the ping, boot sequence, reveals and sheet/panel transitions.
+- `prefers-reduced-motion: reduce` removes the ping, boot log timing, reveals and sheet/panel transitions; the entry bar jumps to complete and fades.
 
 ## Components
 
@@ -240,6 +240,10 @@ The only circles are data and controls: contact dots, situation badges, cluster 
 - **Solid (ink)**: ink ground, cream text — the light-theme primary and the mission's "open file".
 - **Line**: transparent ground, hairline border; hover swaps to amber.
 - Focus: 2px amber outline, 3px offset, everywhere.
+
+### Entry bar
+
+A 3px amber bar fixed under the rail for the duration of the home acquisition. It has no label of its own: the `role="progressbar"` value and the boot terminal supply the context. It fades 650ms after the last contact, never before. On reduced motion it jumps to 100 and fades without a width transition.
 
 ### Tactical switches
 38px tall, square, transparent ink ground with a hairline; a 5px propulsion dot (or 14px situation badge) and a 7px count. Pressed: border and text take the data hue at 60% / 13% mix, dot at full glow. The CLEAR chip is the only red control.

@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-  <link rel="stylesheet" href="assets/css/app.css?v=20261020c">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261020d">
   <script>
     (function () {
       try {
@@ -38,6 +38,10 @@
 </head>
 <body data-page="home">
   <a class="skip" href="#plot" data-i18n="skip.plot">Skip to the plot</a>
+
+  <div class="loadbar" id="loadbar" role="progressbar" aria-label="Cargando el archivo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-i18n-attr="aria-label:boot.loading">
+    <i id="loadbar-fill"></i>
+  </div>
 
   <svg class="sprite" aria-hidden="true" width="0" height="0">
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
@@ -296,6 +300,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-  <script type="module" src="assets/js/app.js?v=20261020c"></script>
+  <script type="module" src="assets/js/app.js?v=20261020d"></script>
 </body>
 </html>
