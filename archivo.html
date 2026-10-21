@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#04070a">
+  <meta name="theme-color" content="#040806">
   <title data-i18n="origin.title">About the Archive // Naval Archive</title>
   <meta name="description" content="How the archive is built, where the data comes from and how the plot works." data-i18n-attr="content:origin.note">
   <link rel="canonical" href="https://submarinos-museo-del-mundo.elsnorkel.com/archivo.html">
@@ -16,8 +16,8 @@
   <link rel="icon" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/app.css?v=20261020d">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261020f">
   <script>
     (function () {
       try {
@@ -26,7 +26,7 @@
           ? stored
           : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
         document.documentElement.dataset.theme = theme;
-        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f2efe6" : "#04070a");
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f2efe6" : "#040806");
       } catch (e) { /* private mode */ }
     })();
   </script>
@@ -215,6 +215,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script type="module" src="assets/js/app.js?v=20261020d"></script>
+  <script type="module" src="assets/js/app.js?v=20261020f"></script>
 </body>
 </html>
