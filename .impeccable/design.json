@@ -414,9 +414,9 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The single phosphor-green action: open the assigned file, open the register, apply the mission.",
-      "html": "<button class=\"ds-btn-amber\"><span>ENTER THE ARCHIVE</span><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></button>",
-      "css": ".ds-btn-amber { display:inline-flex; align-items:center; justify-content:center; gap:14px; padding:19px 28px; border:1px solid transparent; background:var(--amber,#7dff9a); color:var(--ink,#040806); font-family:var(--mono,monospace); font-size:12px; font-weight:600; letter-spacing:.22em; line-height:1; text-transform:uppercase; border-radius:0; cursor:pointer; transition:background 160ms cubic-bezier(.2,.7,.2,1), transform 160ms cubic-bezier(.2,.7,.2,1); } .ds-btn-amber:hover { background:#4fd979; transform:translateY(-1px); } .ds-btn-amber:active { transform:translateY(0); } .ds-btn-amber:focus-visible { outline:2px solid var(--amber,#7dff9a); outline-offset:3px; }"
+      "description": "The single solid-green action: open the assigned file, open the register, apply the mission.",
+      "html": "<button class=\"ds-btn-solid\"><span>ENTER THE ARCHIVE</span><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></button>",
+      "css": ".ds-btn-solid { display:inline-flex; align-items:center; justify-content:center; gap:14px; padding:19px 28px; border:1px solid transparent; background:var(--solid,#3fbf6a); color:var(--on-solid,#040806); font-family:var(--mono,monospace); font-size:12px; font-weight:600; letter-spacing:.22em; line-height:1; text-transform:uppercase; border-radius:0; cursor:pointer; transition:background 160ms cubic-bezier(.2,.7,.2,1), transform 160ms cubic-bezier(.2,.7,.2,1); } .ds-btn-solid:hover { background:#4fd979; transform:translateY(-1px); } .ds-btn-solid:active { transform:translateY(0); } .ds-btn-solid:focus-visible { outline:2px solid var(--amber,#7dff9a); outline-offset:3px; }"
     },
     {
       "name": "Line Button",
