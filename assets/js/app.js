@@ -525,7 +525,7 @@ function applyTheme(theme, { persist = true, swap = true } = {}) {
   if (persist) {
     try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* private */ }
   }
-  if (dom.metaTheme) dom.metaTheme.setAttribute("content", next === "light" ? "#f2efe6" : "#04070a");
+  if (dom.metaTheme) dom.metaTheme.setAttribute("content", next === "light" ? "#f2efe6" : "#040806");
   if (dom.themeToggle) {
     const label = next === "light" ? t("theme.toDark") : t("theme.toLight");
     dom.themeToggle.setAttribute("aria-label", label);
@@ -540,6 +540,7 @@ function swapTiles(theme) {
   const set = TILES[theme] || TILES.dark;
   state.tiles.setUrl(set.base);
   state.labels.setUrl(set.labels);
+  state.labels.setOpacity(next === "light" ? 0.5 : 0.82);
 }
 
 /* ---------- sound ---------- */
@@ -620,8 +621,12 @@ function initMap() {
     attributionControl: false
   });
 
-  state.tiles = L.tileLayer(TILES[theme].base, { maxZoom: 11 }).addTo(state.map);
-  state.labels = L.tileLayer(TILES[theme].labels, { maxZoom: 11, opacity: 0.5 }).addTo(state.map);
+  state.tiles = L.tileLayer(TILES[theme].base, { maxZoom: 11, className: "plot-tiles" }).addTo(state.map);
+  state.labels = L.tileLayer(TILES[theme].labels, {
+    maxZoom: 11,
+    opacity: theme === "light" ? 0.5 : 0.82,
+    className: "plot-labels"
+  }).addTo(state.map);
 
   state.cluster = L.markerClusterGroup({
     showCoverageOnHover: false,
