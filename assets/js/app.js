@@ -542,7 +542,7 @@ function swapTiles(theme) {
   const set = TILES[theme] || TILES.dark;
   state.tiles.setUrl(set.base);
   state.labels.setUrl(set.labels);
-  state.labels.setOpacity(next === "light" ? 0.5 : 0.82);
+  state.labels.setOpacity(theme === "light" ? 0.5 : 0.82);
 }
 
 /* ---------- sound ---------- */
