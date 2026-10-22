@@ -58,7 +58,7 @@ new_en = {
     "gate.skip": "Skip intro",
     "gate.foot": "OPEN RECORD",
 
-    "hud.id": "NMMA // NAVAL ARCHIVE",
+    "hud.id": "SNK // NAVAL ARCHIVE",
     "hud.live": "PLOT LIVE",
     "hud.sound": "Sound",
     "hud.menu": "Menu",
@@ -68,7 +68,7 @@ new_en = {
     "nav.eras": "ERAS",
     "nav.register": "REGISTER",
 
-    "cover.kicker": "ARCHIVE NMMA-26 // PUBLIC RECORD",
+    "cover.kicker": "ARCHIVE SNK-26 // PUBLIC RECORD",
     "cover.title1": "SUBMARINE",
     "cover.title2": "MUSEUMS",
     "cover.sub": "Every preserved submarine on earth, plotted hull by hull: position, condition, file and film.",
@@ -125,7 +125,7 @@ new_en = {
     "register.back": "BACK TO PLOT",
     "register.emptySide": "Pick a row to open its file.",
 
-    "boot.l1": "ARCHIVE NMMA-26 · PUBLIC RECORD",
+    "boot.l1": "ARCHIVE SNK-26 · PUBLIC RECORD",
     "boot.l2": "LOADING CONTACTS",
     "boot.l3": "VERIFYING HULLS",
     "boot.l4": "SYNCING FILMS",
@@ -158,7 +158,7 @@ new_es = {
     "gate.skip": "Saltar intro",
     "gate.foot": "REGISTRO ABIERTO",
 
-    "hud.id": "NMMA // ARCHIVO NAVAL",
+    "hud.id": "SNK // ARCHIVO NAVAL",
     "hud.live": "PLOT EN VIVO",
     "hud.sound": "Sonido",
     "hud.menu": "Menú",
@@ -168,7 +168,7 @@ new_es = {
     "nav.eras": "ÉPOCAS",
     "nav.register": "REGISTRO",
 
-    "cover.kicker": "ARCHIVO NMMA-26 // REGISTRO PÚBLICO",
+    "cover.kicker": "ARCHIVO SNK-26 // REGISTRO PÚBLICO",
     "cover.title1": "SUBMARINOS",
     "cover.title2": "MUSEO",
     "cover.sub": "Cada submarino preservado del mundo, trazado casco a casco: posición, estado, expediente y vídeo.",
@@ -225,7 +225,7 @@ new_es = {
     "register.back": "VOLVER AL PLOT",
     "register.emptySide": "Elige una fila para abrir su expediente.",
 
-    "boot.l1": "ARCHIVO NMMA-26 · REGISTRO PÚBLICO",
+    "boot.l1": "ARCHIVO SNK-26 · REGISTRO PÚBLICO",
     "boot.l2": "CARGANDO CONTACTOS",
     "boot.l3": "VERIFICANDO CASCOS",
     "boot.l4": "SINCRONIZANDO VÍDEOS",

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Imagen próximamente / Image coming soon">
+  <g fill="none" stroke="#8b90a3" stroke-width="1">
+    <g opacity=".14">
+      <path d="M0 40h640M0 80h640M0 120h640M0 160h640M0 200h640M0 240h640M0 280h640M0 320h640"/>
+      <path d="M40 0v360M80 0v360M120 0v360M160 0v360M200 0v360M240 0v360M280 0v360M320 0v360M360 0v360M400 0v360M440 0v360M480 0v360M520 0v360M560 0v360M600 0v360"/>
+    </g>
+    <g opacity=".22">
+      <circle cx="320" cy="176" r="58"/>
+      <circle cx="320" cy="176" r="104"/>
+      <circle cx="320" cy="176" r="150"/>
+    </g>
+    <g opacity=".55">
+      <path d="M154 188c18-20 48-31 92-33 34-2 73 1 106 9 22 5 39 13 51 24-12 11-29 19-51 24-33 8-72 11-106 9-44-2-74-13-92-33Z"/>
+      <path d="M302 156v-22h34v22M312 134v-16h8v16M333 134v-16h5v16"/>
+      <path d="M266 188h110M286 177v22M356 177v22"/>
+      <circle cx="210" cy="188" r="4"/>
+      <path d="M470 188h36M506 188l-8-5M506 188l-8 5"/>
+    </g>
+  </g>
+  <g fill="#8b90a3" font-family="'IBM Plex Mono', Consolas, monospace" text-anchor="middle">
+    <text x="320" y="292" font-size="22" letter-spacing="3.2" opacity=".95">IMAGEN PRÓXIMAMENTE</text>
+    <text x="320" y="314" font-size="11" letter-spacing="2.4" opacity=".7">IMAGE COMING SOON</text>
+  </g>
+  <g fill="#8b90a3" font-family="'IBM Plex Mono', Consolas, monospace" font-size="8" letter-spacing="2" opacity=".45">
+    <text x="24" y="28">SNK // ARCHIVO NAVAL</text>
+    <text x="616" y="28" text-anchor="end">SNK-26</text>
+  </g>
+</svg>

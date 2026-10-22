@@ -40,6 +40,8 @@ const SITUATION_META = {
   monumento: { color: "var(--monumento)", img: "assets/img/situation/monumento.svg" }
 };
 const SITUATION_ORDER = ["flote", "agua", "tierra", "cerrado", "monumento"];
+const UNKNOWN_SITUATION_IMG = "assets/img/situation/unknown.svg";
+const IMAGE_PLACEHOLDER = "assets/img/placeholder-coming-soon.svg";
 
 const TILES = {
   dark: {
@@ -47,11 +49,50 @@ const TILES = {
     labels: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
   },
   light: {
-    base: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    labels: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+    base: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    labels: ""
   }
 };
 const TILE_ATTRIB = 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>';
+const BORDERS_URL = "assets/data/borders-110m.geojson";
+
+function borderStyle(theme) {
+  return theme === "light"
+    ? { color: "#465861", weight: 0.75, opacity: 0.42, lineCap: "round", lineJoin: "round" }
+    : { color: "#9fd8ff", weight: 0.75, opacity: 0.4, lineCap: "round", lineJoin: "round" };
+}
+
+function styleBorders(theme) {
+  if (state.borders) state.borders.setStyle(borderStyle(theme));
+}
+
+function syncBorders() {
+  if (!state.map || !state.borders) return;
+  const visible = state.map.getZoom() <= 5;
+  if (visible && !state.map.hasLayer(state.borders)) state.borders.addTo(state.map);
+  if (!visible && state.map.hasLayer(state.borders)) state.map.removeLayer(state.borders);
+}
+
+function loadBorders(map, theme) {
+  if (state.borders || state.bordersPending) return;
+  state.bordersPending = true;
+  fetch(BORDERS_URL)
+    .then((response) => {
+      if (!response.ok) throw new Error("borders unavailable");
+      return response.json();
+    })
+    .then((geo) => {
+      if (!state.map || state.map !== map) return;
+      state.borders = L.geoJSON(geo, {
+        interactive: false,
+        pane: "borders",
+        style: () => ({ ...borderStyle(state.theme), pane: "borders" })
+      }).addTo(map);
+      syncBorders();
+    })
+    .catch(() => { /* the base map already carries borders */ })
+    .finally(() => { state.bordersPending = false; });
+}
 
 const SITE_URL = "https://submarinos-museo-del-mundo.elsnorkel.com/";
 
@@ -80,6 +121,8 @@ const state = {
   cluster: null,
   tiles: null,
   labels: null,
+  borders: null,
+  bordersPending: false,
   markers: new Map(),
   added: new Set(),
   acquiring: false,
@@ -125,6 +168,14 @@ function typeLabelOf(key) {
 
 function situationLabelOf(key) {
   return key ? t(`situation.${key}`) : "";
+}
+
+function situationTextOf(unit) {
+  return unit.situation ? situationLabelOf(unit.situation) : t("situation.unknown");
+}
+
+function markerTooltip(unit) {
+  return `<b>${esc(unit.dossier)}</b> · ${esc(unit.name)}<span>${esc(typeLabelOf(unit.typeKey))} · ${esc(situationTextOf(unit))}</span>`;
 }
 
 function eraLabelOf(key) {
@@ -538,11 +589,27 @@ function applyTheme(theme, { persist = true, swap = true } = {}) {
 }
 
 function swapTiles(theme) {
-  if (!state.tiles || !state.labels) return;
+  if (!state.map || !state.tiles) return;
   const set = TILES[theme] || TILES.dark;
+  const L = window.L;
   state.tiles.setUrl(set.base);
-  state.labels.setUrl(set.labels);
-  state.labels.setOpacity(theme === "light" ? 0.5 : 0.82);
+
+  if (state.labels) {
+    state.map.removeLayer(state.labels);
+    state.labels = null;
+  }
+
+  if (set.labels) {
+    state.labels = L.tileLayer(set.labels, {
+      maxZoom: 11,
+      opacity: theme === "light" ? 0.5 : 0.82,
+      pane: "labels",
+      className: "plot-labels"
+    }).addTo(state.map);
+  }
+
+  styleBorders(theme);
+  syncBorders();
 }
 
 /* ---------- sound ---------- */
@@ -599,9 +666,14 @@ function setSound(on, { persist = true } = {}) {
 
 function contactIcon(unit, locked = false) {
   const color = TYPE_META[unit.typeKey]?.color || "#e8f1f5";
+  const badge = unit.situation && SITUATION_META[unit.situation]
+    ? SITUATION_META[unit.situation].img
+    : UNKNOWN_SITUATION_IMG;
   return L.divIcon({
     className: "",
-    html: `<span class="contact${locked ? " is-locked" : ""}"><i class="contact__dot" style="--c:${color}"></i></span>`,
+    html: `<span class="contact${locked ? " is-locked" : ""}" style="--p:${color}" role="img" aria-label="${esc(`${typeLabelOf(unit.typeKey)} · ${situationTextOf(unit)}`)}">
+      <img class="contact__badge" src="${badge}" alt="">
+    </span>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15]
   });
@@ -623,12 +695,26 @@ function initMap() {
     attributionControl: false
   });
 
+  state.map.createPane("borders");
+  const borderPane = state.map.getPane("borders");
+  borderPane.style.zIndex = 250;
+  borderPane.style.pointerEvents = "none";
+
+  state.map.createPane("labels");
+  const labelsPane = state.map.getPane("labels");
+  labelsPane.style.zIndex = 300;
+  labelsPane.style.pointerEvents = "none";
+
   state.tiles = L.tileLayer(TILES[theme].base, { maxZoom: 11, className: "plot-tiles" }).addTo(state.map);
-  state.labels = L.tileLayer(TILES[theme].labels, {
-    maxZoom: 11,
-    opacity: theme === "light" ? 0.5 : 0.82,
-    className: "plot-labels"
-  }).addTo(state.map);
+  if (TILES[theme].labels) {
+    state.labels = L.tileLayer(TILES[theme].labels, {
+      maxZoom: 11,
+      opacity: theme === "light" ? 0.5 : 0.82,
+      pane: "labels",
+      className: "plot-labels"
+    }).addTo(state.map);
+  }
+  loadBorders(state.map, theme);
 
   state.cluster = L.markerClusterGroup({
     showCoverageOnHover: false,
@@ -647,17 +733,29 @@ function initMap() {
   state.units.forEach((unit) => {
     const marker = L.marker([unit.lat, unit.lng], {
       icon: contactIcon(unit),
-      title: `${unit.dossier} ${unit.name}`,
+      title: `${unit.dossier} ${unit.name} · ${typeLabelOf(unit.typeKey)} · ${situationTextOf(unit)}`,
       riseOnHover: true,
       keyboard: false
     });
-    marker.bindTooltip(`${esc(unit.dossier)} · ${esc(unit.name)}`, { direction: "top", offset: [0, -8], opacity: 1 });
+    marker.bindTooltip(markerTooltip(unit), { direction: "top", offset: [0, -8], opacity: 1 });
     marker.on("click", () => lockUnit(unit.id, { fly: true, scroll: true }));
     state.markers.set(unit.id, marker);
   });
 
+  state.map.on("zoomend", syncBorders);
   state.map.on("zoomend moveend", updateMapReadout);
   updateMapReadout();
+}
+
+function refreshMarkerTooltips() {
+  state.units.forEach((unit) => {
+    const marker = state.markers.get(unit.id);
+    if (!marker) return;
+    marker.setTooltipContent(markerTooltip(unit));
+    const title = `${unit.dossier} ${unit.name} · ${typeLabelOf(unit.typeKey)} · ${situationTextOf(unit)}`;
+    marker.options.title = title;
+    if (marker._icon) marker._icon.title = title;
+  });
 }
 
 function updateMapReadout() {
@@ -1016,7 +1114,7 @@ function dossierMarkup(unit, { sheet = false } = {}) {
       </button>`
     : unit.image
       ? `<div class="dossier__media"><img src="${esc(unit.image)}" alt="${esc(unit.name)}" loading="lazy"></div>`
-      : `<div class="dossier__media dossier__media--empty">${esc(t("dossier.blueprintPending"))}</div>`;
+      : `<div class="dossier__media dossier__media--empty"><img src="${IMAGE_PLACEHOLDER}" alt="${esc(t("dossier.imagePending"))}" loading="lazy"></div>`;
 
   const facts = [
     [t("dossier.specClass"), unit.class],
@@ -1313,7 +1411,7 @@ function unitCardMarkup(unit) {
   const video = getVideoUrl(unit);
   const media = unit.image
     ? `<img src="${esc(unit.image)}" alt="" loading="lazy">`
-    : `<span class="unit-card__media--empty" aria-hidden="true"><svg><use href="#i-sonar"></use></svg></span>`;
+    : `<span class="unit-card__media--empty" aria-hidden="true"><img src="${IMAGE_PLACEHOLDER}" alt="" loading="lazy"></span>`;
   return `<a class="unit-card" href="${esc(unitHref(unit))}">
     <span class="unit-card__media">${media}<span class="unit-card__badge">${esc(unit.dossier || "—")}</span></span>
     <span class="unit-card__body">
@@ -1332,7 +1430,9 @@ function billboardMarkup(unit) {
   const video = getVideoUrl(unit);
   const place = [unit.museum, unit.city, countryLabel(unit.country)].filter(Boolean).join(" · ");
   return `<div class="billboard__media ${unit.image ? "" : "billboard__media--empty"}">
-      ${unit.image ? `<img src="${esc(unit.image)}" alt="${esc(unit.name)}" loading="lazy">` : ""}
+      ${unit.image
+        ? `<img src="${esc(unit.image)}" alt="${esc(unit.name)}" loading="lazy">`
+        : `<img src="${IMAGE_PLACEHOLDER}" alt="${esc(t("dossier.imagePending"))}" loading="lazy">`}
     </div>
     <div class="billboard__body">
       <div>
@@ -1957,6 +2057,7 @@ function renderAll() {
   renderSocial();
   renderShare();
   renderOrigin();
+  refreshMarkerTooltips();
   observeReveals();
 
   document.querySelectorAll("[data-dossier-close]").forEach((node) => {

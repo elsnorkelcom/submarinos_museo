@@ -15,6 +15,7 @@ para cada unidad, pensado primero para móvil.
 - `data/submarines.json` — 160 unidades normalizadas con coordenadas, tipo, país, museo y media.
 - `data/config.json` — textos, logo, imagen de héroe, canal de vídeo y redes sociales.
 - `data/i18n.json` — diccionario de la interfaz en español e inglés.
+- `assets/data/borders-110m.geojson` — fronteras políticas Natural Earth 1:110m (dominio público).
 - `scripts/import_sheets.py` — genera los JSON a partir de las hojas publicadas de Google Sheets.
 - `scripts/make_coins.py` — genera las monedas SVG de las 5 situaciones del museo.
 
@@ -62,9 +63,11 @@ visible y **no** hay `prefers-reduced-motion`; en cualquier otro caso se queda e
 ### Mapa
 
 - Leaflet 1.9.4 + Leaflet.markercluster.
-- Teselas oscuras de Esri (`World_Dark_Gray_Base` + `World_Dark_Gray_Reference`).
-- Marcadores con icono por tipo (diésel, nuclear, eléctrico, manivela) y agrupación por zona.
-- Halo de selección para localizar una unidad incluso dentro de un clúster.
+- Noche: Esri `World_Dark_Gray_Base` con filtro azul-negro + `World_Dark_Gray_Reference`.
+- Día: Esri `World_Street_Map` a color real (las etiquetas van dentro de la propia tesela).
+- Fronteras políticas: capa vectorial local `assets/data/borders-110m.geojson` (Natural Earth 1:110m, dominio público). Se muestra hasta zoom 5 y se oculta después para no duplicar los límites de la base.
+- Marcador = icono de situación del museo (o `unknown` si falta el dato); el aro luminoso que lo rodea = propulsión.
+- Agrupación por zona y halo de selección para localizar una unidad incluso dentro de un clúster.
 
 ### Destacados
 
@@ -116,25 +119,26 @@ y en el registro).
 Cada unidad puede marcarse con una **situación**, identificada por uno de los 5 iconos del
 proyecto. En la hoja escribe la variable (o pega la URL del icono: el importador la reconoce):
 
-| Variable | Significado | Color | Moneda |
+| Variable | Significado | Color | Marcador |
 | --- | --- | --- | --- |
-| `flote` | A flote, en el agua | `#8ee2ff` | `assets/img/coins/flote.svg` |
-| `agua` | En el agua (varado/sumergido) | `#2f9bff` | `assets/img/coins/agua.svg` |
-| `tierra` | En tierra, en seco y visitable | `#d777ff` | `assets/img/coins/tierra.svg` |
-| `cerrado` | Bajo techo / cerrado, no visitable | `#3fe85f` | `assets/img/coins/cerrado.svg` |
-| `monumento` | Solo queda el monumento | `#ff6a35` | `assets/img/coins/monumento.svg` |
+| `flote` | A flote, en el agua | `#8b90a3` | `assets/img/situation/flote.svg` |
+| `agua` | En el agua (varado/sumergido) | `#1a8cff` | `assets/img/situation/agua.svg` |
+| `tierra` | En tierra, en seco y visitable | `#da00da` | `assets/img/situation/tierra.svg` |
+| `cerrado` | Bajo techo / cerrado, no visitable | `#00d933` | `assets/img/situation/cerrado.svg` |
+| `monumento` | Solo queda el monumento | `#b52000` | `assets/img/situation/monumento.svg` |
 
 El importador también acepta sinónimos (`afloat`, `water`, `on land`, `under cover`, `monument`)
 y busca la variable en una columna `Situacion`/`Situation`, en `Icon URL` o en `Marker Icon`.
 
 Con esa variable se filtra el mapa (chips con el icono), se tiñe el dossier y el registro, y
-**la unidad usa su moneda como icono de punto en el mapa** (`assets/img/coins/marker/*.svg`,
-la versión sin textos para que se lea a 40 px). Las unidades sin situación documentada siguen
-usando el marcador romboidal por tipo de propulsión.
+**la unidad usa el icono de situación como marcador del mapa**. Las unidades sin situación
+documentada usan `assets/img/situation/unknown.svg` y conservan el aro de propulsión. Hoy la
+hoja solo trae situación para 20 de las 160 unidades; las otras 140 quedan como *sin clasificar*
+hasta rellenar la columna.
 
-Las monedas tipo *challenge coin* se generan con `python scripts/make_coins.py` a partir de los
-mismos dibujos, en SVG sin recursos de terceros. El script produce la moneda completa (con
-leyenda) y la versión de marcador.
+Las antiguas monedas tipo *challenge coin* siguen en `assets/img/coins/` como material legacy,
+pero el mapa ya no las usa. Se generan con `python scripts/make_coins.py` a partir de los mismos
+dibujos, en SVG sin recursos de terceros.
 
 **Cambiar los iconos por un rediseño.** El script solo sobrescribe los SVG que llevan su sello,
 así que el arte entregado a mano nunca se pierde:
@@ -166,7 +170,7 @@ Sobre el mapa hay filtros combinables por tipo, país, búsqueda libre, situaci�
 
 Al seleccionar una unidad (en el mapa, en el registro o en destacados) se abre su expediente:
 tipo con icono, estado, ubicación, especificaciones y media. La media admite imagen o
-video público de YouTube; si no hay media se muestra un plano técnico provisional.
+video público de YouTube; si no hay media se muestra una imagen provisional de «próximamente».
 
 ### Cronología
 
@@ -410,7 +414,8 @@ data/
 assets/
   css/app.css
   js/app.js
-  img/logo.jpg
+  img/logo-elsnorkel-2025.png
+  img/placeholder-coming-soon.svg
   img/cobia.webp
   img/coins/          # monedas SVG por situación (moneda completa)
   img/coins/marker/   # versión de marcador para el mapa
@@ -431,7 +436,7 @@ Componentes de terceros usados en el frontend:
 
 - Leaflet v1.9.4 https://leafletjs.com (BSD-2-Clause)
 - Leaflet.markercluster https://github.com/Leaflet/Leaflet.markercluster (MIT)
-- Teselas de Esri (Canvas World Dark Gray), sujetas a los términos de Esri.
+- Teselas de Esri (Canvas World Dark Gray para la noche, World Street Map para el día), sujetas a los términos de Esri.
 - Tipografías Barlow Condensed, IBM Plex Mono e Inter vía Google Fonts (SIL OFL).
 
 El diseño toma como referencia el lenguaje visual de los HUD militares/tácticos; no incluye

@@ -330,13 +330,13 @@
     "shadows": [
       {
         "name": "contact-glow",
-        "value": "0 0 12px var(--c, rgba(232, 241, 245, 0.4))",
-        "purpose": "Live contact dot transmitting in its propulsion colour."
+        "value": "0 0 8px var(--p, rgba(232, 241, 245, 0.4))",
+        "purpose": "Luminous propulsion ring around a situation badge."
       },
       {
         "name": "contact-ring",
-        "value": "0 0 0 3px rgba(232, 241, 245, 0.08)",
-        "purpose": "Quiet separation halo under a contact dot."
+        "value": "0 1px 5px rgba(0, 0, 0, 0.5)",
+        "purpose": "Quiet separation shadow under a contact badge."
       },
       {
         "name": "lock-glow",
@@ -467,12 +467,12 @@
       "css": ".ds-era { display:flex; flex-direction:column; gap:6px; padding:14px 16px 16px 0; border:0; border-right:1px solid rgba(230,245,235,.07); background:none; color:inherit; text-decoration:none; border-radius:0; } .ds-era:last-child { border-right:0; } .ds-era-n { font-family:var(--mono,monospace); font-size:9px; letter-spacing:.24em; color:var(--mut,#7d9487); } .ds-era-name { font-family:var(--sans,'Archivo',sans-serif); font-size:13px; font-weight:700; letter-spacing:-.01em; text-transform:uppercase; color:var(--txt,#e6f5eb); transition:color 160ms cubic-bezier(.2,.7,.2,1); } .ds-era-years { font-family:var(--mono,monospace); font-size:9px; letter-spacing:.14em; color:var(--mut,#7d9487); } .ds-era-bar { display:block; height:2px; margin-top:8px; background:rgba(230,245,235,.12); overflow:hidden; } .ds-era-bar i { display:block; height:100%; background:rgba(125,255,154,.45); transition:background 160ms cubic-bezier(.2,.7,.2,1); } .ds-era:hover .ds-era-name { color:var(--amber,#7dff9a); } .ds-era:hover .ds-era-bar i { background:var(--amber,#7dff9a); } .ds-era:focus-visible { outline:2px solid var(--amber,#7dff9a); outline-offset:3px; }"
     },
     {
-      "name": "Contact Dot",
+      "name": "Contact Badge",
       "kind": "custom",
       "refersTo": "tag",
-      "description": "A plotted submarine: 7px dot in its propulsion colour on a 30px hit area; red and pinged when locked.",
-      "html": "<div style=\"display:flex;gap:28px;align-items:center;padding:18px\"><span class=\"ds-contact\" style=\"--c:#ffb648\"><i></i></span><span class=\"ds-contact is-locked\" style=\"--c:#ff4d3d\"><i></i></span></div>",
-      "css": ".ds-contact { position:relative; display:grid; place-items:center; width:30px; height:30px; } .ds-contact i { width:7px; height:7px; border-radius:50%; background:var(--c,#e6f5eb); box-shadow:0 0 0 3px rgba(230,245,235,.08), 0 0 12px var(--c,#e6f5eb); transition:transform 180ms cubic-bezier(.2,.7,.2,1); } .ds-contact:hover i { transform:scale(1.5); } .ds-contact.is-locked i { width:11px; height:11px; background:var(--alarm,#ff4d3d); box-shadow:0 0 0 4px rgba(255,77,61,.18), 0 0 22px rgba(255,77,61,.8); } .ds-contact.is-locked::after { content:''; position:absolute; inset:-12px; border:1px solid rgba(255,77,61,.5); border-radius:50%; }"
+      "description": "A plotted submarine: 23px situation badge on a 30px hit area, wrapped in a 1.5px luminous propulsion ring; the locked contact turns the ring alarm-red and adds a ping.",
+      "html": "<div style=\"display:flex;gap:28px;align-items:center;padding:18px\"><span class=\"ds-contact\" style=\"--p:#ffb648\"><img src=\"assets/img/situation/tierra.svg\" alt=\"\"></span><span class=\"ds-contact is-locked\" style=\"--p:#ff4d3d\"><img src=\"assets/img/situation/agua.svg\" alt=\"\"></span></div>",
+      "css": ".ds-contact { position:relative; display:grid; place-items:center; width:30px; height:30px; } .ds-contact::before { content:''; position:absolute; inset:0; border:1.5px solid var(--p,#e6f5eb); border-radius:50%; opacity:.72; box-shadow:0 0 8px var(--p,#e6f5eb); pointer-events:none; transition:opacity 180ms cubic-bezier(.2,.7,.2,1), transform 180ms cubic-bezier(.2,.7,.2,1), border-color 180ms cubic-bezier(.2,.7,.2,1), box-shadow 180ms cubic-bezier(.2,.7,.2,1); } .ds-contact img { width:23px; height:23px; border-radius:50%; box-shadow:0 1px 5px rgba(0,0,0,.5); transition:transform 180ms cubic-bezier(.2,.7,.2,1), box-shadow 180ms cubic-bezier(.2,.7,.2,1); } .ds-contact:hover img { transform:scale(1.18); } .ds-contact:hover::before { opacity:1; transform:scale(1.04); } .ds-contact.is-locked img { box-shadow:0 0 0 2px var(--alarm,#ff4d3d), 0 0 18px rgba(255,77,61,.65); } .ds-contact.is-locked::before { border-color:var(--alarm,#ff4d3d); box-shadow:0 0 12px var(--alarm,#ff4d3d); opacity:1; } .ds-contact.is-locked::after { content:''; position:absolute; inset:-9px; border:1px solid rgba(255,77,61,.5); border-radius:50%; }"
     },
     {
       "name": "Mission Ticket",

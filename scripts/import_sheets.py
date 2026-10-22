@@ -377,7 +377,7 @@ def build_config(rows: list[dict[str, str]]) -> dict:
                 f"© {date.today().year} elSnorkel.com. Todos los derechos reservados.",
             ),
         ),
-        "logo": "assets/img/logo.jpg",
+        "logo": "assets/img/logo-elsnorkel-2025.png",
         "heroImage": "assets/img/cobia.webp",
         "heroVideo": safe_media(settings.get("hero_video")),
         "heroVideoMobile": safe_media(settings.get("hero_video_mobile")),

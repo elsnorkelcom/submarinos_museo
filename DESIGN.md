@@ -150,7 +150,7 @@ Headlines are heavy, condensed and uppercase. Everything the instrument would me
 - **Ink text** (#101a20), **grey** (#465861 / #6a7a83) for secondary copy.
 - **Ochre** (#a15a00) replaces phosphor green so contrast survives on paper; **brick** (#b3261e) replaces alarm red.
 - **Solid actions invert**: the primary button becomes ink on paper, with cream text.
-- Map tiles switch to Esri `World_Light_Gray_Base` with a warm, desaturated filter. The dark theme uses `World_Dark_Gray_Base` with `brightness(0.8) contrast(1.28) saturate(0.35)`; labels sit on a separate unfiltered layer at 0.82 opacity. Scanlines never appear in the light theme.
+- Map tiles switch to Esri `World_Street_Map` in full colour, with a light `saturate(0.92) contrast(1.02) brightness(1.01)` adjustment. The dark theme uses `World_Dark_Gray_Base` with the blue-black tactical filter `grayscale(1) brightness(0.72) contrast(1.3) sepia(1) hue-rotate(170deg) saturate(2.6)`; its labels sit on a separate unfiltered layer at 0.82 opacity. Scanlines never appear in the light theme.
 
 ### Data hues
 Propulsion: Diesel (#ffb648), Nuclear (#7dffb2), Electric (#5bc8ff), Hand-crank (#d8c9a3). Situation: Afloat (#8b90a3), In water (#1a8cff), On land (#da00da), Enclosed (#00d933), Monument (#b52000). Situation also carries a badge glyph (coloured ring, light face, dark pictogram); the ring colour is the situation token.
@@ -190,7 +190,7 @@ A 58px instrument rail across the top (54px below 720px) carries identity, navig
 ### Home (three blocks)
 1. **Hero** — classified stamp and revision line, the two-line title, standfirst, stats (contacts, waters, films, propulsion types), the two entry actions, and the **mission ticket** in the right column on desktop. On mobile the mission ticket sits between the standfirst and the stats.
 2. **Map** — a bounded `.plot-section`: a one-line HUD (title, count, lock state, readout, tiles credit), the Esri plot (`clamp(430px, 66svh, 720px)`), the boot terminal at its top-left, and the tactical panel pinned to its bottom edge.
-3. **Detail** — the assigned dossier: code, name, type/situation tags, fact grid, description, media (photo, inline film or blueprint placeholder) and the three actions (locate, route, copy link). On desktop it is a two-column dossier inside a 1180px measure; on mobile the media moves above the name and the whole block stacks.
+3. **Detail** — the assigned dossier: code, name, type/situation tags, fact grid, description, media (photo, inline film or image-coming-soon placeholder) and the three actions (locate, route, copy link). On desktop it is a two-column dossier inside a 1180px measure; on mobile the media moves above the name and the whole block stacks.
 
 The home URL is deliberately not synchronised with the random mission, so a reload can assign a different target. Deep links (`?unit=<slug>`) still open a specific file.
 
@@ -213,13 +213,13 @@ The theme is chosen before first paint from `localStorage` (`snk-theme`) with `p
 Theme changes are a **state change**, not a page reload: the map tiles swap, the paper tokens resolve, and the tactical panel, dossier and footer re-paint from the same variables. No component may assume a dark ground.
 
 ### CRT map treatment
-The dark theme uses Esri `World_Dark_Gray_Base` with a green-black tint and a separate reference-label layer. The base receives `brightness(0.8) contrast(1.28) saturate(0.35)`; labels stay unfiltered at `opacity: 0.82` so place names remain readable. A static scanline overlay (approximately 20% opacity) covers the map only. The map does **not** become monochrome: diesel, nuclear, electric, hand-crank and situation hues keep their meaning. The light theme is unchanged declassified paper and receives no scanlines.
+The dark theme uses Esri `World_Dark_Gray_Base` with a blue-black tactical tint and a separate reference-label layer. The base receives `grayscale(1) brightness(0.72) contrast(1.3) sepia(1) hue-rotate(170deg) saturate(2.6)`; labels stay unfiltered at `opacity: 0.82`. A static scanline overlay (approximately 20% opacity) covers the map only. The light theme switches to Esri `World_Street_Map` in natural colour, with a light `saturate(0.92) contrast(1.02) brightness(1.01)` adjustment and no scanlines. The map does **not** become monochrome: the contact badges carry situation hue and shape, while the luminous ring around each badge carries propulsion hue. A local Natural Earth 1:110m boundary layer reinforces political division: pale cyan over the dark chart, ink-grey over paper, hidden above zoom 5 where the base tiles already carry borders.
 
 ## Elevation & Depth
 
 The system is flat by design: **there are no drop shadows on surfaces.** Depth comes from tonal ground steps, one-pixel hairlines, and `backdrop-filter: blur(10–14px)` on surfaces that float over the live map (tactical panel, boot terminal, mobile sheets).
 
-Glow is reserved for live instrumentation: contact dots, the locked-contact ring, the HUD live dot, and the phosphor focus outline. These are signal, not elevation.
+Glow is reserved for live instrumentation: contact badges, propulsion rings, the locked-contact ring, the HUD live dot, and the phosphor focus outline. These are signal, not elevation.
 
 ### Named Rules
 **The Flat-By-Default Rule.** A surface never gains a shadow to look important. If it must separate, it gains a hairline, a tonal step or blur.
@@ -230,7 +230,7 @@ Glow is reserved for live instrumentation: contact dots, the locked-contact ring
 
 Square by default: every panel, button, switch, tag, field, row and media well is `border-radius: 0`. The form language is the instrument face — rectangles divided by hairlines.
 
-The only circles are data and controls: contact dots, situation badges, cluster discs, the recorded-video play disc, the theme toggle's sun/moon, and the focus outline.
+The only circles are data and controls: contact badges, propulsion rings, cluster discs, the recorded-video play disc, the theme toggle's sun/moon, and the focus outline.
 
 ## Motion
 
@@ -260,13 +260,13 @@ A 3px bar fixed under the rail for the duration of the home acquisition: phospho
 A bordered ticket with a 2px phosphor-green left rule, `MISIÓN ASIGNADA` and the dossier code on one line, the target name in condensed uppercase, the museum · city · country line in mono, and three actions: **open file**, **route** (Google Maps directions) and **another** (re-roll the assignment). It appears in the hero and is echoed by the `MISSION TARGET` state in the detail block.
 
 ### Dossier
-Two-column on desktop: identity, facts and copy on the left; media and actions on the right. Media is a photograph if the sheet has one, an inline film on desktop, or a blueprint placeholder (`PLANO TÉCNICO // DIGITALIZACIÓN PENDIENTE`) otherwise. Tags carry propulsion and situation; the code stays phosphor green in the dark theme and ochre on paper.
+Two-column on desktop: identity, facts and copy on the left; media and actions on the right. Media is a photograph if the sheet has one, an inline film on desktop, or an image-coming-soon placeholder (`IMAGEN PRÓXIMAMENTE`) otherwise. Tags carry propulsion and situation; the code stays phosphor green in the dark theme and ochre on paper.
 
 ### Video player (signature)
 On mobile every film opens a fixed full-screen modal: title bar, the player filling the remaining height, and a bottom hint bar reading `GIRA EL MÓVIL O PULSA GIRAR` with a `GIRAR` button. Rotating swaps the player to `100dvh × 100vw` and 90°; the button becomes `VOLVER`. Closing restores the page and stops the player. Vertical-native films skip the rotate control.
 
 ### Navigation
-- **HUD:** logo placeholder (typographic `elSnorkel / NAVAL ARCHIVE`), archive code, live dot, 10px mono links with a 1px phosphor underline, theme, sound, language, menu.
+- **HUD:** the elSnorkel circular logo, archive code, live dot, 10px mono links with a 1px phosphor underline, theme, sound, language, menu.
 - **Mobile:** logo, theme, sound, menu; navigation moves to a full-height overlay with 01–05 entries.
 - **Active state:** phosphor text plus the underline (ochre on paper).
 
@@ -274,7 +274,7 @@ On mobile every film opens a fixed full-screen modal: title bar, the player fill
 Six chronological watches, as cards with a generated sparkline, the unit count and an "open watch" affordance; they link straight into the filtered register.
 
 ### Contact & Dossier
-Contacts are 7px dots in their propulsion colour on a 30px hit area. Locking one turns it red, expands its ping, opens the dossier and updates the HUD/lock readout.
+Contacts are situation badges on a 30px hit area, wrapped in a 1.5px luminous ring in the propulsion hue. A documented situation uses its five-hue badge; a missing one uses the dashed neutral `unknown` badge. Locking a contact turns the ring alarm-red, adds the ping, opens the dossier and updates the HUD/lock readout.
 
 ## Do's and Don'ts
 
